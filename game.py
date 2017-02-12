@@ -45,6 +45,7 @@ while (not gameOver):
     if (currSecs >= 60):
         currMins += 1
         currSecs -= 60
+        currMills -= 60000
     timeText = font.render('Time: ' + '{:02d}'.format(currMins) + ':' + '{:02d}'.format(currSecs), 1, Color(0, 0, 0))
     screen.blit(timeText, (10, 10))
     scoreText = font.render('Score: ' + str(score), 1, Color(0, 0, 0))
@@ -83,9 +84,8 @@ while (not gameOver):
     if (positionx < 5):
         positionx = 5
         score += 1
-    if (positionx > 620):
-        positionx = 620
-        score -= 1
+    if (positionx > 310):
+        positionx = 310
     if (positiony < 5):
         positiony = 5
     if (positiony > 460):
