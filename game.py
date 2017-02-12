@@ -35,10 +35,20 @@ currSecs = 0
 currMins = 0
 gameOver = 0
 
+# Maze Details
+lineCount = 2
+lines = [[0 for x in range(2)] for y in range(20)]
+lines[0][0] = (100, 230)
+lines[0][1] = (190, 230)
+lines[1][0] = (100, 265)
+lines[1][1] = (190, 265)
+
 while (not gameOver):
     # Paint Screen
     screen.fill(bgColor)
     screen.blit(player, position)
+    for row in range(lineCount):
+        pygame.draw.line(screen, Color(0, 0, 0), lines[row][0], lines[row][1], 10)
     time.tick()
     currMills += time.get_time()
     currSecs = currMills / 1000
@@ -55,8 +65,13 @@ while (not gameOver):
     # Arrow Move Events
     keys = pygame.key.get_pressed()
     if (keys[pygame.K_RIGHT] or keys[pygame.K_d]):
-        positionx += moveSpeed
-        score += 1
+        blocked = 0
+        for row in range(lineCount):
+            if (((positionx + (3 * moveSpeed)) > lines[row][0][0]) and ((positionx + (2 * moveSpeed)) < lines[row][0][0]) and ((positiony - (3 * moveSpeed)) < lines[row][0][1]) and ((positiony + (3 * moveSpeed)) > lines[row][0][1])):
+                blocked = 1
+        if (not blocked):
+            positionx += moveSpeed
+            score += 1
     elif (keys[pygame.K_DOWN] or keys[pygame.K_s]):
         positiony += moveSpeed
     elif (keys[pygame.K_UP] or keys[pygame.K_w]):
@@ -83,9 +98,15 @@ while (not gameOver):
     # Position Adjustments (to prevent screen overflow) 
     if (positionx < 5):
         positionx = 5
+        for row in range(lineCount):
+            lines[row][0] = (lines[row][0][0] + moveSpeed, lines[row][0][1])
+            lines[row][1] = (lines[row][1][0] + moveSpeed, lines[row][1][1])
         score += 1
     if (positionx > 310):
         positionx = 310
+        for row in range(lineCount):
+            lines[row][0] = (lines[row][0][0] - moveSpeed, lines[row][0][1])
+            lines[row][1] = (lines[row][1][0] - moveSpeed, lines[row][1][1])
     if (positiony < 5):
         positiony = 5
     if (positiony > 460):
