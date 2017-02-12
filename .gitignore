@@ -1,1 +1,4 @@
 img/*.xcf
+dist/*
+build/*
+infinite_maze.egg-info/*
