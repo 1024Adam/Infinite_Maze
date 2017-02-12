@@ -26,6 +26,8 @@ position = (positionx, positiony)
 
 # Game Config/Stats
 moveSpeed = 8
+xcollisionSpace = 3 * moveSpeed
+ycollisionSpace = 3 * moveSpeed
 font = pygame.font.SysFont('', 20)
 score = 0
 time = pygame.time.Clock()
@@ -36,12 +38,18 @@ currMins = 0
 gameOver = 0
 
 # Maze Details
-lineCount = 2
+lineCount = 5
 lines = [[0 for x in range(2)] for y in range(20)]
 lines[0][0] = (100, 230)
-lines[0][1] = (190, 230)
-lines[1][0] = (100, 265)
-lines[1][1] = (190, 265)
+lines[0][1] = (105, 230)
+lines[1][0] = (105, 230)
+lines[1][1] = (110, 230)
+lines[2][0] = (110, 230)
+lines[2][1] = (115, 230)
+lines[3][0] = (115, 230)
+lines[3][1] = (120, 230)
+lines[4][0] = (100, 265)
+lines[4][1] = (105, 265)
 
 while (not gameOver):
     # Paint Screen
@@ -67,16 +75,21 @@ while (not gameOver):
     if (keys[pygame.K_RIGHT] or keys[pygame.K_d]):
         blocked = 0
         for row in range(lineCount):
-            if (((positionx + (3 * moveSpeed)) > lines[row][0][0]) and ((positionx + (2 * moveSpeed)) < lines[row][0][0]) and ((positiony - (3 * moveSpeed)) < lines[row][0][1]) and ((positiony + (3 * moveSpeed)) > lines[row][0][1])):
+            if (((positionx + xcollisionSpace) > lines[row][0][0]) and ((positionx - xcollisionSpace) < lines[row][0][0]) and ((positiony - ycollisionSpace) < lines[row][0][1]) and ((positiony + ycollisionSpace) > lines[row][0][1])):
                 blocked = 1
         if (not blocked):
             positionx += moveSpeed
             score += 1
-    elif (keys[pygame.K_DOWN] or keys[pygame.K_s]):
-        positiony += moveSpeed
-    elif (keys[pygame.K_UP] or keys[pygame.K_w]):
+    if (keys[pygame.K_DOWN] or keys[pygame.K_s]):
+        blocked = 0
+        for row in range(lineCount):
+            if (((positionx + xcollisionSpace) > lines[row][0][0]) and ((positionx - xcollisionSpace) < lines[row][0][0]) and ((positiony - ycollisionSpace) < lines[row][0][1]) and ((positiony + ycollisionSpace) > lines[row][0][1])):
+                blocked = 1
+        if (not blocked):
+            positiony += moveSpeed
+    if (keys[pygame.K_UP] or keys[pygame.K_w]):
         positiony -= moveSpeed
-    elif (keys[pygame.K_LEFT] or keys[pygame.K_a]):
+    if (keys[pygame.K_LEFT] or keys[pygame.K_a]):
         positionx -= moveSpeed
         score -= 1
     
