@@ -11,4 +11,5 @@ setup(
     author = 'Adam Reid',
     author_email = 'adamjreid10@gmail.com',
     url = 'https://github.com/1024Adam/infinite-maze',
+    packages=find_packages(exclude=('tests', 'docs'))
 )

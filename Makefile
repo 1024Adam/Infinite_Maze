@@ -1,2 +1,2 @@
 init:
-	pip install pygame
+	pip install -r requirements.txt
