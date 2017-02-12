@@ -1,6 +1,8 @@
 import pygame
 from pygame.locals import *
 
+from Player import Player
+
 def maze(): 
     pygame.init()
 
@@ -24,13 +26,9 @@ def maze():
     lineColor = pygame.Color(0, 0, 0) 
     
     # Player/Position Details
-    player = pygame.image.load('img/player.png')
-    positionx = 80
-    positiony = height / 2
-    position = (positionx, positiony)
+    player = Player('img/player.png', 80, (height / 2), 10)
     
     # Game Config/Stats
-    moveSpeed = 10
     font = pygame.font.SysFont('', 20)
     score = 0
     time = pygame.time.Clock()
@@ -59,7 +57,7 @@ def maze():
     while (not gameOver):
         # Paint Screen
         screen.fill(bgColor)
-        screen.blit(player, position)
+        screen.blit(player.cursor, player.position)
         for row in range(lineCount):
             pygame.draw.line(screen, Color(0, 0, 0), lines[row][0], lines[row][1], 10)
         time.tick()
@@ -80,32 +78,32 @@ def maze():
         if (keys[pygame.K_RIGHT] or keys[pygame.K_d]):
             blocked = 0
             for row in range(lineCount):
-                if ((positionx + 10 + moveSpeed >= lines[row][0][0]) and (positionx + 10 <= lines[row][0][0]) and (positiony + 20 > lines[row][0][1]) and (positiony - 5 < lines[row][0][1])):
+                if ((player.position[0] + 10 + player.speed >= lines[row][0][0]) and (player.position[0] + 10 <= lines[row][0][0]) and (player.position[1] + 20 > lines[row][0][1]) and (player.position[1] - 5 < lines[row][0][1])):
                     blocked = 1
             if (not blocked):
-                positionx += moveSpeed
+                player.xMove(1)
                 score += 1
         if (keys[pygame.K_DOWN] or keys[pygame.K_s]):
             blocked = 0
             for row in range(lineCount):
-                if ((positiony + 15 + moveSpeed >= lines[row][0][1]) and (positiony + 15 <= lines[row][0][1]) and (positionx + 15 > lines[row][0][0]) and (positionx - 15 < lines[row][0][0])):
+                if ((player.position[1] + 15 + player.speed >= lines[row][0][1]) and (player.position[1] + 15 <= lines[row][0][1]) and (player.position[0] + 15 > lines[row][0][0]) and (player.position[0] - 15 < lines[row][0][0])):
                     blocked = 1
             if (not blocked):
-                positiony += moveSpeed
+                player.yMove(1)
         if (keys[pygame.K_UP] or keys[pygame.K_w]):
             blocked = 0
             for row in range(lineCount):
-                if ((positiony - moveSpeed <= lines[row][0][1]) and (positiony >= lines[row][0][1]) and (positionx + 15 > lines[row][0][0]) and (positionx - 15 < lines[row][0][0])):
+                if ((player.position[1] - player.speed <= lines[row][0][1]) and (player.position[1] >= lines[row][0][1]) and (player.position[0] + 15 > lines[row][0][0]) and (player.position[0] - 15 < lines[row][0][0])):
                     blocked = 1
             if (not blocked):
-                positiony -= moveSpeed
+                player.yMove(-1)
         if (keys[pygame.K_LEFT] or keys[pygame.K_a]):
             blocked = 0
             for row in range(lineCount):
-                if ((positionx - 5 - moveSpeed <= lines[row][0][0]) and (positionx - 5 >= lines[row][0][0]) and (positiony + 20 > lines[row][0][1]) and (positiony - 5 < lines[row][0][1])):
+                if ((player.position[0] - 5 - player.speed <= lines[row][0][0]) and (player.position[0] - 5 >= lines[row][0][0]) and (player.position[1] + 20 > lines[row][0][1]) and (player.position[1] - 5 < lines[row][0][1])):
                     blocked = 1
             if (not blocked):
-                positionx -= moveSpeed
+                player.xMove(-1)
                 score -= 1
         
         # Quit Events
@@ -124,22 +122,20 @@ def maze():
                 gameOver = 1
        
         # Position Adjustments (to prevent screen overflow) 
-        if (positionx < maxWidthL):
-            positionx = maxWidthL
+        if (player.position[0] < maxWidthL):
+            player.xSet(maxWidthL)
             score = max(score, 0)
             if (score > 0):
                 for row in range(lineCount):
-                    lines[row][0] = (lines[row][0][0] + moveSpeed, lines[row][0][1])
-                    lines[row][1] = (lines[row][1][0] + moveSpeed, lines[row][1][1])
-        if (positionx > maxWidthR):
-            positionx = maxWidthR
+                    lines[row][0] = (lines[row][0][0] + player.speed, lines[row][0][1])
+                    lines[row][1] = (lines[row][1][0] + player.speed, lines[row][1][1])
+        if (player.position[0] > maxWidthR):
+            player.xSet(maxWidthR)
             for row in range(lineCount):
-                lines[row][0] = (lines[row][0][0] - moveSpeed, lines[row][0][1])
-                lines[row][1] = (lines[row][1][0] - moveSpeed, lines[row][1][1])
-        positiony = max(positiony, maxHeightU)
-        positiony = min(positiony, maxHeightD)
+                lines[row][0] = (lines[row][0][0] - player.speed, lines[row][0][1])
+                lines[row][1] = (lines[row][1][0] - player.speed, lines[row][1][1])
+        player.ySet(max(player.position[1], maxHeightU))
+        player.ySet(min(player.position[1], maxHeightD))
         
-        position = (positionx, positiony)
-    
     pygame.quit() 
     exit(0)
