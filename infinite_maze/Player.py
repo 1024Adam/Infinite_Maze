@@ -2,20 +2,34 @@ import pygame
 from pygame.locals import *
 
 class Player:
-    def __init__(self, cursorImage, xPosition, yPosition, moveSpeed):
-        self.cursor = pygame.image.load(cursorImage)
+    def __init__(self, xPosition, yPosition):
+        self.cursor = pygame.image.load('img/player.png')
         self.position = (xPosition, yPosition)
-        self.speed = moveSpeed
+        self.speed = 10
 
-    def xSet(self, xPosition):
+    def setX(self, xPosition):
         self.position = (xPosition, self.position[1])
 
-    def ySet(self, yPosition):
+    def setY(self, yPosition):
         self.position = (self.position[0], yPosition)
     
-    def xMove(self, units):
+    def moveX(self, units):
         self.position = (self.position[0] + (units * self.speed), self.position[1]) 
 
-    def yMove(self, units):
+    def moveY(self, units):
         self.position = (self.position[0], self.position[1] + (units * self.speed)) 
-    
+
+    def getX(self):
+        return self.position[0]
+
+    def getY(self):
+        return self.position[1]   
+
+    def getPosition(self):
+        return self.position
+
+    def getSpeed(self):
+        return self.speed
+
+    def getCursor(self):
+        return self.cursor
