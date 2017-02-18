@@ -27,8 +27,10 @@ class Game:
         self.bgColor = pygame.Color(255, 255, 255)
         self.fgColor = pygame.Color(0, 0, 0) 
    
+        self.pace = 0
         self.score = 0
         self.over = 0
+        self.shutdown = 0
 
         self.clock = Clock()
 
@@ -41,15 +43,25 @@ class Game:
 
         # Update Clock
         self.clock.update()
-        timeText = self.font.render('Time: ' + self.clock.getTimeString(), 1, self.fgColor)
 
         # Print Display Text
+        timeText = self.font.render('Time: ' + self.clock.getTimeString(), 1, self.fgColor)
         self.screen.blit(timeText, (10, 10))
         scoreText = self.font.render('Score: ' + str(self.score), 1, self.fgColor)
         self.screen.blit(scoreText, (10, 25))
 
         pygame.display.flip()
-    
+   
+    def printEndDisplay(self):
+        # Paint Screen
+        self.screen.fill(self.bgColor)
+        endText = self.font.render('Continue? (y/n)', 1, self.fgColor)
+
+        # Print Display Text
+        self.screen.blit(endText, (10, 10))
+        
+        pygame.display.flip()
+
     def end(self):
         self.over = 1
 
@@ -58,6 +70,19 @@ class Game:
 
     def isActive(self):
         return not self.over
+    
+    def quit(self):
+        self.shutdown = 1
+
+    def isPlaying(self):
+        return not self.shutdown
+
+    def reset(self):
+        self.pace = 0
+        self.score = 0
+        self.over = 0
+
+        self.clock.reset()
 
     def getClock(self):
         return self.clock

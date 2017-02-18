@@ -33,3 +33,8 @@ class Player:
 
     def getCursor(self):
         return self.cursor
+
+    def reset(self, xPosition, yPosition):
+        self.setX(xPosition)
+        self.setY(yPosition)
+        self.speed = 10

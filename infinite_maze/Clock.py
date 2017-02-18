@@ -21,3 +21,8 @@ class Clock:
 
     def getTimeString(self):
         return ('{:02d}'.format(self.minutes) + ':' + '{:02d}'.format(self.seconds))
+
+    def reset(self):
+        self.milliseconds = 0
+        self.seconds = 0
+        self.minutes = 0
