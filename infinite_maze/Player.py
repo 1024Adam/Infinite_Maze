@@ -20,19 +20,19 @@ class Player:
         self.position = (self.position[0], self.position[1] + (units * self.speed)) 
 
     def getX(self):
-        return self.position[0]
+        return (self.position[0])
 
     def getY(self):
-        return self.position[1]   
+        return (self.position[1])
 
     def getPosition(self):
-        return self.position
+        return (self.position)
 
     def getSpeed(self):
-        return self.speed
+        return (self.speed)
 
     def getCursor(self):
-        return self.cursor
+        return (self.cursor)
 
     def reset(self, xPosition, yPosition):
         self.setX(xPosition)

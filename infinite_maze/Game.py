@@ -76,13 +76,13 @@ class Game:
         pygame.quit() 
 
     def isActive(self):
-        return not self.over
+        return (not self.over)
     
     def quit(self):
         self.shutdown = 1
 
     def isPlaying(self):
-        return not self.shutdown
+        return (not self.shutdown)
 
     def reset(self):
         self.pace = 0
@@ -92,13 +92,13 @@ class Game:
         self.clock.reset()
 
     def getClock(self):
-        return self.clock
+        return (self.clock)
 
     def getScreen(self):
-        return self.screen
+        return (self.screen)
   
     def getScore(self):
-        return self.score
+        return (self.score)
 
     def updateScore(self, amount):
         self.score += amount
@@ -107,34 +107,34 @@ class Game:
         self.score = newScore
 
     def getWidth(self):
-        return self.width
+        return (self.width)
 
     def getHeight(self):
-        return self.height
+        return (self.height)
 
     def getXMin(self):
-        return self.xMin
+        return (self.xMin)
 
     def getYMin(self):
-        return self.yMin
+        return (self.yMin)
 
     def getXMax(self):
-        return self.xMax
+        return (self.xMax)
 
     def getYMax(self):
-        return self.yMax
+        return (self.yMax)
 
     def getFont(self):
-        return self.font
+        return (self.font)
 
     def getBGColor(self):
-        return self.bgColor
+        return (self.bgColor)
     
     def getFGColor(self):
-        return self.fgColor
+        return (self.fgColor)
 
     def getPace(self):
-        return self.pace
+        return (self.pace)
 
     def setPace(self, newPace):
         self.pace = newPace
