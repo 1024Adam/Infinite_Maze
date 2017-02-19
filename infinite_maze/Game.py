@@ -1,6 +1,7 @@
 import pygame
 from pygame.locals import *
 from Clock import Clock
+from Line import Line
 
 class Game:
     def __init__(self):
@@ -34,12 +35,12 @@ class Game:
 
         self.clock = Clock()
 
-    def updateScreen(self, player, lines, lineCount):
+    def updateScreen(self, player, lines):
         # Paint Screen
         self.screen.fill(self.bgColor)
         self.screen.blit(player.getCursor(), player.getPosition())
-        for row in range(lineCount):
-            pygame.draw.line(self.getScreen(), self.fgColor, lines[row][0], lines[row][1], 10)
+        for line in lines:
+            pygame.draw.line(self.getScreen(), self.fgColor, line.getStart(), line.getEnd(), 10)
 
         prevClock = self.clock.getSecs()
 

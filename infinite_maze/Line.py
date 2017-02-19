@@ -7,6 +7,18 @@ class Line:
         self.start = startPos
         self.end = endPos
 
+    def getStart(self):
+        return (self.start)
+
+    def setStart(self, newStart):
+        self.start = newStart
+
+    def getEnd(self):
+        return (self.end)
+
+    def setEnd(self, newEnd):
+        self.end = newEnd
+
     def getXStart(self):
         return (self.start[0])
 
