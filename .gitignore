@@ -3,3 +3,4 @@ dist/*
 build/*
 infinite_maze.egg-info/*
 infinite_maze/*.pyc
+infinite_maze/*.swp

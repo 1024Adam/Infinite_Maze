@@ -26,3 +26,15 @@ class Clock:
         self.milliseconds = 0
         self.seconds = 0
         self.minutes = 0
+
+    def getMills(self):
+        return (self.milliseconds)
+
+    def getSecs(self):
+        return (self.seconds)
+
+    def getMins(self):
+        return (self.minutes)
+
+    def getFullTime(self):
+        return (self.milliseconds + (self.seconds * 1000) + (self.minutes * 60000))

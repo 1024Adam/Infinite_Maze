@@ -41,10 +41,17 @@ class Game:
         for row in range(lineCount):
             pygame.draw.line(self.getScreen(), self.fgColor, lines[row][0], lines[row][1], 10)
 
+        prevClock = self.clock.getSecs()
+
         # Update Clock
         self.clock.update()
 
+        # Update Pace
+        if ((self.clock.getSecs() == 10 and self.clock.getSecs() != prevClock) or (self.clock.getFullTime() > 1000 and self.clock.getSecs() % 30 == 0 and self.clock.getSecs() != prevClock)):
+            self.pace += 1
+
         # Print Display Text
+        pygame.draw.line(self.getScreen(), self.fgColor, (78, self.yMin), (78, self.yMax + 15), 2)
         timeText = self.font.render('Time: ' + self.clock.getTimeString(), 1, self.fgColor)
         self.screen.blit(timeText, (10, 10))
         scoreText = self.font.render('Score: ' + str(self.score), 1, self.fgColor)
@@ -125,3 +132,9 @@ class Game:
     
     def getFGColor(self):
         return self.fgColor
+
+    def getPace(self):
+        return self.pace
+
+    def setPace(self, newPace):
+        self.pace = newPace

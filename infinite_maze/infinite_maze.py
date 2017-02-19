@@ -6,7 +6,7 @@ from Game import Game
 def maze(): 
     # Contains All Game Stats/Config
     game = Game() 
-     
+ 
     # Player Stats/Position/Details
     player = Player(80, (game.getHeight() / 2))
     
@@ -78,6 +78,13 @@ def maze():
                 if (event.type == pygame.QUIT):
                     game.end()
        
+            # Process game pace adjustments
+            prevClock = game.getClock().getSecs()
+            player.setX(player.getX() - game.getPace())
+            for row in range(lineCount):
+                lines[row][0] = (lines[row][0][0] - game.getPace(), lines[row][0][1])
+                lines[row][1] = (lines[row][1][0] - game.getPace(), lines[row][1][1])
+
             # Position Adjustments (to prevent screen overflow) 
             if (player.getX() < game.getXMin()):
                 game.end()
