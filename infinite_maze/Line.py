@@ -2,10 +2,14 @@ class Line:
     def __init__(self):
         self.start = (0, 0)
         self.end = (0, 0)
+        self.sideA = 0
+        self.sideB = 0
 
-    def __init__(self, startPos, endPos):
+    def __init__(self, startPos, endPos, sideA, sideB):
         self.start = startPos
         self.end = endPos
+        self.sideA = sideA
+        self.sideB = sideB
 
     def getStart(self):
         return (self.start)
@@ -42,3 +46,19 @@ class Line:
 
     def setYEnd(self, newY):
         self.end = (self.end[0], newY)
+
+    @staticmethod
+    def generateMaze(game, width, height):
+        lines = []
+        for x in range(width):
+            xPos = (22 * x) + game.getXMax()
+            for y in range(height):
+                yPos = (22 * y) + game.getYMin()
+                lines.append(Line((xPos, yPos), (xPos + 22, yPos), 0, 0))
+        for y in range(height - 1):
+            yPos = (22 * y) + game.getYMin()
+            for x in range(1, width):
+                xPos = (22 * x) + game.getXMax()
+                lines.append(Line((xPos, yPos), (xPos, yPos + 22), 0, 0))
+
+        return (lines)

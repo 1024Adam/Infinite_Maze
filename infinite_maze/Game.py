@@ -52,7 +52,7 @@ class Game:
             self.pace += 1
 
         # Print Display Text
-        pygame.draw.line(self.getScreen(), self.fgColor, (78, self.yMin), (78, self.yMax + 15), 2)
+        pygame.draw.line(self.getScreen(), self.fgColor, (80, self.yMin), (80, self.yMax + 15), 2)
         timeText = self.font.render('Time: ' + self.clock.getTimeString(), 1, self.fgColor)
         self.screen.blit(timeText, (10, 10))
         scoreText = self.font.render('Score: ' + str(self.score), 1, self.fgColor)
