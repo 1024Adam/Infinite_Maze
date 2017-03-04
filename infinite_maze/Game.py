@@ -40,7 +40,7 @@ class Game:
         self.screen.fill(self.bgColor)
         self.screen.blit(player.getCursor(), player.getPosition())
         for line in lines:
-            pygame.draw.line(self.getScreen(), self.fgColor, line.getStart(), line.getEnd(), 10)
+            pygame.draw.line(self.getScreen(), self.fgColor, line.getStart(), line.getEnd(), 1)
 
         prevClock = self.clock.getSecs()
 

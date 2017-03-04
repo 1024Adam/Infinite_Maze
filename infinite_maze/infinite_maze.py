@@ -23,7 +23,9 @@ def maze():
             if (keys[pygame.K_RIGHT] or keys[pygame.K_d]):
                 blocked = 0
                 for line in lines:
-                    if ((player.getX() + player.getSpeed() >= line.getXStart()) and (player.getX() <= line.getXStart()) and (player.getY() + 5 > line.getYStart()) and (player.getY() - 5 < line.getYStart())):
+                    if ((player.getX() + player.getSpeed() >= line.getXStart()) and (player.getX() <= line.getXStart()) and (player.getY() + 6 >= line.getYStart()) and (player.getY() - 6 <= line.getYStart())):
+                        blocked = 1
+                    if ((player.getX() + 5 + player.getSpeed() >= line.getXStart()) and (player.getX() <= line.getXStart()) and (player.getY() >= line.getYStart()) and (player.getY() <= line.getYEnd())):
                         blocked = 1
                 if (not blocked):
                     player.moveX(1)
@@ -31,21 +33,27 @@ def maze():
             if (keys[pygame.K_DOWN] or keys[pygame.K_s]):
                 blocked = 0
                 for line in lines:
-                    if ((player.getY() + player.getSpeed() >= line.getYStart()) and (player.getY() <= line.getYStart()) and (player.getX() + 5 > line.getXStart()) and (player.getX() - 5 < line.getXStart())):
+                    if ((player.getY() + player.getSpeed() >= line.getYStart()) and (player.getY() <= line.getYStart()) and (player.getX() + 6 > line.getXStart()) and (player.getX() - 6 < line.getXStart())):
+                        blocked = 1
+                    if ((player.getY() + 8 + player.getSpeed() >= line.getYStart()) and (player.getY() <= line.getYStart()) and (player.getX() >= line.getXStart()) and (player.getX() <= line.getXEnd())):
                         blocked = 1
                 if (not blocked):
                     player.moveY(1)
             if (keys[pygame.K_UP] or keys[pygame.K_w]):
                 blocked = 0
                 for line in lines:
-                    if ((player.getY() - player.getSpeed() <= line.getYStart()) and (player.getY() >= line.getYStart()) and (player.getX() + 5 > line.getXStart()) and (player.getX() - 5 < line.getXStart())):
+                    if ((player.getY() - player.getSpeed() <= line.getYEnd()) and (player.getY() >= line.getYEnd()) and (player.getX() + 5 > line.getXStart()) and (player.getX() - 5 < line.getXStart())):
+                        blocked = 1
+                    if ((player.getY() - 8 - player.getSpeed() <= line.getYEnd()) and (player.getY() >= line.getYEnd()) and (player.getX() >= line.getXStart()) and (player.getX() <= line.getXEnd())):
                         blocked = 1
                 if (not blocked):
                     player.moveY(-1)
             if (keys[pygame.K_LEFT] or keys[pygame.K_a]):
                 blocked = 0
                 for line in lines:
-                    if ((player.getX() - player.getSpeed() <= line.getXStart()) and (player.getX() >= line.getXStart()) and (player.getY() + 5 > line.getYStart()) and (player.getY() - 5 < line.getYStart())):
+                    if ((player.getX() + 1 - player.getSpeed() <= line.getXEnd()) and (player.getX() >= line.getXEnd()) and (player.getY() + 6 >= line.getYStart()) and (player.getY() - 6 <= line.getYStart())):
+                        blocked = 1
+                    if ((player.getX() - player.getSpeed() <= line.getXEnd()) and (player.getX() >= line.getXEnd()) and (player.getY() >= line.getYStart()) and (player.getY() <= line.getYEnd())):
                         blocked = 1
                 if (not blocked):
                     player.moveX(-1)
@@ -93,7 +101,7 @@ def maze():
             player.reset(80, (game.getHeight() / 2))
 
             # Maze Details
-            lines = Line.generateMaze(5, 5)
+            lines = Line.generateMaze(game, 15, 20)
         
         if (keys[pygame.K_n]):
             game.quit()
