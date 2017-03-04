@@ -64,9 +64,11 @@ class Game:
         # Paint Screen
         self.screen.fill(self.bgColor)
         endText = self.font.render('Continue? (y/n)', 1, self.fgColor)
+        scoreText = self.font.render('Score: ' + str(self.score), 1, self.fgColor)
 
         # Print Display Text
         self.screen.blit(endText, (10, 10))
+        self.screen.blit(scoreText, (10, 25))
         
         pygame.display.flip()
 
