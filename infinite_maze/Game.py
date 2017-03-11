@@ -12,7 +12,7 @@ class Game:
         self.xMin = 80
         self.xMax = (self.width / 2)
         self.yMin = 40
-        self.yMax = (self.height - 40)
+        self.yMax = (self.height - 32)
 
         self.screen = pygame.display.set_mode((self.width, self.height))
         
@@ -52,9 +52,9 @@ class Game:
             self.pace += 1
 
         # Print Border
-        pygame.draw.line(self.getScreen(), self.fgColor, (self.xMin, self.yMin), (self.width, self.yMin), 1)
-        pygame.draw.line(self.getScreen(), self.fgColor, (self.xMin, self.yMax + 15), (self.width, self.yMax + 15), 1)
-        pygame.draw.line(self.getScreen(), self.fgColor, (80, self.yMin), (80, self.yMax + 15), 2)
+        pygame.draw.line(self.getScreen(), self.fgColor, (self.xMin, self.yMin), (self.width, self.yMin), 2)
+        pygame.draw.line(self.getScreen(), self.fgColor, (self.xMin, self.yMax + 10), (self.width, self.yMax + 10), 2)
+        pygame.draw.line(self.getScreen(), self.fgColor, (80, self.yMin), (80, self.yMax + 10), 2)
         
         # Print Display Text
         timeText = self.font.render('Time: ' + self.clock.getTimeString(), 1, self.fgColor)
