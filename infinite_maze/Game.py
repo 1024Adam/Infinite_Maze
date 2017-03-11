@@ -51,8 +51,12 @@ class Game:
         if ((self.clock.getSecs() == 10 and self.clock.getSecs() != prevClock) or (self.clock.getFullTime() > 1000 and self.clock.getSecs() % 30 == 0 and self.clock.getSecs() != prevClock)):
             self.pace += 1
 
-        # Print Display Text
+        # Print Border
+        pygame.draw.line(self.getScreen(), self.fgColor, (self.xMin, self.yMin), (self.width, self.yMin), 1)
+        pygame.draw.line(self.getScreen(), self.fgColor, (self.xMin, self.yMax + 15), (self.width, self.yMax + 15), 1)
         pygame.draw.line(self.getScreen(), self.fgColor, (80, self.yMin), (80, self.yMax + 15), 2)
+        
+        # Print Display Text
         timeText = self.font.render('Time: ' + self.clock.getTimeString(), 1, self.fgColor)
         self.screen.blit(timeText, (10, 10))
         scoreText = self.font.render('Score: ' + str(self.score), 1, self.fgColor)

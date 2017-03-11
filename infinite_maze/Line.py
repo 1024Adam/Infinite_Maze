@@ -50,11 +50,14 @@ class Line:
     @staticmethod
     def generateMaze(game, width, height):
         lines = []
+        #side = 0
+        # Horizontal Line Gen
         for x in range(width):
             xPos = (22 * x) + game.getXMax()
-            for y in range(height):
+            for y in range(1, height - 1):
                 yPos = (22 * y) + game.getYMin()
                 lines.append(Line((xPos, yPos), (xPos + 22, yPos), 0, 0))
+        # Vertical Line Gen
         for y in range(height - 1):
             yPos = (22 * y) + game.getYMin()
             for x in range(1, width):
