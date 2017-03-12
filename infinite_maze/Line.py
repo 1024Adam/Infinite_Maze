@@ -99,7 +99,7 @@ class Line:
                 for line in lines:
                     if (line.getSideA() == tempSideB):
                         line.setSideA(tempSideA)
-                    elif (line.getSideB() == tempSideB):
+                    if (line.getSideB() == tempSideB):
                         line.setSideB(tempSideA)
             sets = []
             for line in lines:
