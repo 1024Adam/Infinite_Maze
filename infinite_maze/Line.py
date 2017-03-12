@@ -65,7 +65,7 @@ class Line:
     def generateMaze(game, width, height):
         lines = []
         # Horizontal Line Gen
-        for x in range(width):
+        for x in range(width * 2):
             sideA = (19 * x) + 1
             sideB = sideA + 1
 
@@ -81,7 +81,7 @@ class Line:
             sideB = sideA + 19
 
             yPos = (22 * y) + game.getYMin()
-            for x in range(1, width):
+            for x in range(1, width * 2):
                 xPos = (22 * x) + game.getXMax()
                 lines.append(Line((xPos, yPos), (xPos, yPos + 22), sideA, sideB))
                 sideA = sideB
