@@ -90,9 +90,6 @@ class Line:
         sets = []
         length = len(lines)
         while (len(sets) != 1):
-        #count = 0
-        #while (count < 400):
-            #count += 1
             length = len(lines)
             lineNum = randint(0, length - 1)
             tempSideA = lines[lineNum].getSideA()
