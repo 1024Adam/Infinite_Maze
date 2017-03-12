@@ -65,9 +65,10 @@ class Line:
     def generateMaze(game, width, height):
         lines = []
         # Horizontal Line Gen
-        sideA = 0
-        sideB = 1
         for x in range(width):
+            sideA = (19 * x) + 1
+            sideB = sideA + 1
+
             xPos = (22 * x) + game.getXMax()
             for y in range(1, height - 1):
                 yPos = (22 * y) + game.getYMin()
@@ -75,40 +76,41 @@ class Line:
                 sideA = sideB
                 sideB += 1
         # Vertical Line Gen
-        sideA = 0
-        sideB = 1
         for y in range(height - 1):
+            sideA = y + 1
+            sideB = sideA + 19
+
             yPos = (22 * y) + game.getYMin()
             for x in range(1, width):
                 xPos = (22 * x) + game.getXMax()
                 lines.append(Line((xPos, yPos), (xPos, yPos + 22), sideA, sideB))
                 sideA = sideB
-                sideB += 1
+                sideB += 19
 
         sets = []
         length = len(lines)
-        #while (len(sets) != 1):
-        #    length = len(lines)
-        #    lineNum = randint(0, length - 1)
-        #    lineNum = 5
-        #    tempSideA = lines[lineNum].getSideA()
-        #    tempSideB = lines[lineNum].getSideB()
-        #    if(tempSideA != tempSideB):
-        #        del lines[lineNum]
-        #        for line in lines:
-        #            if (line.getSideA() == tempSideB):
-        #                line.setSideA(tempSideA)
-        #            elif (line.getSideB() == tempSideB):
-        #                line.setSideB(tempSideA)
-        #    sets = []
-        #    for line in lines:
-        #        tempSideA = line.getSideA()
-        #        tempSideB = line.getSideB()
-        #        print tempSideA, tempSideB
-        #        if (tempSideA not in sets):
-        #            sets.append(tempSideA)
-        #        if (tempSideB not in sets):
-        #            sets.append(tempSideB)
-        #    print len(sets)
+        while (len(sets) != 1):
+        #count = 0
+        #while (count < 400):
+            #count += 1
+            length = len(lines)
+            lineNum = randint(0, length - 1)
+            tempSideA = lines[lineNum].getSideA()
+            tempSideB = lines[lineNum].getSideB()
+            if(tempSideA != tempSideB):
+                del lines[lineNum]
+                for line in lines:
+                    if (line.getSideA() == tempSideB):
+                        line.setSideA(tempSideA)
+                    elif (line.getSideB() == tempSideB):
+                        line.setSideB(tempSideA)
+            sets = []
+            for line in lines:
+                tempSideA = line.getSideA()
+                tempSideB = line.getSideB()
+                if (tempSideA not in sets):
+                    sets.append(tempSideA)
+                if (tempSideB not in sets):
+                    sets.append(tempSideB)
 
         return (lines)
