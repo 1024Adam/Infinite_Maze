@@ -25,7 +25,7 @@ def maze():
                 for line in lines:
                     if ((player.getX() + player.getSpeed() >= line.getXStart()) and (player.getX() <= line.getXStart()) and (player.getY() + 6 >= line.getYStart()) and (player.getY() - 6 <= line.getYStart())):
                         blocked = 1
-                    if ((player.getX() + 5 + player.getSpeed() >= line.getXStart()) and (player.getX() <= line.getXStart()) and (player.getY() >= line.getYStart()) and (player.getY() <= line.getYEnd())):
+                    if ((player.getX() + 6 + player.getSpeed() >= line.getXStart()) and (player.getX() <= line.getXStart()) and (player.getY() >= line.getYStart()) and (player.getY() <= line.getYEnd())):
                         blocked = 1
                 if (not blocked):
                     player.moveX(1)
@@ -33,18 +33,18 @@ def maze():
             if (keys[pygame.K_DOWN] or keys[pygame.K_s]):
                 blocked = 0
                 for line in lines:
-                    if ((player.getY() + player.getSpeed() >= line.getYStart()) and (player.getY() <= line.getYStart()) and (player.getX() + 6 > line.getXStart()) and (player.getX() - 6 < line.getXStart())):
+                    if ((player.getY() + 5 + player.getSpeed() >= line.getYStart()) and (player.getY() <= line.getYStart()) and (player.getX() + 6 > line.getXStart()) and (player.getX() - 6 < line.getXStart())):
                         blocked = 1
-                    if ((player.getY() + 8 + player.getSpeed() >= line.getYStart()) and (player.getY() <= line.getYStart()) and (player.getX() >= line.getXStart()) and (player.getX() <= line.getXEnd())):
+                    if ((player.getY() + 6 + player.getSpeed() >= line.getYStart()) and (player.getY() <= line.getYStart()) and (player.getX() >= line.getXStart()) and (player.getX() <= line.getXEnd())):
                         blocked = 1
                 if (not blocked):
                     player.moveY(1)
             if (keys[pygame.K_UP] or keys[pygame.K_w]):
                 blocked = 0
                 for line in lines:
-                    if ((player.getY() - player.getSpeed() <= line.getYEnd()) and (player.getY() >= line.getYEnd()) and (player.getX() + 5 > line.getXStart()) and (player.getX() - 5 < line.getXStart())):
+                    if ((player.getY() - player.getSpeed() <= line.getYEnd()) and (player.getY() >= line.getYEnd()) and (player.getX() + 6 > line.getXStart()) and (player.getX() - 6 < line.getXStart())):
                         blocked = 1
-                    if ((player.getY() - 8 - player.getSpeed() <= line.getYEnd()) and (player.getY() >= line.getYEnd()) and (player.getX() >= line.getXStart()) and (player.getX() <= line.getXEnd())):
+                    if ((player.getY() - 6 - player.getSpeed() <= line.getYEnd()) and (player.getY() >= line.getYEnd()) and (player.getX() >= line.getXStart()) and (player.getX() <= line.getXEnd())):
                         blocked = 1
                 if (not blocked):
                     player.moveY(-1)
