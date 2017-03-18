@@ -13,6 +13,8 @@ def maze():
     
     # Maze Details
     lines = Line.generateMaze(game, 15, 20)
+
+    game.getClock().reset()
     
     while (game.isPlaying()): 
         while (game.isActive()):
@@ -91,7 +93,19 @@ def maze():
                     line.setXEnd(line.getXEnd() - player.getSpeed())
             player.setY(max(player.getY(), game.getYMin()))
             player.setY(min(player.getY(), game.getYMax()))
-      
+
+            # Reposition lines that have been passed 
+            xMax = Line.getXMax(lines)
+            for line in lines:
+                start = line.getXStart()
+                end = line.getXEnd()
+                if (start < 0):
+                    line.setXStart(xMax)
+                    if (start == end):
+                        line.setXEnd(xMax)
+                    else: 
+                        line.setXEnd(xMax + 22)
+
         # Game has ended
         game.printEndDisplay() 
         # Quit Events
@@ -102,6 +116,8 @@ def maze():
 
             # Maze Details
             lines = Line.generateMaze(game, 15, 20)
+            
+            game.getClock().reset()
         
         if (keys[pygame.K_n]):
             game.quit()

@@ -62,6 +62,15 @@ class Line:
         self.sideB = side
 
     @staticmethod
+    def getXMax(lines):
+        xMax = 0
+        for line in lines:
+            lineEnd = line.getXEnd()
+            if (lineEnd > xMax):
+                xMax = lineEnd
+        return (xMax)
+
+    @staticmethod
     def generateMaze(game, width, height):
         lines = []
         # Horizontal Line Gen
