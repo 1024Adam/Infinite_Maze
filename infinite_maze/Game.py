@@ -43,12 +43,12 @@ class Game:
             pygame.draw.line(self.getScreen(), self.fgColor, line.getStart(), line.getEnd(), 1)
 
         prevClock = self.clock.getSecs()
-
         # Update Clock
         self.clock.update()
-
+        currClock = self.clock.getSecs()
+        
         # Update Pace
-        if ((self.clock.getSecs() == 10 and self.clock.getSecs() != prevClock) or (self.clock.getFullTime() > 1000 and self.clock.getSecs() % 30 == 0 and self.clock.getSecs() != prevClock)):
+        if (self.clock.getFullTime() > 1000 and currClock % 30 == 0 and currClock != prevClock):
             self.pace += 1
 
         # Print Border
