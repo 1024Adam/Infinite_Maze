@@ -31,6 +31,9 @@ class Player:
     def getSpeed(self):
         return (self.speed)
 
+    def setCursor(self, image):
+        self.cursor = pygame.image.load(image)
+
     def getCursor(self):
         return (self.cursor)
 

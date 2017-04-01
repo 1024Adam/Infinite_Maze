@@ -27,9 +27,10 @@ class Game:
         self.font = pygame.font.SysFont('', 20)
         self.bgColor = pygame.Color(255, 255, 255)
         self.fgColor = pygame.Color(0, 0, 0) 
-   
+
         self.pace = 0
         self.score = 0
+        self.paused = 0
         self.over = 0
         self.shutdown = 0
 
@@ -61,6 +62,10 @@ class Game:
         self.screen.blit(timeText, (10, 10))
         scoreText = self.font.render('Score: ' + str(self.score), 1, self.fgColor)
         self.screen.blit(scoreText, (10, 25))
+      
+        if (self.paused):
+            scoreText = self.font.render('Paused (press space to continue)', 1, self.fgColor)
+            self.screen.blit(scoreText, (100, 10))
 
         pygame.display.flip()
    
@@ -112,6 +117,18 @@ class Game:
 
     def setScore(self, newScore):
         self.score = newScore
+
+    def isPaused(self):
+        return (self.paused)
+
+    def changePaused(self, player):
+        self.paused = not self.paused
+        if (self.paused):
+            self.fgColor = pygame.Color(128, 128, 128)
+            player.setCursor('img/player_paused.png')
+        else:
+            self.fgColor = pygame.Color(0, 0, 0) 
+            player.setCursor('img/player.png')
 
     def getWidth(self):
         return (self.width)
