@@ -1,13 +1,7 @@
 from random import randint
 
 class Line:
-    def __init__(self):
-        self.start = (0, 0)
-        self.end = (0, 0)
-        self.sideA = 0
-        self.sideB = 0
-
-    def __init__(self, startPos, endPos, sideA, sideB):
+    def __init__(self, startPos = (0, 0), endPos = (0, 0), sideA = 0, sideB = 0):
         self.start = startPos
         self.end = endPos
         self.sideA = sideA
