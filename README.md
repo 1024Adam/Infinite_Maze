@@ -33,6 +33,15 @@ To compile and execute the game, type **python infinite_maze**
 - Points are taken away based on each movement the player performs to the **left**.
 - Pace will start at the 30 second mark, and become incrementally quicker every 30 seconds onwards.
 
+## Controls
+|  Key           |  Action                 |
+| -------------- | ----------------------- |
+| **w, a, s, d** | up, left, down, right   |
+| **space**      | pause                   |
+| **esc, q**     | end game                |
+| **y, n**       | yes, no (when prompted) |
+
+
 ## Specifications
 The only software needed to run this program is Python. Infinite Maze Game
 was developed and tested using Python (v2.7.11).
