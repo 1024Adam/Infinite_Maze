@@ -10,8 +10,14 @@ What makes this maze infinite is exactly that - there is no end to the maze.
 As long as participants are able to keep up with the pace of the maze, the 
 game will never end.
 
-## Execution
-From the root directory: **python infinite_maze**
+## Setup
+**Note:** The following commands should be run in a terminal window after navigating to the root directory of the application.
+
+1. To install the requirements needed to run the game, type **make**.
+2. To run the setup and initialization of the game, type **python setup.py install**.
+
+### Execution
+To compile and execute the game, type **python infinite_maze**
 
 ## Game Definitions
 |  Term      |  Definition  |
@@ -38,7 +44,8 @@ create basic games, import images, and draw shapes. More information on Pygame c
 
 ## For Developers
 ### Code Structure
-|  Directory         |  Description  |
-| ------------------ | ------------- |
+|  Directory           |  Description  |
+| -------------------- | ------------- |
+| **./**               | All setup and information files. |
 | **./img/**           | Image resources used in the game. |
 | **./infinite_maze/** | All Python code, and complied files. | 
