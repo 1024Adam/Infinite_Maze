@@ -11,7 +11,7 @@ As long as participants are able to keep up with the pace of the maze, the
 game will never end.
 
 ## Setup
-**Note:** The following commands should be run in a terminal window after navigating to the root directory of the application.
+The following commands in this section (**bolded**) should be run in a terminal window after navigating to the root directory of the application.
 
 1. To install the requirements needed to run the game, type **make**.
 2. To run the setup and initialization of the game, type **python setup.py install**.
