@@ -23,7 +23,7 @@ To compile and execute the game, type **python infinite_maze**
 |  Term      |  Definition  |
 | ---------- | ------------ |
 | **Player** | Represented by the 'dot' in game. |
-| **Pace**   | A game mechanic in which the game tries to catch up to the player. When the pace successfully catches up, the game is over. |
+| **Pace**   | A game mechanic in which the game tries to catch up to the Player. When the Pace successfully catches up to the Player, the game is over. |
 | **Wall**   | Inhibits the movement of the Player. |
 | **Point**  | Awarded when the Player based on movement. |
 
