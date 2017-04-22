@@ -27,6 +27,10 @@ From the root directory: *python infinite_maze*
 - Points are taken away based on each movement the player performs to the *left*.
 - Pace will start at the 30 second mark, and become incrementally quicker every 30 seconds onwards.
 
+## Assets
+Infinite Maze Game makes use of the Pygame library, which is a simple and easy way to
+create basic games, import images, and draw shapes.
+
 ## Specifications
 The only software needed to run this program is Python. Infinite Maze Game
 was developed and tested using Python (v2.7.11).
