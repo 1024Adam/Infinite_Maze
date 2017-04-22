@@ -11,20 +11,20 @@ As long as participants are able to keep up with the pace of the maze, the
 game will never end.
 
 ## Execution
-From the root directory: *python infinite_maze*
+From the root directory: **python infinite_maze**
 
 ## Game Definitions
-|  Term  |  Definition  |
-| ------ | ------------ |
-| Player | Represented by the 'dot' in game. |
-| Pace   | A game mechanic in which the game tries to catch up to the player. When the pace successfully catches up, the game is over. |
-| Wall   | Inhibits the movement of the Player. |
-| Point  | Awarded when the Player based on movement. |
+|  Term      |  Definition  |
+| ---------- | ------------ |
+| **Player** | Represented by the 'dot' in game. |
+| **Pace**   | A game mechanic in which the game tries to catch up to the player. When the pace successfully catches up, the game is over. |
+| **Wall**   | Inhibits the movement of the Player. |
+| **Point**  | Awarded when the Player based on movement. |
 
 ## Game Rules
 - Objective is to get as far right through the maze as possible without being caught by the pace.
-- Points are awarded based on each movement the player performs to the *right*.
-- Points are taken away based on each movement the player performs to the *left*.
+- Points are awarded based on each movement the player performs to the **right**.
+- Points are taken away based on each movement the player performs to the **left**.
 - Pace will start at the 30 second mark, and become incrementally quicker every 30 seconds onwards.
 
 ## Specifications
@@ -40,5 +40,5 @@ create basic games, import images, and draw shapes. More information on Pygame c
 ### Code Structure
 |  Directory         |  Description  |
 | ------------------ | ------------- |
-| *./img/*           | Image resources used in the game. |
-| *./infinite_maze/* | All Python code, and complied files. | 
+| **./img/**           | Image resources used in the game. |
+| **./infinite_maze/** | All Python code, and complied files. | 
