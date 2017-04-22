@@ -40,7 +40,7 @@ was developed and tested using Python (v2.7.11).
 ## Special Features
 Infinite Maze Game makes use of the Pygame library, which is a simple and easy way to
 create basic games, import images, and draw shapes. More information on Pygame can be found
-[here](https://www.pygame.org/docs/).
+[**here**](https://www.pygame.org/docs/).
 
 ## For Developers
 ### Code Structure
