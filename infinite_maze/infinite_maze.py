@@ -1,6 +1,6 @@
 import pygame
 from pygame.locals import *
-from pygame.time import *
+from pygame import time
 from Player import Player
 from Game import Game
 from Line import Line
@@ -17,10 +17,9 @@ def maze():
 
     game.getClock().reset()
     keys = pygame.key.get_pressed()
-
+    mills = 0
     while (game.isPlaying()): 
         while (game.isActive()):
-            mills = game.getClock().getFullTime()
             game.updateScreen(player, lines)     
             
             prevKeys = keys
@@ -117,9 +116,9 @@ def maze():
 
             # Process FPS
             processTime = game.getClock().getFullTime() - mills
-            if (processTime < 16):
-               delay(16 - processTime)
-       
+            if (processTime <= 16):
+                time.delay(16 - processTime)
+            mills = game.getClock().getFullTime()
 
         # Game has ended
         game.printEndDisplay() 
@@ -147,6 +146,6 @@ def maze():
         for event in pygame.event.get():
             if (event.type == pygame.QUIT):
                 game.quit()
-        
+                    
     game.cleanup()
     exit(0)
