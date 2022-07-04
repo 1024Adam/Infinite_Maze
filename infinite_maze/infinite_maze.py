@@ -115,7 +115,7 @@ def maze():
                     game.end()
 
             # Process FPS
-            processTime = game.getClock().getFullTime() - mills
+            processTime = int(game.getClock().getFullTime() - mills)
             if (processTime <= 16):
                 time.delay(16 - processTime)
             mills = game.getClock().getFullTime()

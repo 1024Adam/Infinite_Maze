@@ -20,7 +20,7 @@ class Clock:
             self.milliseconds -= 60000
 
     def getTimeString(self):
-        return ('{:02d}'.format(self.minutes) + ':' + '{:02d}'.format(self.seconds))
+        return ('{:02f}'.format(self.minutes) + ':' + '{:02f}'.format(self.seconds))
 
     def reset(self):
         self.time = pygame.time.Clock()
