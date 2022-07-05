@@ -42,7 +42,7 @@ def maze():
                                 player.getX() + player.getWidth() + player.getSpeed() >= line.getXStart() and
                                 (
                                     (player.getY() >= line.getYStart() and player.getY() <= line.getYEnd()) or
-                                    (player.getY() + player.getHeight() >= line.getYStart() and player.getY() + player.getHeight() < line.getYEnd())
+                                    (player.getY() + player.getHeight() >= line.getYStart() and player.getY() + player.getHeight() <= line.getYEnd())
                                 )
                             )
                     if (not blocked):
@@ -63,7 +63,7 @@ def maze():
                                 player.getX() - player.getSpeed() <= line.getXEnd() and
                                 (
                                     (player.getY() >= line.getYStart() and player.getY() <= line.getYEnd()) or
-                                    (player.getY() + player.getHeight() >= line.getYStart() and player.getY() + player.getHeight() < line.getYEnd())
+                                    (player.getY() + player.getHeight() >= line.getYStart() and player.getY() + player.getHeight() <= line.getYEnd())
                                 )                            
                             )
                     if (not blocked):
@@ -71,24 +71,50 @@ def maze():
                         game.decrementScore()
                 if (keys[pygame.K_DOWN] or keys[pygame.K_s]):
                     blocked = False
-                    #for line in lines:
-                    #    blocked = blocked or ((player.getY() + 5 + player.getSpeed() >= line.getYStart()) and (player.getY() <= line.getYStart()) and (player.getX() + 5 > line.getXStart()) and (player.getX() - 5 < line.getXStart()))
-                    #    blocked = blocked or ((player.getY() + 5 + player.getSpeed() >= line.getYStart()) and (player.getY() <= line.getYStart()) and (player.getX() >= line.getXStart()) and (player.getX() <= line.getXEnd()))
+                    for line in lines:
+                        if line.getIsHorizontal():
+                            blocked = blocked or (
+                                player.getY() + player.getHeight() <= line.getYStart() and
+                                player.getY() + player.getHeight() + player.getSpeed() >= line.getYStart() and
+                                (
+                                    (player.getX() >= line.getXStart() and player.getX() <= line.getXEnd()) or
+                                    (player.getX() + player.getWidth() >= line.getXStart() and player.getX() + player.getWidth() <= line.getXEnd())
+                                )
+                            )  
+                        else: # vertical line
+                            blocked = blocked or (
+                                player.getX() <= line.getXStart() and
+                                player.getX() + player.getWidth() >= line.getXStart() and
+                                player.getY() + player.getHeight() + player.getSpeed() == line.getYStart()
+                            )
                     if (not blocked):
                         player.moveY(player.getSpeed())
                 elif (keys[pygame.K_UP] or keys[pygame.K_w]):
                     blocked = False
-                    #for line in lines:
-                    #    blocked = blocked or ((player.getY() - player.getSpeed() <= line.getYEnd()) and (player.getY() >= line.getYEnd()) and (player.getX() + 5 > line.getXStart()) and (player.getX() - 5 < line.getXStart()))
-                    #    blocked = blocked or ((player.getY() - 5 - player.getSpeed() <= line.getYEnd()) and (player.getY() >= line.getYEnd()) and (player.getX() >= line.getXStart()) and (player.getX() <= line.getXEnd()))
+                    for line in lines:
+                        if line.getIsHorizontal():
+                            blocked = blocked or (
+                                player.getY() >= line.getYStart() and
+                                player.getY() - player.getSpeed() <= line.getYStart() and
+                                (
+                                    (player.getX() >= line.getXStart() and player.getX() <= line.getXEnd()) or
+                                    (player.getX() + player.getWidth() >= line.getXStart() and player.getX() + player.getWidth() <= line.getXEnd())
+                                )
+                            )  
+                        else: # vertical line
+                            blocked = blocked or (
+                                player.getX() <= line.getXStart() and
+                                player.getX() + player.getWidth() >= line.getXStart() and
+                                player.getY() - player.getSpeed() == line.getYEnd()
+                            )
                     if (not blocked):
                         player.moveY(-player.getSpeed())
             
                 # Process game pace adjustments
-                #player.setX(player.getX() - game.getPace())
-                #for line in lines:
-                #    line.setXStart(line.getXStart() - game.getPace())
-                #    line.setXEnd(line.getXEnd() - game.getPace())
+                player.setX(player.getX() - game.getPace())
+                for line in lines:
+                    line.setXStart(line.getXStart() - game.getPace())
+                    line.setXEnd(line.getXEnd() - game.getPace())
 
                 # Position Adjustments (to prevent screen overflow) 
                 if (player.getX() < game.getXMin()):
@@ -106,7 +132,7 @@ def maze():
                 for line in lines:
                     start = line.getXStart()
                     end = line.getXEnd()
-                    if (start < 0):
+                    if (start < 80):
                         line.setXStart(xMax)
                         if (start == end):
                             line.setXEnd(xMax)

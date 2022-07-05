@@ -27,4 +27,4 @@ class Clock:
         return (self.millis)
     
     def getSeconds(self):
-        return (self.millis / 60)
+        return int((self.millis / 1000) % 60)

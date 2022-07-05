@@ -31,9 +31,10 @@ class Game:
         self.pace = 0
         self.score = 0
         self.scoreIncrement = 1
-        self.paused = 0
-        self.over = 0
-        self.shutdown = 0
+        
+        self.paused = False
+        self.over = False
+        self.shutdown = False
 
         self.clock = Clock()
 
@@ -50,7 +51,7 @@ class Game:
         currClock = self.clock.getSeconds()
         
         # Update Pace
-        if (self.clock.getMillis() > 1000 and currClock % 30 == 0 and currClock != prevClock):
+        if (self.clock.getMillis() > 10000 and currClock % 30 == 0 and currClock != prevClock):
             self.pace += 0.1
 
         # Print Border
@@ -83,7 +84,7 @@ class Game:
         pygame.display.flip()
 
     def end(self):
-        self.over = 1
+        self.over = True
 
     def cleanup(self):
         pygame.quit() 
@@ -92,7 +93,7 @@ class Game:
         return (not self.over)
     
     def quit(self):
-        self.shutdown = 1
+        self.shutdown = True
 
     def isPlaying(self):
         return (not self.shutdown)
@@ -100,7 +101,7 @@ class Game:
     def reset(self):
         self.pace = 0
         self.score = 0
-        self.over = 0
+        self.over = False
 
         self.clock.reset()
 
@@ -120,7 +121,7 @@ class Game:
         self.score += self.scoreIncrement
         
     def decrementScore(self):
-        self.score -= self.scoreIncrement
+        self.score -= self.scoreIncrement if self.score > 0 else 0
 
     def setScore(self, newScore):
         self.score = newScore
