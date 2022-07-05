@@ -6,6 +6,7 @@ class Line:
         self.end = endPos
         self.sideA = sideA
         self.sideB = sideB
+        self.isHorizontal = (startPos[1] == endPos[1])
 
     def getStart(self):
         return (self.start)
@@ -54,6 +55,12 @@ class Line:
 
     def setSideB(self, side):
         self.sideB = side
+        
+    def getIsHorizontal(self):
+        return self.isHorizontal
+        
+    def resetIsHorizontal(self):
+        self.isHorizontal = (self.startPos[0] == self.endPos[0])
 
     @staticmethod
     def getXMax(lines):

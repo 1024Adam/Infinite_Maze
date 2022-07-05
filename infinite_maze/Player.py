@@ -5,7 +5,9 @@ class Player:
     def __init__(self, xPosition, yPosition):
         self.cursor = pygame.image.load('img/player.png')
         self.position = (xPosition, yPosition)
-        self.speed = 5
+        self.width = 10
+        self.height = 10
+        self.speed = 1
 
     def setX(self, xPosition):
         self.position = (xPosition, self.position[1])
@@ -36,8 +38,14 @@ class Player:
 
     def getCursor(self):
         return (self.cursor)
+        
+    def getWidth(self):
+        return self.width
+    
+    def getHeight(self):
+        return self.height
 
     def reset(self, xPosition, yPosition):
         self.setX(xPosition)
         self.setY(yPosition)
-        self.speed = 5
+        self.speed = 1

@@ -30,6 +30,7 @@ class Game:
 
         self.pace = 0
         self.score = 0
+        self.scoreIncrement = 1
         self.paused = 0
         self.over = 0
         self.shutdown = 0
@@ -43,14 +44,14 @@ class Game:
         for line in lines:
             pygame.draw.line(self.getScreen(), self.fgColor, line.getStart(), line.getEnd(), 1)
 
-        prevClock = self.clock.getSecs()
+        prevClock = self.clock.getSeconds()
         # Update Clock
         self.clock.update()
-        currClock = self.clock.getSecs()
+        currClock = self.clock.getSeconds()
         
         # Update Pace
-        if (self.clock.getFullTime() > 1000 and currClock % 30 == 0 and currClock != prevClock):
-            self.pace += 1
+        if (self.clock.getMillis() > 1000 and currClock % 30 == 0 and currClock != prevClock):
+            self.pace += 0.1
 
         # Print Border
         pygame.draw.line(self.getScreen(), self.fgColor, (self.xMin, self.yMin), (self.width, self.yMin), 2)
@@ -114,6 +115,12 @@ class Game:
 
     def updateScore(self, amount):
         self.score += amount
+        
+    def incrementScore(self):
+        self.score += self.scoreIncrement
+        
+    def decrementScore(self):
+        self.score -= self.scoreIncrement
 
     def setScore(self, newScore):
         self.score = newScore

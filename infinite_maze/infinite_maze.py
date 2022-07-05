@@ -17,7 +17,7 @@ def maze():
 
     game.getClock().reset()
     keys = pygame.key.get_pressed()
-    mills = 0
+    millis = 0
     while (game.isPlaying()): 
         while (game.isActive()):
             game.updateScreen(player, lines)     
@@ -28,49 +28,67 @@ def maze():
             if (not game.isPaused()): 
                 # Arrow Move Events
                 if (keys[pygame.K_RIGHT] or keys[pygame.K_d]):
-                    blocked = 0
+                    blocked = False
                     for line in lines:
-                        if ((player.getX() + player.getSpeed() >= line.getXStart()) and (player.getX() <= line.getXStart()) and (player.getY() + 6 >= line.getYStart()) and (player.getY() - 6 <= line.getYStart())):
-                            blocked = 1
-                        if ((player.getX() + 6 + player.getSpeed() >= line.getXStart()) and (player.getX() <= line.getXStart()) and (player.getY() >= line.getYStart()) and (player.getY() <= line.getYEnd())):
-                            blocked = 1
+                        if line.getIsHorizontal():
+                            blocked = blocked or (
+                                player.getY() <= line.getYStart() and
+                                player.getY() + player.getHeight() >= line.getYStart() and
+                                player.getX() + player.getWidth() + player.getSpeed() == line.getXStart()
+                            )  
+                        else: # vertical line
+                            blocked = blocked or (
+                                player.getX() + player.getWidth() <= line.getXStart() and
+                                player.getX() + player.getWidth() + player.getSpeed() >= line.getXStart() and
+                                (
+                                    (player.getY() >= line.getYStart() and player.getY() <= line.getYEnd()) or
+                                    (player.getY() + player.getHeight() >= line.getYStart() and player.getY() + player.getHeight() < line.getYEnd())
+                                )
+                            )
                     if (not blocked):
-                        player.moveX(1)
-                        game.updateScore(1)
+                        player.moveX(player.getSpeed())
+                        game.incrementScore()
+                elif (keys[pygame.K_LEFT] or keys[pygame.K_a]):
+                    blocked = False
+                    for line in lines:
+                        if line.getIsHorizontal():
+                            blocked = blocked or (
+                                player.getY() <= line.getYStart() and
+                                player.getY() + player.getHeight() >= line.getYStart() and
+                                player.getX() - player.getSpeed() == line.getXEnd()
+                            )  
+                        else: # vertical line
+                            blocked = blocked or (
+                                player.getX() >= line.getXEnd() and
+                                player.getX() - player.getSpeed() <= line.getXEnd() and
+                                (
+                                    (player.getY() >= line.getYStart() and player.getY() <= line.getYEnd()) or
+                                    (player.getY() + player.getHeight() >= line.getYStart() and player.getY() + player.getHeight() < line.getYEnd())
+                                )                            
+                            )
+                    if (not blocked):
+                        player.moveX(-player.getSpeed())
+                        game.decrementScore()
                 if (keys[pygame.K_DOWN] or keys[pygame.K_s]):
-                    blocked = 0
-                    for line in lines:
-                        if ((player.getY() + 5 + player.getSpeed() >= line.getYStart()) and (player.getY() <= line.getYStart()) and (player.getX() + 6 > line.getXStart()) and (player.getX() - 6 < line.getXStart())):
-                            blocked = 1
-                        if ((player.getY() + 6 + player.getSpeed() >= line.getYStart()) and (player.getY() <= line.getYStart()) and (player.getX() >= line.getXStart()) and (player.getX() <= line.getXEnd())):
-                            blocked = 1
+                    blocked = False
+                    #for line in lines:
+                    #    blocked = blocked or ((player.getY() + 5 + player.getSpeed() >= line.getYStart()) and (player.getY() <= line.getYStart()) and (player.getX() + 5 > line.getXStart()) and (player.getX() - 5 < line.getXStart()))
+                    #    blocked = blocked or ((player.getY() + 5 + player.getSpeed() >= line.getYStart()) and (player.getY() <= line.getYStart()) and (player.getX() >= line.getXStart()) and (player.getX() <= line.getXEnd()))
                     if (not blocked):
-                        player.moveY(1)
-                if (keys[pygame.K_UP] or keys[pygame.K_w]):
-                    blocked = 0
-                    for line in lines:
-                        if ((player.getY() - player.getSpeed() <= line.getYEnd()) and (player.getY() >= line.getYEnd()) and (player.getX() + 6 > line.getXStart()) and (player.getX() - 6 < line.getXStart())):
-                            blocked = 1
-                        if ((player.getY() - 6 - player.getSpeed() <= line.getYEnd()) and (player.getY() >= line.getYEnd()) and (player.getX() >= line.getXStart()) and (player.getX() <= line.getXEnd())):
-                            blocked = 1
+                        player.moveY(player.getSpeed())
+                elif (keys[pygame.K_UP] or keys[pygame.K_w]):
+                    blocked = False
+                    #for line in lines:
+                    #    blocked = blocked or ((player.getY() - player.getSpeed() <= line.getYEnd()) and (player.getY() >= line.getYEnd()) and (player.getX() + 5 > line.getXStart()) and (player.getX() - 5 < line.getXStart()))
+                    #    blocked = blocked or ((player.getY() - 5 - player.getSpeed() <= line.getYEnd()) and (player.getY() >= line.getYEnd()) and (player.getX() >= line.getXStart()) and (player.getX() <= line.getXEnd()))
                     if (not blocked):
-                        player.moveY(-1)
-                if (keys[pygame.K_LEFT] or keys[pygame.K_a]):
-                    blocked = 0
-                    for line in lines:
-                        if ((player.getX() + 1 - player.getSpeed() <= line.getXEnd()) and (player.getX() >= line.getXEnd()) and (player.getY() + 6 >= line.getYStart()) and (player.getY() - 6 <= line.getYStart())):
-                            blocked = 1
-                        if ((player.getX() - player.getSpeed() <= line.getXEnd()) and (player.getX() >= line.getXEnd()) and (player.getY() >= line.getYStart()) and (player.getY() <= line.getYEnd())):
-                            blocked = 1
-                    if (not blocked):
-                        player.moveX(-1)
-                        game.updateScore(-1)
+                        player.moveY(-player.getSpeed())
             
                 # Process game pace adjustments
-                player.setX(player.getX() - game.getPace())
-                for line in lines:
-                    line.setXStart(line.getXStart() - game.getPace())
-                    line.setXEnd(line.getXEnd() - game.getPace())
+                #player.setX(player.getX() - game.getPace())
+                #for line in lines:
+                #    line.setXStart(line.getXStart() - game.getPace())
+                #    line.setXEnd(line.getXEnd() - game.getPace())
 
                 # Position Adjustments (to prevent screen overflow) 
                 if (player.getX() < game.getXMin()):
@@ -115,10 +133,10 @@ def maze():
                     game.end()
 
             # Process FPS
-            processTime = int(game.getClock().getFullTime() - mills)
+            processTime = int(game.getClock().getMillis() - millis)
             if (processTime <= 16):
                 time.delay(16 - processTime)
-            mills = game.getClock().getFullTime()
+            millis = game.getClock().getMillis()
 
         # Game has ended
         game.printEndDisplay() 
