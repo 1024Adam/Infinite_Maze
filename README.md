@@ -44,7 +44,7 @@ To compile and execute the game, type **python infinite_maze**
 
 ## Specifications
 The only software needed to run this program is Python. Infinite Maze Game
-was developed and tested using Python (v2.7.11).
+was developed and tested using Python (v3.10.4).
 
 ## Special Features
 Infinite Maze Game makes use of the Pygame library, which is a simple and easy way to

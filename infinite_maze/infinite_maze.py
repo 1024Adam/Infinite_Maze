@@ -16,12 +16,10 @@ def maze():
     lines = Line.generateMaze(game, 15, 20)
 
     game.getClock().reset()
-    keys = pygame.key.get_pressed()
-    millis = 0
+    keys = pygame.key.get_pressed()   
     while (game.isPlaying()): 
         while (game.isActive()):
             game.updateScreen(player, lines)     
-            
             prevKeys = keys
             keys = pygame.key.get_pressed()
 
@@ -109,12 +107,13 @@ def maze():
                             )
                     if (not blocked):
                         player.moveY(-player.getSpeed())
-            
+
                 # Process game pace adjustments
-                player.setX(player.getX() - game.getPace())
-                for line in lines:
-                    line.setXStart(line.getXStart() - game.getPace())
-                    line.setXEnd(line.getXEnd() - game.getPace())
+                if game.getClock().getTicks() % 10 == 0:
+                    player.setX(player.getX() - game.getPace())
+                    for line in lines:
+                        line.setXStart(line.getXStart() - game.getPace())
+                        line.setXEnd(line.getXEnd() - game.getPace())
 
                 # Position Adjustments (to prevent screen overflow) 
                 if (player.getX() < game.getXMin()):
@@ -138,11 +137,11 @@ def maze():
                             line.setXEnd(xMax)
                         else: 
                             line.setXEnd(xMax + 22)
-    
+
             # Pause Event
             if (prevKeys[pygame.K_SPACE] and not keys[pygame.K_SPACE]):
                 game.changePaused(player)
-    
+
             # Quit Events
             if (keys[pygame.K_LMETA] and keys[pygame.K_q]):
                 game.end()
@@ -152,20 +151,14 @@ def maze():
                 game.end()
             if (keys[pygame.K_ESCAPE]):
                 game.end()
-        
-            # Process Game Events
-            for event in pygame.event.get():
-                if (event.type == pygame.QUIT):
-                    game.end()
 
-            # Process FPS
-            processTime = int(game.getClock().getMillis() - millis)
-            if (processTime <= 16):
-                time.delay(16 - processTime)
-            millis = game.getClock().getMillis()
+            # Process Game Events
+            if any(event.type == pygame.QUIT for event in pygame.event.get()):
+                game.end()
 
         # Game has ended
         game.printEndDisplay() 
+        
         # Quit Events
         keys = pygame.key.get_pressed()
         if (keys[pygame.K_y]):
@@ -176,7 +169,6 @@ def maze():
             lines = Line.generateMaze(game, 15, 20)
             
             game.getClock().reset()
-        
         if (keys[pygame.K_n]):
             game.quit()
         if (keys[pygame.K_LMETA] and keys[pygame.K_q]):
@@ -187,9 +179,8 @@ def maze():
             game.quit()
         
         # Process Game Events
-        for event in pygame.event.get():
-            if (event.type == pygame.QUIT):
-                game.quit()
-                    
+        if any(event == pygame.QUIT for event in pygame.event.get()):
+            game.quit()
+
     game.cleanup()
     exit(0)

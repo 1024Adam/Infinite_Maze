@@ -47,7 +47,8 @@ class Game:
 
         prevMillis = self.clock.getMillis()
         prevSeconds = self.clock.getSeconds()
-        # Update Clock
+        # Update Clock/Ticks
+        self.clock.tick()
         self.clock.update()
 
         if self.paused:
@@ -55,7 +56,7 @@ class Game:
         
         # Update Pace
         if not self.paused and self.clock.getMillis() > 10000 and self.clock.getSeconds() % 30 == 0 and prevSeconds != self.clock.getSeconds():
-            self.pace += 0.1
+            self.pace += 1
 
         # Print Border
         pygame.draw.line(self.getScreen(), self.fgColor, (self.xMin, self.yMin), (self.width, self.yMin), 2)

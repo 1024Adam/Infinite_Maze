@@ -8,6 +8,7 @@ class Clock:
         
         self.milliseconds = 0
         self.millisPaused = 0
+        self.ticks = 0
 
     def update(self):
         self.time.tick()
@@ -18,14 +19,21 @@ class Clock:
         seconds = int((self.millis / 1000) % 60)
         return (f'{minutes:02}' + ':' + f'{seconds:02}')
 
+    def getFps(self):
+        return self.time.get_fps()
+
     def reset(self):
         self.time = pygame.time.Clock()
         self.startTime = self.time.get_time()
         
         self.millis = 0
+        self.ticks = 0
 
     def getMillis(self):
         return (self.millis)
+
+    def getSeconds(self):
+        return int((self.millis / 1000) % 60)
 
     def rollbackMillis(self, rollback):
         self.millis -= rollback
@@ -36,5 +44,8 @@ class Clock:
     def setMillisPaused(self, millis):
         self.millisPaused = millis
 
-    def getSeconds(self):
-        return int((self.millis / 1000) % 60)
+    def tick(self):
+        self.ticks += 1
+
+    def getTicks(self):
+        return self.ticks
