@@ -16,6 +16,7 @@ def maze():
     lines = Line.generateMaze(game, 15, 20)
 
     game.getClock().reset()
+    millis = 0
     keys = pygame.key.get_pressed()   
     while (game.isPlaying()): 
         while (game.isActive()):
@@ -116,15 +117,15 @@ def maze():
                         line.setXEnd(line.getXEnd() - game.getPace())
 
                 # Position Adjustments (to prevent screen overflow) 
-                if (player.getX() < game.getXMin()):
+                if (player.getX() < game.X_MIN):
                     game.end()
-                if (player.getX() > game.getXMax()):
-                    player.setX(game.getXMax())
+                if (player.getX() > game.X_MAX):
+                    player.setX(game.X_MAX)
                     for line in lines:
                         line.setXStart(line.getXStart() - player.getSpeed())
                         line.setXEnd(line.getXEnd() - player.getSpeed())
-                player.setY(max(player.getY(), game.getYMin()))
-                player.setY(min(player.getY(), game.getYMax()))
+                player.setY(max(player.getY(), game.Y_MIN))
+                player.setY(min(player.getY(), game.Y_MAX))
 
                 # Reposition lines that have been passed 
                 xMax = Line.getXMax(lines)
@@ -156,6 +157,11 @@ def maze():
             if any(event.type == pygame.QUIT for event in pygame.event.get()):
                 game.end()
 
+            # Process FPS
+            processTime = int(game.getClock().getMillis() - game.getClock().getPrevMillis())
+            if (processTime <= 16):
+                time.delay(16 - processTime)
+
         # Game has ended
         game.printEndDisplay() 
         
@@ -163,7 +169,7 @@ def maze():
         keys = pygame.key.get_pressed()
         if (keys[pygame.K_y]):
             game.reset();
-            player.reset(80, (game.getHeight() / 2))
+            player.reset(80, (game.HEIGHT / 2))
 
             # Maze Details
             lines = Line.generateMaze(game, 15, 20)

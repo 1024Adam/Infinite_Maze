@@ -6,14 +6,17 @@ class Clock:
         self.time = pygame.time.Clock()
         self.startTime = self.time.get_time()
         
-        self.milliseconds = 0
+        self.prevMillis = 0
+        self.millis = 0
         self.millisPaused = 0
         self.ticks = 0
 
     def update(self):
+        self.prevMillis = self.millis
         self.time.tick()
         self.millis += self.time.get_time()
-
+        self.tick()
+        
     def getTimeString(self):
         minutes = int(self.millis / 60000)
         seconds = int((self.millis / 1000) % 60)
@@ -26,14 +29,21 @@ class Clock:
         self.time = pygame.time.Clock()
         self.startTime = self.time.get_time()
         
+        self.prevMillis = 0
         self.millis = 0
         self.ticks = 0
 
+    def getPrevMillis(self):
+        return self.prevMillis
+
     def getMillis(self):
-        return (self.millis)
+        return self.millis
 
     def getSeconds(self):
         return int((self.millis / 1000) % 60)
+
+    def getPrevSeconds(self):
+        return int((self.prevMillis / 1000) % 60)
 
     def rollbackMillis(self, rollback):
         self.millis -= rollback

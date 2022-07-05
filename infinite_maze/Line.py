@@ -79,9 +79,9 @@ class Line:
             sideA = (19 * x) + 1
             sideB = sideA + 1
 
-            xPos = (22 * x) + game.getXMax()
+            xPos = (22 * x) + game.X_MAX
             for y in range(1, height - 1):
-                yPos = (22 * y) + game.getYMin()
+                yPos = (22 * y) + game.Y_MIN
                 lines.append(Line((xPos, yPos), (xPos + 22, yPos), sideA, sideB))
                 sideA = sideB
                 sideB += 1
@@ -90,9 +90,9 @@ class Line:
             sideA = y + 1
             sideB = sideA + 19
 
-            yPos = (22 * y) + game.getYMin()
+            yPos = (22 * y) + game.Y_MIN
             for x in range(1, width * 2):
-                xPos = (22 * x) + game.getXMax()
+                xPos = (22 * x) + game.X_MAX
                 lines.append(Line((xPos, yPos), (xPos, yPos + 22), sideA, sideB))
                 sideA = sideB
                 sideB += 19

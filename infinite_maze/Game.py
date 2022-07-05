@@ -4,17 +4,27 @@ from Clock import Clock
 from Line import Line
 
 class Game:
+    # Display config
+    WIDTH = 640
+    HEIGHT = 480
+    X_MIN = 80
+    Y_MIN = 40
+
+    X_MAX = (WIDTH / 2)
+    Y_MAX = (HEIGHT - 32)
+
+    SCORE_INCREMENT = 1
+
+    BG_COLOR = pygame.Color(255, 255, 255)
+    FG_COLOR = pygame.Color(0, 0, 0) 
+
     def __init__(self):
         pygame.init()
-        
-        self.width = 640
-        self.height = 480
-        self.xMin = 80
-        self.xMax = (self.width / 2)
-        self.yMin = 40
-        self.yMax = (self.height - 32)
 
-        self.screen = pygame.display.set_mode((self.width, self.height))
+        # Font Config
+        self.font = pygame.font.SysFont('', 20)
+
+        self.screen = pygame.display.set_mode((self.WIDTH, self.HEIGHT))
         
         self.icon = pygame.Surface((32, 32))
         iconImage = pygame.image.load('img/icon.png')
@@ -22,15 +32,9 @@ class Game:
     
         pygame.display.set_caption('Infinite Maze')
         pygame.display.set_icon(self.icon)
-   
-        # Font Config
-        self.font = pygame.font.SysFont('', 20)
-        self.bgColor = pygame.Color(255, 255, 255)
-        self.fgColor = pygame.Color(0, 0, 0) 
 
         self.pace = 0
         self.score = 0
-        self.scoreIncrement = 1
         
         self.paused = False
         self.over = False
@@ -40,46 +44,42 @@ class Game:
 
     def updateScreen(self, player, lines):
         # Paint Screen
-        self.screen.fill(self.bgColor)
+        self.screen.fill(self.BG_COLOR)
         self.screen.blit(player.getCursor(), player.getPosition())
         for line in lines:
-            pygame.draw.line(self.getScreen(), self.fgColor, line.getStart(), line.getEnd(), 1)
+            pygame.draw.line(self.getScreen(), self.FG_COLOR, line.getStart(), line.getEnd(), 1)
 
-        prevMillis = self.clock.getMillis()
-        prevSeconds = self.clock.getSeconds()
         # Update Clock/Ticks
-        self.clock.tick()
         self.clock.update()
-
         if self.paused:
-            self.clock.rollbackMillis(self.clock.getMillis() - prevMillis)
+            self.clock.rollbackMillis(self.clock.getMillis() - self.clock.getPrevMillis())
         
         # Update Pace
-        if not self.paused and self.clock.getMillis() > 10000 and self.clock.getSeconds() % 30 == 0 and prevSeconds != self.clock.getSeconds():
+        if not self.paused and self.clock.getMillis() > 10000 and self.clock.getSeconds() % 30 == 0 and self.clock.getPrevSeconds() != self.clock.getSeconds():
             self.pace += 1
 
         # Print Border
-        pygame.draw.line(self.getScreen(), self.fgColor, (self.xMin, self.yMin), (self.width, self.yMin), 2)
-        pygame.draw.line(self.getScreen(), self.fgColor, (self.xMin, self.yMax + 10), (self.width, self.yMax + 10), 2)
-        pygame.draw.line(self.getScreen(), self.fgColor, (80, self.yMin), (80, self.yMax + 10), 2)
+        pygame.draw.line(self.getScreen(), self.FG_COLOR, (self.X_MIN, self.Y_MIN), (self.WIDTH, self.Y_MIN), 2)
+        pygame.draw.line(self.getScreen(), self.FG_COLOR, (self.X_MIN, self.Y_MAX + 10), (self.WIDTH, self.Y_MAX + 10), 2)
+        pygame.draw.line(self.getScreen(), self.FG_COLOR, (80, self.Y_MIN), (80, self.Y_MAX + 10), 2)
         
         # Print Display Text
-        timeText = self.font.render('Time: ' + self.clock.getTimeString(), 1, self.fgColor)
+        timeText = self.font.render('Time: ' + self.clock.getTimeString(), 1, self.FG_COLOR)
         self.screen.blit(timeText, (10, 10))
-        scoreText = self.font.render('Score: ' + str(self.score), 1, self.fgColor)
+        scoreText = self.font.render('Score: ' + str(self.score), 1, self.FG_COLOR)
         self.screen.blit(scoreText, (10, 25))
       
         if (self.paused):
-            scoreText = self.font.render('Paused (press space to continue)', 1, self.fgColor)
+            scoreText = self.font.render('Paused (press space to continue)', 1, self.FG_COLOR)
             self.screen.blit(scoreText, (100, 10))
 
         pygame.display.flip()
    
     def printEndDisplay(self):
         # Paint Screen
-        self.screen.fill(self.bgColor)
-        endText = self.font.render('Continue? (y/n)', 1, self.fgColor)
-        scoreText = self.font.render('Score: ' + str(self.score), 1, self.fgColor)
+        self.screen.fill(self.BG_COLOR)
+        endText = self.font.render('Continue? (y/n)', 1, self.FG_COLOR)
+        scoreText = self.font.render('Score: ' + str(self.score), 1, self.FG_COLOR)
 
         # Print Display Text
         self.screen.blit(endText, (10, 10))
@@ -122,10 +122,10 @@ class Game:
         self.score += amount
         
     def incrementScore(self):
-        self.score += self.scoreIncrement
+        self.score += self.SCORE_INCREMENT
         
     def decrementScore(self):
-        self.score -= self.scoreIncrement if self.score > 0 else 0
+        self.score -= self.SCORE_INCREMENT if self.score > 0 else 0
 
     def setScore(self, newScore):
         self.score = newScore
@@ -136,38 +136,11 @@ class Game:
     def changePaused(self, player):
         self.paused = not self.paused
         if (self.paused):
-            self.fgColor = pygame.Color(128, 128, 128)
+            self.FG_COLOR = pygame.Color(128, 128, 128)
             player.setCursor('img/player_paused.png')
         else:
-            self.fgColor = pygame.Color(0, 0, 0) 
+            self.FG_COLOR = pygame.Color(0, 0, 0) 
             player.setCursor('img/player.png')
-
-    def getWidth(self):
-        return (self.width)
-
-    def getHeight(self):
-        return (self.height)
-
-    def getXMin(self):
-        return (self.xMin)
-
-    def getYMin(self):
-        return (self.yMin)
-
-    def getXMax(self):
-        return (self.xMax)
-
-    def getYMax(self):
-        return (self.yMax)
-
-    def getFont(self):
-        return (self.font)
-
-    def getBGColor(self):
-        return (self.bgColor)
-    
-    def getFGColor(self):
-        return (self.fgColor)
 
     def getPace(self):
         return (self.pace)
