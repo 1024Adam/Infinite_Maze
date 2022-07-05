@@ -45,13 +45,16 @@ class Game:
         for line in lines:
             pygame.draw.line(self.getScreen(), self.fgColor, line.getStart(), line.getEnd(), 1)
 
-        prevClock = self.clock.getSeconds()
+        prevMillis = self.clock.getMillis()
+        prevSeconds = self.clock.getSeconds()
         # Update Clock
         self.clock.update()
-        currClock = self.clock.getSeconds()
+
+        if self.paused:
+            self.clock.rollbackMillis(self.clock.getMillis() - prevMillis)
         
         # Update Pace
-        if (self.clock.getMillis() > 10000 and currClock % 30 == 0 and currClock != prevClock):
+        if not self.paused and self.clock.getMillis() > 10000 and self.clock.getSeconds() % 30 == 0 and prevSeconds != self.clock.getSeconds():
             self.pace += 0.1
 
         # Print Border

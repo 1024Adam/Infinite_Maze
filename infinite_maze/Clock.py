@@ -7,6 +7,7 @@ class Clock:
         self.startTime = self.time.get_time()
         
         self.milliseconds = 0
+        self.millisPaused = 0
 
     def update(self):
         self.time.tick()
@@ -25,6 +26,15 @@ class Clock:
 
     def getMillis(self):
         return (self.millis)
+
+    def rollbackMillis(self, rollback):
+        self.millis -= rollback
     
+    def getMillisPaused(self):
+        return self.millisPaused
+
+    def setMillisPaused(self, millis):
+        self.millisPaused = millis
+
     def getSeconds(self):
         return int((self.millis / 1000) % 60)
