@@ -1,8 +1,9 @@
 """
-Test and demonstration script for trained Infinite Maze RL agents.
+Test and demonstration script for trained Infinite Maze RL agents with enhanced navigation.
 
 This script loads trained models and allows testing them either with
-or without visualization.
+or without visualization. Works with models trained using the enhanced
+reward system that includes navigation intelligence.
 """
 
 import argparse
@@ -12,10 +13,10 @@ import numpy as np
 import time
 from stable_baselines3 import DQN
 
-# Add parent directory to path
+# Add parent directory to path for infinite_maze imports
 sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
-from rl.environment import InfiniteMazeEnv, InfiniteMazeWrapper
+from environment import InfiniteMazeEnv, InfiniteMazeWrapper
 
 def test_agent_with_visualization(model_path: str, num_episodes: int = 3):
     """Test agent with pygame visualization."""
@@ -176,7 +177,7 @@ def create_random_baseline(num_episodes: int = 10):
 
 def main():
     parser = argparse.ArgumentParser(description='Test Infinite Maze RL Agents')
-    parser.add_argument('--model', type=str, default='rl/models/best_model.zip',
+    parser.add_argument('--model', type=str, default='models/best_model.zip',
                        help='Path to trained model')
     parser.add_argument('--episodes', type=int, default=5,
                        help='Number of test episodes')

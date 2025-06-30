@@ -1,14 +1,30 @@
-# Reinforcement Learning for Infinite Maze
+# Reinforcement Learning for Infinite Maze with Enhanced Navigation
 
-This directory contains a complete RL implementation for training agents to play the Infinite Maze game.
+This directory contains a complete RL implementation for training agents to play the Infinite Maze game with enhanced navigation intelligence.
 
 ## Overview
 
 The RL implementation includes:
-- **Gymnasium Environment**: A custom environment wrapper that conforms to OpenAI Gym standards
+- **Enhanced Gymnasium Environment**: Custom environment with intelligent navigation rewards
 - **DQN Agent**: Deep Q-Network implementation using Stable-Baselines3
+- **Navigation Intelligence**: Advanced reward system that encourages smart navigation behavior
 - **Training Pipeline**: Complete training infrastructure with logging and evaluation
 - **Testing Framework**: Tools for evaluating and comparing trained agents
+
+## Enhanced Features
+
+### Navigation Intelligence Rewards
+- **Progress-Based Rewards**: Rewards actual movement progress, not just movement attempts
+- **Stuck Detection**: Penalties for repeatedly trying blocked movements
+- **Vertical Movement Incentives**: Rewards for using vertical movement to navigate around obstacles
+- **Look-Ahead Navigation**: Rewards for considering alternative paths when stuck
+- **Collision Avoidance**: Smart penalties that encourage learning from failed moves
+
+### Key Improvements Over Basic RL
+- Agents learn to use vertical movement strategically instead of just moving right
+- Better obstacle navigation and path finding
+- Reduced getting stuck against walls
+- More intelligent exploration vs. exploitation balance
 
 ## Files
 
@@ -82,10 +98,10 @@ To continue training from a previously saved model:
 ```bash
 cd rl
 # Continue from the best model
-python train_agent.py --continue rl/models/best_model.zip
+python train_agent.py --continue models/best_model.zip
 
 # Or use the dedicated continue training script
-python continue_training.py --model rl/models/best_model.zip --steps 100000
+python continue_training.py --model models/best_model.zip --steps 100000
 ```
 
 To list available saved models:
@@ -190,7 +206,7 @@ python train_agent.py                    # Train new agent
 
 **Continued Training:**
 ```bash
-python train_agent.py --continue rl/models/best_model.zip  # Continue from best
+python train_agent.py --continue models/best_model.zip  # Continue from best
 python continue_training.py --steps 200000                 # Continue with more steps
 ```
 

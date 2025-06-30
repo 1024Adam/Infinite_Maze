@@ -111,6 +111,7 @@ class InfiniteMazeEnv(gym.Env):
         # Reset navigation tracking
         self._consecutive_failed_right_moves = 0
         self._last_rightward_progress = 0
+        self._position_history = []
         
         # Reset game clock
         self.game.getClock().reset()
@@ -180,13 +181,13 @@ class InfiniteMazeEnv(gym.Env):
             if not blocked:
                 self.player.moveX(self.player.getSpeed())
                 self.game.incrementScore()
-                # Base reward for rightward movement
-                reward += 0.5
+                # Reduced base reward - progress bonus will be added later
+                reward += 0.2
                 # Reset failed moves counter
                 self._consecutive_failed_right_moves = 0
             else:
-                # Small penalty for trying to move into a wall
-                reward -= 0.1
+                # Penalty for trying to move into a wall
+                reward -= 0.15
                 # Track consecutive failed right moves
                 if not hasattr(self, '_consecutive_failed_right_moves'):
                     self._consecutive_failed_right_moves = 0
@@ -197,10 +198,10 @@ class InfiniteMazeEnv(gym.Env):
             if not blocked:
                 self.player.moveX(-self.player.getSpeed())
                 self.game.decrementScore()
-                # Penalty for leftward movement
-                reward -= 0.5
+                # Higher penalty for leftward movement to discourage oscillation
+                reward -= 0.8
             else:
-                reward -= 0.1
+                reward -= 0.15
                 
         elif action == DOWN:
             blocked = self._check_collision_down()
@@ -220,30 +221,78 @@ class InfiniteMazeEnv(gym.Env):
             else:
                 reward -= 0.1
                 
-        # DO_NOTHING (action == 0) requires no movement
+        # DO_NOTHING gets small penalty to encourage action
+        elif action == DO_NOTHING:
+            reward -= 0.05
         
-        # Additional reward for forward progress (rightward movement)
+        # Enhanced progress tracking
         current_x = self.player.getX()
+        current_y = self.player.getY()
+        
+        # Reward for net rightward progress
         if current_x > prev_x:
-            # Reward actual rightward progress
             progress = (current_x - prev_x) / self.player.getSpeed()
-            reward += 1.0 * progress
+            reward += 1.2 * progress  # Increased progress bonus
+        
+        # Track overall position for oscillation detection
+        if not hasattr(self, '_position_history'):
+            self._position_history = []
+        
+        self._position_history.append((current_x, current_y))
+        
+        # Keep only recent history
+        if len(self._position_history) > 20:
+            self._position_history.pop(0)
+        
+        # Penalty for oscillating behavior
+        if len(self._position_history) >= 10:
+            oscillation_penalty = self._detect_oscillation()
+            reward -= oscillation_penalty
         
         # Penalty for being stuck against a wall trying to go right
         if action == RIGHT and blocked:
-            # Check if player is stuck - hasn't moved right in a while
             if not hasattr(self, '_last_rightward_progress'):
                 self._last_rightward_progress = 0
             
             self._last_rightward_progress += 1
-            if self._last_rightward_progress > 10:  # Stuck for 10+ steps
-                # Strong incentive to try vertical movement
-                reward -= 0.5
+            if self._last_rightward_progress > 8:  # Reduced threshold
+                # Stronger incentive to try vertical movement
+                reward -= 0.8
         else:
             if hasattr(self, '_last_rightward_progress'):
                 self._last_rightward_progress = 0
         
         return reward
+    
+    def _detect_oscillation(self) -> float:
+        """Detect oscillating behavior and return penalty."""
+        if len(self._position_history) < 10:
+            return 0.0
+        
+        # Check for repeated back-and-forth movement
+        recent_x_positions = [pos[0] for pos in self._position_history[-10:]]
+        
+        # Count direction changes
+        direction_changes = 0
+        for i in range(1, len(recent_x_positions)):
+            if i < len(recent_x_positions) - 1:
+                # Check if direction changed
+                prev_diff = recent_x_positions[i] - recent_x_positions[i-1]
+                next_diff = recent_x_positions[i+1] - recent_x_positions[i]
+                
+                if (prev_diff > 0 and next_diff < 0) or (prev_diff < 0 and next_diff > 0):
+                    direction_changes += 1
+        
+        # Penalty for excessive direction changes (oscillation)
+        if direction_changes > 4:  # More than 4 direction changes in 10 steps
+            return 0.5 * (direction_changes - 4)
+        
+        # Check for minimal net progress
+        net_progress = recent_x_positions[-1] - recent_x_positions[0]
+        if abs(net_progress) < 5:  # Very little net movement
+            return 0.3
+        
+        return 0.0
     
     def _calculate_navigation_reward(self) -> float:
         """Calculate reward for intelligent navigation behavior."""
@@ -261,15 +310,23 @@ class InfiniteMazeEnv(gym.Env):
         if right_blocked and (not up_blocked or not down_blocked):
             # Look ahead to see if vertical movement could lead to rightward progress
             if self._can_vertical_movement_help():
-                nav_reward += 0.3  # Reward for considering navigation around obstacles
+                nav_reward += 0.4  # Increased reward for considering navigation around obstacles
         
         # Reward finding alternative paths when stuck
         if hasattr(self, '_consecutive_failed_right_moves'):
-            if self._consecutive_failed_right_moves > 5:
+            if self._consecutive_failed_right_moves > 3:  # Reduced threshold
                 # If we've been stuck going right, reward vertical exploration
                 if not up_blocked:
-                    nav_reward += 0.2
+                    nav_reward += 0.3
                 if not down_blocked:
+                    nav_reward += 0.3
+        
+        # Bonus for making forward progress consistently
+        if hasattr(self, '_position_history') and len(self._position_history) >= 5:
+            recent_x = [pos[0] for pos in self._position_history[-5:]]
+            if len(recent_x) >= 2:
+                net_progress = recent_x[-1] - recent_x[0]
+                if net_progress > 10:  # Good forward progress
                     nav_reward += 0.2
         
         return nav_reward

@@ -93,3 +93,5 @@ Assist in developing, implementing, and optimizing reinforcement learning (RL) a
 
 ## Other information
 - Place all RL related files (training, testing, setup, environment, logs), in its own structure under an "rl" folder.
+- All RL scripts should be run from within the "rl" directory using relative paths.
+- Model files are stored in "rl/models/", logs in "rl/logs/", and TensorBoard logs in "rl/tensorboard_logs/".

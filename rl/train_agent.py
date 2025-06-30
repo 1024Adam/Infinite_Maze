@@ -1,8 +1,8 @@
 """
-Training script for Infinite Maze RL agent using DQN algorithm.
+Training script for Infinite Maze RL agent using DQN algorithm with enhanced navigation rewards.
 
-This script sets up the training environment, creates a DQN agent,
-and trains it to play the Infinite Maze game.
+This script sets up the training environment with improved reward functions that encourage
+intelligent navigation behavior, including vertical movement when stuck going right.
 
 Usage:
     python train_agent.py                    # Train new model
@@ -179,8 +179,8 @@ def train_dqn_agent(continue_from_model: str = None, total_timesteps: int = 5000
     # Create callbacks
     eval_callback = EvalCallback(
         eval_env,
-        best_model_save_path='./rl/models/',
-        log_path='./rl/logs/',
+        best_model_save_path='./models/',
+        log_path='./logs/',
         eval_freq=10000,
         deterministic=True,
         render=False,
@@ -205,16 +205,16 @@ def train_dqn_agent(continue_from_model: str = None, total_timesteps: int = 5000
         )
         
         # Save final model
-        model.save("rl/models/dqn_infinite_maze_final")
+        model.save("models/navigation_agent_final")
         print("Training completed successfully!")
         
     except KeyboardInterrupt:
         print("Training interrupted by user")
-        model.save("rl/models/dqn_infinite_maze_interrupted")
+        model.save("models/navigation_agent_interrupted")
     
     except Exception as e:
         print(f"Training failed with error: {e}")
-        model.save("rl/models/dqn_infinite_maze_error")
+        model.save("models/navigation_agent_error")
     
     finally:
         env.close()
@@ -222,7 +222,7 @@ def train_dqn_agent(continue_from_model: str = None, total_timesteps: int = 5000
     
     return model
 
-def test_trained_agent(model_path: str = "rl/models/best_model.zip", num_episodes: int = 5):
+def test_trained_agent(model_path: str = "models/best_model.zip", num_episodes: int = 5):
     """Test a trained agent on the environment."""
     
     print(f"Loading model from {model_path}")
@@ -305,17 +305,17 @@ if __name__ == "__main__":
                       help='Test existing model instead of training')
     parser.add_argument('--continue', dest='continue_model', type=str,
                       help='Continue training from specified model path')
-    parser.add_argument('--model', '-m', type=str, default='rl/models/best_model.zip',
-                      help='Model path for testing (default: rl/models/best_model.zip)')
+    parser.add_argument('--model', '-m', type=str, default='models/best_model.zip',
+                      help='Model path for testing (default: models/best_model.zip)')
     parser.add_argument('--episodes', '-e', type=int, default=5,
                       help='Number of episodes for testing (default: 5)')
     
     args = parser.parse_args()
     
     # Create necessary directories
-    os.makedirs("rl/models", exist_ok=True)
-    os.makedirs("rl/logs", exist_ok=True)
-    os.makedirs("rl/tensorboard_logs", exist_ok=True)
+    os.makedirs("models", exist_ok=True)
+    os.makedirs("logs", exist_ok=True)
+    os.makedirs("tensorboard_logs", exist_ok=True)
     
     if args.test:
         print("Testing trained agent...")
@@ -365,6 +365,6 @@ if __name__ == "__main__":
         print("To test the trained agent with visualization, run:")
         print("python train_agent.py --test")
         print("\nTo continue training from the best model, run:")
-        print("python train_agent.py --continue rl/models/best_model.zip")
+        print("python train_agent.py --continue models/best_model.zip")
         print("Or from the final model:")
-        print("python train_agent.py --continue rl/models/dqn_infinite_maze_final.zip")
+        print("python train_agent.py --continue models/navigation_agent_final.zip")
