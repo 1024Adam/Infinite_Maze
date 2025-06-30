@@ -20,6 +20,7 @@ from stable_baselines3.common.env_util import make_vec_env
 from stable_baselines3.common.callbacks import EvalCallback, StopTrainingOnRewardThreshold
 from stable_baselines3.common.monitor import Monitor
 from stable_baselines3.common.vec_env import VecFrameStack, DummyVecEnv
+from stable_baselines3.common.utils import get_linear_fn
 import torch
 
 # Add parent directory to path
@@ -41,11 +42,12 @@ def create_eval_env():
     env = InfiniteMazeEnv(headless=True)
     return Monitor(env, "rl/logs/evaluation")
 
-def train_dqn_agent(continue_from_model: str = None):
+def train_dqn_agent(continue_from_model: str = None, total_timesteps: int = 500000):
     """Train a DQN agent on the Infinite Maze environment.
     
     Args:
         continue_from_model: Path to a previously saved model to continue training from
+        total_timesteps: Total number of timesteps to train for
     """
     
     # Create training environment - wrap individual envs with Monitor first, then vectorize
@@ -85,7 +87,88 @@ def train_dqn_agent(continue_from_model: str = None):
         model = DQN.load(continue_from_model, env=env)
         print("Continuing training from loaded model...")
         
-        # Optionally adjust hyperparameters for continued training
+        # Get the current number of timesteps the model has been trained for
+        current_timesteps = getattr(model, 'num_timesteps', 0)
+        print(f"Model has been trained for {current_timesteps} timesteps")
+        
+        # Calculate current exploration rate based on the original exploration schedule
+        # These should match the original training config
+        exploration_fraction = 0.3
+        exploration_initial_eps = 1.0
+        exploration_final_eps = 0.05
+        
+        # Use the original training timesteps (500000) for exploration calculation
+        original_total_timesteps = 500000
+        exploration_timesteps = int(exploration_fraction * original_total_timesteps)  # 150000
+        
+        # Calculate what the exploration rate should be at this point
+        if current_timesteps < exploration_timesteps:
+            # Linear decay from initial to final
+            exploration_progress = current_timesteps / exploration_timesteps
+            current_eps = exploration_initial_eps - (exploration_initial_eps - exploration_final_eps) * exploration_progress
+        else:
+            # Exploration phase is over, use final epsilon
+            current_eps = exploration_final_eps
+        
+        print(f"Calculated current exploration rate: {current_eps:.4f}")
+        print(f"Model's stored exploration rate: {model.exploration_rate:.4f}")
+        
+        # Create a new exploration schedule that starts from the current exploration rate
+        # and continues to decay (if still in exploration phase) or stays constant
+        if current_timesteps < exploration_timesteps:
+            # Still in exploration phase - continue the decay for remaining timesteps
+            remaining_exploration_timesteps = exploration_timesteps - current_timesteps
+            exploration_fraction_remaining = remaining_exploration_timesteps / total_timesteps
+            
+            print(f"Continuing exploration decay from {current_eps:.4f} to {exploration_final_eps:.4f}")
+            print(f"Remaining exploration fraction: {exploration_fraction_remaining:.3f}")
+            
+            # Update the model's exploration parameters to continue from current point
+            model.exploration_initial_eps = current_eps
+            model.exploration_final_eps = exploration_final_eps
+            model.exploration_fraction = exploration_fraction_remaining
+            
+            # Create new exploration schedule using get_linear_fn
+            # Note: get_linear_fn uses progress_remaining (1.0 -> 0.0)
+            # start: value when progress_remaining = 1.0 (beginning of training)
+            # end: value when progress_remaining = (1.0 - end_fraction) 
+            model.exploration_schedule = get_linear_fn(
+                start=current_eps,
+                end=exploration_final_eps,
+                end_fraction=exploration_fraction_remaining
+            )
+        else:
+            # Past exploration phase - use constant final epsilon
+            print(f"Exploration phase completed, using constant rate: {exploration_final_eps:.4f}")
+            
+            model.exploration_initial_eps = exploration_final_eps
+            model.exploration_final_eps = exploration_final_eps
+            model.exploration_fraction = 0.0  # No exploration decay needed
+            
+            # Create constant exploration schedule
+            model.exploration_schedule = get_linear_fn(
+                start=exploration_final_eps,
+                end=exploration_final_eps,
+                end_fraction=1.0
+            )
+        
+        # Set the current exploration rate
+        model.exploration_rate = current_eps
+        
+        print(f"Updated exploration parameters:")
+        print(f"  Initial eps: {model.exploration_initial_eps:.4f}")
+        print(f"  Final eps: {model.exploration_final_eps:.4f}")
+        print(f"  Fraction: {model.exploration_fraction:.4f}")
+        print(f"  Current rate: {model.exploration_rate:.4f}")
+        
+        # Test the exploration schedule at a few points to verify it's working
+        print(f"Exploration schedule test:")
+        test_progress = [1.0, 0.75, 0.5, 0.25, 0.0]
+        for progress in test_progress:
+            eps = model.exploration_schedule(progress)
+            print(f"  Progress {progress:.2f}: eps = {eps:.4f}")
+        
+        # Optionally adjust other hyperparameters for continued training
         # You might want to use a lower learning rate for fine-tuning
         # model.learning_rate = 5e-5  # Half the original learning rate
         
@@ -116,7 +199,7 @@ def train_dqn_agent(continue_from_model: str = None):
     print("Starting training...")
     try:
         model.learn(
-            total_timesteps=500000,
+            total_timesteps=total_timesteps,
             callback=callbacks,
             progress_bar=True
         )

@@ -28,6 +28,7 @@ def continue_training_from_model(model_path: str, additional_timesteps: int = 10
     print("=" * 40)
     print(f"Loading model: {model_path}")
     print(f"Additional timesteps: {additional_timesteps}")
+    print(f"Note: Exploration rate will be automatically adjusted based on previous training progress")
     
     # Create necessary directories
     os.makedirs("rl/models", exist_ok=True)
@@ -35,7 +36,7 @@ def continue_training_from_model(model_path: str, additional_timesteps: int = 10
     os.makedirs("rl/tensorboard_logs", exist_ok=True)
     
     # Continue training
-    model = train_dqn_agent(continue_from_model=model_path)
+    model = train_dqn_agent(continue_from_model=model_path, total_timesteps=additional_timesteps)
     
     print("\nContinued training completed!")
     print("New models saved in rl/models/")

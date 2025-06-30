@@ -14,16 +14,18 @@ The RL implementation includes:
 
 ### Core Components
 - `environment.py`: Custom Gymnasium environment for the Infinite Maze game
-- `train_agent.py`: Training script for DQN agents
+- `train_agent.py`: Training script for DQN agents with support for continuing training
 - `test_agent.py`: Testing and evaluation script for trained agents
+- `continue_training.py`: Convenient script for continuing training from saved models
 
 ### Directory Structure
 ```
 rl/
 ├── __init__.py          # Package initialization
 ├── environment.py       # RL environment wrapper
-├── train_agent.py      # Training script
+├── train_agent.py      # Training script with continue support
 ├── test_agent.py       # Testing script
+├── continue_training.py # Continue training script
 ├── README.md           # This file
 ├── models/             # Trained model storage (created during training)
 ├── logs/               # Training logs (created during training)
@@ -70,10 +72,26 @@ pip install -r requirements.txt
 
 ### Training an Agent
 
-To train a DQN agent:
+To train a new DQN agent from scratch:
 ```bash
 cd rl
 python train_agent.py
+```
+
+To continue training from a previously saved model:
+```bash
+cd rl
+# Continue from the best model
+python train_agent.py --continue rl/models/best_model.zip
+
+# Or use the dedicated continue training script
+python continue_training.py --model rl/models/best_model.zip --steps 100000
+```
+
+To list available saved models:
+```bash
+cd rl
+python continue_training.py --list-models
 ```
 
 Training parameters can be modified in the `train_dqn_agent()` function in `train_agent.py`.
@@ -83,6 +101,8 @@ Training parameters can be modified in the `train_dqn_agent()` function in `trai
 To test with visualization:
 ```bash
 cd rl
+python train_agent.py --test --model models/best_model.zip
+# Or using the dedicated test script
 python test_agent.py --model models/best_model.zip
 ```
 
@@ -133,10 +153,12 @@ The DQN uses a Multi-Layer Perceptron (MLP) policy with:
 ## Training Tips
 
 1. **Start Small**: Begin with shorter training runs to verify the environment works correctly
-2. **Monitor Rewards**: Watch for positive trends in episode rewards and survival times
-3. **Hyperparameter Tuning**: Adjust learning rate, exploration parameters, and network architecture based on performance
-4. **Curriculum Learning**: Consider gradually increasing difficulty or maze complexity
-5. **Multiple Seeds**: Train multiple agents with different random seeds for robust evaluation
+2. **Continue Training**: Use `--continue` to build upon previous training sessions instead of starting from scratch
+3. **Monitor Rewards**: Watch for positive trends in episode rewards and survival times
+4. **Best vs Final Models**: Continue from `best_model.zip` (best performance) rather than `final.zip` (end of training)
+5. **Hyperparameter Tuning**: Adjust learning rate, exploration parameters, and network architecture based on performance
+6. **Curriculum Learning**: Consider gradually increasing difficulty or maze complexity
+7. **Multiple Seeds**: Train multiple agents with different random seeds for robust evaluation
 
 ## Integration with Original Game
 
@@ -158,6 +180,25 @@ Key metrics to track:
 2. **Pygame Issues**: Make sure pygame is properly installed and display is available (use headless=True for servers)
 3. **CUDA Issues**: The code automatically detects and uses GPU if available
 4. **Memory Issues**: Reduce buffer size or batch size if running out of memory
+
+### Common Usage Patterns
+
+**Initial Training:**
+```bash
+python train_agent.py                    # Train new agent
+```
+
+**Continued Training:**
+```bash
+python train_agent.py --continue rl/models/best_model.zip  # Continue from best
+python continue_training.py --steps 200000                 # Continue with more steps
+```
+
+**Testing:**
+```bash
+python train_agent.py --test             # Test with visualization
+python test_agent.py --headless          # Test without graphics
+```
 
 ### Performance Issues
 
