@@ -1,7 +1,7 @@
-from infinite_maze import maze
+from .infinite_maze import maze
 
 def main(): 
-    maze();
+    maze()
 
 if __name__ == '__main__':
     main()

@@ -1,9 +1,9 @@
 import pygame
 from pygame.locals import *
 from pygame import time
-from Player import Player
-from Game import Game
-from Line import Line
+from .Player import Player
+from .Game import Game
+from .Line import Line
 
 DO_NOTHING = 0
 RIGHT = 1

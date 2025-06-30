@@ -1,1 +1,9 @@
 pygame
+
+# Reinforcement Learning dependencies
+gymnasium>=0.29.0
+stable-baselines3>=2.0.0
+torch>=2.0.0
+tensorboard>=2.13.0
+numpy>=1.21.0
+stable-baselines3[extra]

@@ -1,7 +1,7 @@
 import pygame
 from pygame.locals import *
-from Clock import Clock
-from Line import Line
+from .Clock import Clock
+from .Line import Line
 
 class Game:
     # Display config
@@ -18,20 +18,31 @@ class Game:
     BG_COLOR = pygame.Color(255, 255, 255)
     FG_COLOR = pygame.Color(0, 0, 0) 
 
-    def __init__(self):
-        pygame.init()
+    def __init__(self, headless=False):
+        if not headless:
+            pygame.init()
 
-        # Font Config
-        self.font = pygame.font.SysFont('', 20)
+            # Font Config
+            self.font = pygame.font.SysFont('', 20)
 
-        self.screen = pygame.display.set_mode((self.WIDTH, self.HEIGHT))
+            self.screen = pygame.display.set_mode((self.WIDTH, self.HEIGHT))
+            
+            self.icon = pygame.Surface((32, 32))
+            try:
+                iconImage = pygame.image.load('img/icon.png')
+                self.icon.blit(iconImage, (0, 0))
+            except (pygame.error, FileNotFoundError):
+                # If icon can't be loaded, use a default surface
+                self.icon.fill(pygame.Color(255, 255, 255))
         
-        self.icon = pygame.Surface((32, 32))
-        iconImage = pygame.image.load('img/icon.png')
-        self.icon.blit(iconImage, (0, 0))
-    
-        pygame.display.set_caption('Infinite Maze')
-        pygame.display.set_icon(self.icon)
+            pygame.display.set_caption('Infinite Maze')
+            pygame.display.set_icon(self.icon)
+        else:
+            # Headless mode - minimal pygame initialization
+            pygame.init()
+            self.font = None
+            self.screen = None
+            self.icon = None
 
         self.pace = 0
         self.score = 0
@@ -39,10 +50,22 @@ class Game:
         self.paused = False
         self.over = False
         self.shutdown = False
+        self.headless = headless
 
         self.clock = Clock()
 
     def updateScreen(self, player, lines):
+        if self.headless:
+            # In headless mode, just update the clock and pace
+            self.clock.update()
+            if self.paused:
+                self.clock.rollbackMillis(self.clock.getMillis() - self.clock.getPrevMillis())
+            
+            # Update Pace
+            if not self.paused and self.clock.getMillis() > 10000 and self.clock.getSeconds() % 30 == 0 and self.clock.getPrevSeconds() != self.clock.getSeconds():
+                self.pace += 1
+            return
+            
         # Paint Screen
         self.screen.fill(self.BG_COLOR)
         self.screen.blit(player.getCursor(), player.getPosition())
