@@ -91,4 +91,5 @@ Assist in developing, implementing, and optimizing reinforcement learning (RL) a
 - **Visualization**: TensorBoard, Weights & Biases, matplotlib
 - **Parallel Computing**: Ray, multiprocessing for training acceleration
 
-This role positions the AI agent as a comprehensive development partner for creating intelligent systems that can master the Infinite Maze game through machine learning, while also providing insights into game design and player behavior.
+## Other information
+- Place all RL related files (training, testing, setup, environment, logs), in its own structure under an "rl" folder.

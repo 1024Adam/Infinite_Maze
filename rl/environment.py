@@ -108,6 +108,10 @@ class InfiniteMazeEnv(gym.Env):
         self.last_score = 0
         self.survival_time = 0
         
+        # Reset navigation tracking
+        self._consecutive_failed_right_moves = 0
+        self._last_rightward_progress = 0
+        
         # Reset game clock
         self.game.getClock().reset()
         
@@ -147,6 +151,10 @@ class InfiniteMazeEnv(gym.Env):
                 reward += 0.05
             elif distance_from_left < 20:  # Dangerous proximity
                 reward -= 0.1
+            
+            # Navigation intelligence reward
+            nav_reward = self._calculate_navigation_reward()
+            reward += nav_reward
                 
         else:
             # Death penalty
@@ -163,33 +171,140 @@ class InfiniteMazeEnv(gym.Env):
         reward = 0.0
         blocked = False
         
+        # Store previous position for progress calculation
+        prev_x = self.player.getX()
+        prev_y = self.player.getY()
+        
         if action == RIGHT:
             blocked = self._check_collision_right()
             if not blocked:
                 self.player.moveX(self.player.getSpeed())
                 self.game.incrementScore()
-                reward += 1.0  # Reward for rightward movement
+                # Base reward for rightward movement
+                reward += 0.5
+                # Reset failed moves counter
+                self._consecutive_failed_right_moves = 0
+            else:
+                # Small penalty for trying to move into a wall
+                reward -= 0.1
+                # Track consecutive failed right moves
+                if not hasattr(self, '_consecutive_failed_right_moves'):
+                    self._consecutive_failed_right_moves = 0
+                self._consecutive_failed_right_moves += 1
                 
         elif action == LEFT:
             blocked = self._check_collision_left()
             if not blocked:
                 self.player.moveX(-self.player.getSpeed())
                 self.game.decrementScore()
-                reward -= 1.0  # Penalty for leftward movement
+                # Penalty for leftward movement
+                reward -= 0.5
+            else:
+                reward -= 0.1
                 
         elif action == DOWN:
             blocked = self._check_collision_down()
             if not blocked:
                 self.player.moveY(self.player.getSpeed())
+                # Small reward for successful vertical movement
+                reward += 0.1
+            else:
+                reward -= 0.1
                 
         elif action == UP:
             blocked = self._check_collision_up()
             if not blocked:
                 self.player.moveY(-self.player.getSpeed())
+                # Small reward for successful vertical movement
+                reward += 0.1
+            else:
+                reward -= 0.1
                 
         # DO_NOTHING (action == 0) requires no movement
         
+        # Additional reward for forward progress (rightward movement)
+        current_x = self.player.getX()
+        if current_x > prev_x:
+            # Reward actual rightward progress
+            progress = (current_x - prev_x) / self.player.getSpeed()
+            reward += 1.0 * progress
+        
+        # Penalty for being stuck against a wall trying to go right
+        if action == RIGHT and blocked:
+            # Check if player is stuck - hasn't moved right in a while
+            if not hasattr(self, '_last_rightward_progress'):
+                self._last_rightward_progress = 0
+            
+            self._last_rightward_progress += 1
+            if self._last_rightward_progress > 10:  # Stuck for 10+ steps
+                # Strong incentive to try vertical movement
+                reward -= 0.5
+        else:
+            if hasattr(self, '_last_rightward_progress'):
+                self._last_rightward_progress = 0
+        
         return reward
+    
+    def _calculate_navigation_reward(self) -> float:
+        """Calculate reward for intelligent navigation behavior."""
+        nav_reward = 0.0
+        
+        # Check if rightward movement is blocked
+        right_blocked = self._check_collision_right()
+        
+        # Check if there are clear vertical paths
+        up_blocked = self._check_collision_up()
+        down_blocked = self._check_collision_down()
+        
+        # If right is blocked but vertical movement is available, 
+        # encourage exploration of vertical movement
+        if right_blocked and (not up_blocked or not down_blocked):
+            # Look ahead to see if vertical movement could lead to rightward progress
+            if self._can_vertical_movement_help():
+                nav_reward += 0.3  # Reward for considering navigation around obstacles
+        
+        # Reward finding alternative paths when stuck
+        if hasattr(self, '_consecutive_failed_right_moves'):
+            if self._consecutive_failed_right_moves > 5:
+                # If we've been stuck going right, reward vertical exploration
+                if not up_blocked:
+                    nav_reward += 0.2
+                if not down_blocked:
+                    nav_reward += 0.2
+        
+        return nav_reward
+    
+    def _can_vertical_movement_help(self) -> bool:
+        """Check if vertical movement could eventually lead to rightward progress."""
+        # Simple heuristic: look a few steps ahead in vertical directions
+        player_x = self.player.getX()
+        player_y = self.player.getY()
+        speed = self.player.getSpeed()
+        
+        # Check up direction
+        for steps in range(1, 5):  # Look up to 4 steps ahead
+            test_y = player_y - (speed * steps)
+            # Check if we can move right from this vertical position
+            temp_y = self.player.getY()
+            self.player.setY(test_y)
+            can_move_right = not self._check_collision_right()
+            self.player.setY(temp_y)  # Restore original position
+            
+            if can_move_right:
+                return True
+        
+        # Check down direction
+        for steps in range(1, 5):
+            test_y = player_y + (speed * steps)
+            temp_y = self.player.getY()
+            self.player.setY(test_y)
+            can_move_right = not self._check_collision_right()
+            self.player.setY(temp_y)
+            
+            if can_move_right:
+                return True
+        
+        return False
     
     def _check_collision_right(self) -> bool:
         """Check if moving right would cause a collision."""
