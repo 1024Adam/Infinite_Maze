@@ -3,10 +3,16 @@ Training script for Infinite Maze RL agent using DQN algorithm.
 
 This script sets up the training environment, creates a DQN agent,
 and trains it to play the Infinite Maze game.
+
+Usage:
+    python train_agent.py                    # Train new model
+    python train_agent.py --test             # Test existing model
+    python train_agent.py --continue model   # Continue training from model
 """
 
 import os
 import sys
+import argparse
 import numpy as np
 import gymnasium as gym
 from stable_baselines3 import DQN
@@ -35,8 +41,12 @@ def create_eval_env():
     env = InfiniteMazeEnv(headless=True)
     return Monitor(env, "rl/logs/evaluation")
 
-def train_dqn_agent():
-    """Train a DQN agent on the Infinite Maze environment."""
+def train_dqn_agent(continue_from_model: str = None):
+    """Train a DQN agent on the Infinite Maze environment.
+    
+    Args:
+        continue_from_model: Path to a previously saved model to continue training from
+    """
     
     # Create training environment - wrap individual envs with Monitor first, then vectorize
     print("Creating training environment...")
@@ -70,8 +80,18 @@ def train_dqn_agent():
     print(f"Using device: {model_config['device']}")
     
     # Create DQN model
-    print("Creating DQN model...")
-    model = DQN(**model_config)
+    if continue_from_model:
+        print(f"Loading existing model from {continue_from_model}...")
+        model = DQN.load(continue_from_model, env=env)
+        print("Continuing training from loaded model...")
+        
+        # Optionally adjust hyperparameters for continued training
+        # You might want to use a lower learning rate for fine-tuning
+        # model.learning_rate = 5e-5  # Half the original learning rate
+        
+    else:
+        print("Creating new DQN model...")
+        model = DQN(**model_config)
     
     # Create callbacks
     eval_callback = EvalCallback(
@@ -197,34 +217,71 @@ def create_baseline_comparison():
     return np.mean(random_rewards), np.mean(random_scores)
 
 if __name__ == "__main__":
+    parser = argparse.ArgumentParser(description='Train or test Infinite Maze RL agent')
+    parser.add_argument('--test', action='store_true', 
+                      help='Test existing model instead of training')
+    parser.add_argument('--continue', dest='continue_model', type=str,
+                      help='Continue training from specified model path')
+    parser.add_argument('--model', '-m', type=str, default='rl/models/best_model.zip',
+                      help='Model path for testing (default: rl/models/best_model.zip)')
+    parser.add_argument('--episodes', '-e', type=int, default=5,
+                      help='Number of episodes for testing (default: 5)')
+    
+    args = parser.parse_args()
+    
     # Create necessary directories
     os.makedirs("rl/models", exist_ok=True)
     os.makedirs("rl/logs", exist_ok=True)
     os.makedirs("rl/tensorboard_logs", exist_ok=True)
     
-    print("Infinite Maze RL Training")
-    print("=" * 40)
-    
-    # Test environment first
-    print("Testing environment...")
-    env = InfiniteMazeEnv(headless=True)
-    obs, info = env.reset()
-    print(f"Observation space: {env.observation_space}")
-    print(f"Action space: {env.action_space}")
-    print(f"Initial observation shape: {obs.shape}")
-    env.close()
-    
-    # Create baseline
-    baseline_reward, baseline_score = create_baseline_comparison()
-    
-    # Train the agent
-    print("\nStarting DQN training...")
-    model = train_dqn_agent()
-    
-    # Test the trained agent (uncomment to test with rendering)
-    # print("\nTesting trained agent...")
-    # test_trained_agent()
-    
-    print("\nTraining pipeline completed!")
-    print("To test the trained agent with visualization, run:")
-    print("python rl/train_agent.py --test")
+    if args.test:
+        print("Testing trained agent...")
+        test_trained_agent(args.model, args.episodes)
+        
+    elif args.continue_model:
+        print("Infinite Maze RL Continued Training")
+        print("=" * 40)
+        print(f"Continuing from: {args.continue_model}")
+        
+        # Test environment first
+        print("Testing environment...")
+        env = InfiniteMazeEnv(headless=True)
+        obs, info = env.reset()
+        print(f"Observation space: {env.observation_space}")
+        print(f"Action space: {env.action_space}")
+        print(f"Initial observation shape: {obs.shape}")
+        env.close()
+        
+        # Continue training
+        print("\nContinuing DQN training...")
+        model = train_dqn_agent(continue_from_model=args.continue_model)
+        
+        print("\nContinued training completed!")
+        
+    else:
+        print("Infinite Maze RL Training")
+        print("=" * 40)
+        
+        # Test environment first
+        print("Testing environment...")
+        env = InfiniteMazeEnv(headless=True)
+        obs, info = env.reset()
+        print(f"Observation space: {env.observation_space}")
+        print(f"Action space: {env.action_space}")
+        print(f"Initial observation shape: {obs.shape}")
+        env.close()
+        
+        # Create baseline
+        baseline_reward, baseline_score = create_baseline_comparison()
+        
+        # Train the agent
+        print("\nStarting DQN training...")
+        model = train_dqn_agent()
+        
+        print("\nTraining pipeline completed!")
+        print("To test the trained agent with visualization, run:")
+        print("python train_agent.py --test")
+        print("\nTo continue training from the best model, run:")
+        print("python train_agent.py --continue rl/models/best_model.zip")
+        print("Or from the final model:")
+        print("python train_agent.py --continue rl/models/dqn_infinite_maze_final.zip")
