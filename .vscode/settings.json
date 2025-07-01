@@ -1,3 +1,4 @@
 {"github.copilot.chat.codeGeneration.instructions": [
-    { "file": "../.github/roles/AI_AGENT_ROLE.md" }
+    { "file": "../.github/roles/PYTHON_GAME_FRAMEWORK_EXPERT.md" },
+    { "file": "../.github/roles/PYTHON_GAME_TESTING_EXPERT.md" }
 ]}
