@@ -1,13 +1,25 @@
 # Infinite Maze Game
 
-## Overview
+A fast-paced, infinitely challenging maze navigation game built with Python and Pygame.
+
+## 🎮 Overview
 Infinite Maze is a dynamic maze-style game where players navigate through a randomly generated maze, attempting to progress as far as possible while maintaining pace. The maze is infinite - as long as you can keep up with the advancing pace, the game continues indefinitely.
 
-What makes this truly challenging is the progressive difficulty: the game's pace increases every 30 seconds, forcing players to move faster while navigating increasingly complex maze layouts.
+**What makes this truly challenging:** The game's pace increases every 30 seconds, forcing players to move faster while navigating increasingly complex maze layouts. Can you keep up with the relentless advance?
 
-## Quick Start
+## ✨ Key Features
+- **Infinite Gameplay**: Procedurally generated mazes that never end
+- **Progressive Difficulty**: Pace increases every 30 seconds for escalating challenge
+- **Smart Scoring**: Gain points for rightward progress, lose points for backtracking
+- **Responsive Controls**: Smooth WASD or arrow key movement
+- **Pause System**: Take a breather when needed
+- **Modern Architecture**: Clean, extensible Python codebase with Poetry dependency management
 
-### One-Command Setup (Easiest)
+## 🚀 Quick Start
+
+### One-Command Setup (Recommended)
+Get up and running in seconds:
+
 ```bash
 # Linux/macOS
 ./setup.sh
@@ -16,7 +28,15 @@ What makes this truly challenging is the progressive difficulty: the game's pace
 setup.bat
 ```
 
-### Manual Setup
+These scripts will automatically:
+- Check if Poetry is installed (and guide you to install it if needed)
+- Install all project dependencies
+- Verify everything works correctly
+- Launch the game
+
+### Manual Installation
+If you prefer more control over the installation process:
+
 ```bash
 # 1. Install Poetry (one-time setup per machine)
 curl -sSL https://install.python-poetry.org | python3 -
@@ -26,16 +46,17 @@ poetry install
 poetry run infinite-maze
 ```
 
-### Alternative Installation Methods
-```bash
-# Using pip (if you prefer not to use Poetry)
-pip install -e .
-infinite-maze
+### Alternative Running Methods
+Once installed, you can run the game multiple ways:
 
-# Direct execution
+```bash
+# Modern entry point (recommended)
+poetry run infinite-maze
+
+# Python module execution
 python -m infinite_maze
 
-# Legacy method (still supported)
+# Direct execution (legacy, still supported)
 python run_game.py
 ```
 
@@ -66,22 +87,34 @@ The setup script will:
 - Install all project dependencies
 - Verify everything works correctly
 
-## Game Mechanics
+## 🎯 Game Mechanics
 
+### Core Elements
 |  Element   |  Description  |
 | ---------- | ------------- |
-| **Player** | Your character, represented by a dot that moves through the maze |
-| **Pace**   | The advancing boundary that pursues you - stay ahead or the game ends |
-| **Walls**  | Maze barriers that block your movement |
-| **Points** | Scored based on rightward progress through the maze |
+| **Player** | Your character (red dot) that moves through the maze |
+| **Pace Line** | The advancing boundary that pursues you - stay ahead or the game ends |
+| **Maze Walls** | Dynamically generated barriers that block your movement |
+| **Scoring** | Points awarded for rightward progress, deducted for leftward movement |
 
-## Game Rules
+### Game Rules
 - **Objective**: Navigate as far right through the infinite maze as possible
-- **Scoring**: Gain points for rightward movement, lose points for moving left
-- **Pace**: Starts after 30 seconds and accelerates every 30 seconds thereafter
-- **Game Over**: When the pace catches up to your position
+- **Scoring System**: 
+  - +1 point for each rightward movement
+  - -1 point for each leftward movement (minimum score: 0)
+- **Pace Mechanic**: 
+  - Starts after 30 seconds
+  - Accelerates every 30 seconds thereafter
+  - Forces continuous forward progress
+- **Game Over**: When the pace line catches up to your position
 
-## Controls
+### Strategy Tips
+- **Plan Ahead**: Look for openings in the maze before the pace forces movement
+- **Minimize Backtracking**: Leftward movement costs points and wastes time
+- **Use Vertical Space**: Moving up/down doesn't affect score but can find better paths
+- **Stay Calm**: The pace increases, but panicking leads to poor decisions
+
+## ⌨️ Controls
 |  Key(s)        |  Action                 |
 | -------------- | ----------------------- |
 | **W, A, S, D** | Move up, left, down, right |
@@ -90,39 +123,26 @@ The setup script will:
 | **Esc, Q**     | Quit game |
 | **Y, N**       | Yes/No responses when prompted |
 
-## Technical Requirements
-- **Python**: 3.8+ (tested with Python 3.10.4)
+## 📋 System Requirements
+- **Python**: 3.8+ (tested with Python 3.8-3.12)
 - **Dependencies**: Pygame 2.5+ (automatically managed by Poetry)
 - **Platforms**: Windows, macOS, Linux
+- **Memory**: ~50MB RAM
+- **Storage**: ~10MB disk space
 
-## Architecture
+## 📚 Documentation
 
-### Modern Project Structure
-```
-infinite_maze/
-├── infinite_maze/          # Main game package
-│   ├── __init__.py         # Package initialization
-│   ├── __main__.py         # Entry point for python -m infinite_maze
-│   ├── infinite_maze.py    # Main game logic
-│   ├── Game.py            # Core game state management
-│   ├── Player.py          # Player character implementation
-│   ├── Clock.py           # Game timing and frame rate control
-│   ├── Line.py            # Maze generation and utilities
-│   ├── config.py          # Configuration management
-│   └── logger.py          # Centralized logging
-├── assets/                # Game assets and resources
-├── pyproject.toml         # Modern Python project configuration
-├── DEVELOPMENT.md         # Development setup guide
-└── migrate_to_modern.py   # Migration helper script
-```
+### Quick Links
+- **[📖 Complete Documentation](docs/)** - Comprehensive guides for players and developers
+- **[🎮 Player Guide](docs/player-guide.md)** - Master the game with strategies and tips
+- **[⚙️ Installation Guide](docs/installation-guide.md)** - Detailed setup instructions
+- **[🛠️ Developer Guide](docs/development.md)** - Development environment and workflow
+- **[🔧 Troubleshooting](docs/troubleshooting.md)** - Solve common issues
 
-### Key Features
-- **Modern Python packaging** with Poetry and pyproject.toml
-- **Configuration management** - externalized settings for easy customization
-- **Comprehensive logging** - structured logging for debugging and monitoring
-- **Type annotations** - improved code documentation and IDE support
-- **Modular architecture** - clean separation of concerns
-- **Multiple entry points** - flexible ways to run the game
+### For Different Audiences
+- **New Players**: Start with [Installation Guide](docs/installation-guide.md), then [Player Guide](docs/player-guide.md)
+- **Developers**: Check [Development Guide](docs/development.md) and [Architecture Guide](docs/architecture.md)
+- **Contributors**: Read [Contributing Guide](docs/contributing.md) and [API Reference](docs/api-reference.md)
 
 ## Development
 

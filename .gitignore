@@ -66,4 +66,4 @@ game_logs/
 migration_backup/
 
 # GitHub workflows (uncomment if needed)
-# .github/
+.github/
