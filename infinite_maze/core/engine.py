@@ -1,9 +1,8 @@
 import pygame
-from pygame.locals import *
 from pygame import time
-from .Player import Player
-from .Game import Game
-from .Line import Line
+from ..entities.player import Player
+from .game import Game
+from ..entities.maze import Line
 
 DO_NOTHING = 0
 RIGHT = 1
@@ -265,7 +264,6 @@ def controlled_run(wrapper, counter):
     while game.isPlaying():
         while game.isActive():
             game.updateScreen(player, lines)
-            prevKeys = keys
             keys = pygame.key.get_pressed()
 
             if not game.isPaused():

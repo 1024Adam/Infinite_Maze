@@ -1,8 +1,8 @@
 """
 Configuration module for Infinite Maze game.
 
-This module contains all game configuration settings, extracted from hardcoded values
-to improve maintainability and allow for easy customization.
+This module contains all game configuration settings, extracted from hardcoded
+values to improve maintainability and allow for easy customization.
 """
 
 from typing import Tuple, Dict, Any
@@ -86,6 +86,7 @@ class GameConfig:
     def get_asset_path(cls, *path_parts: str) -> str:
         """Build a path relative to the assets directory."""
         import os
+
         return os.path.join(cls.ASSETS_DIR, *path_parts)
 
     @classmethod

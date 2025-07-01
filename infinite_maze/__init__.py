@@ -16,7 +16,6 @@ Modules:
 Usage:
     To run the game:
         python -m infinite_maze
-    
     Or import and run programmatically:
         from infinite_maze import maze
         maze()
@@ -27,19 +26,19 @@ __author__ = "Adam Reid"
 __email__ = "adamjreid10@gmail.com"
 
 # Import main game function for convenience
-from .infinite_maze import maze
+from .core.engine import maze
 
 # Import core game classes
-from .Game import Game
-from .Player import Player
-from .Line import Line
-from .Clock import Clock
+from .core.game import Game
+from .entities.player import Player
+from .entities.maze import Line
+from .core.clock import Clock
 
 # Import configuration for external access
-from .config import config, GameConfig
+from .utils.config import config, GameConfig
 
 # Import logger for external use
-from .logger import logger, GameLogger
+from .utils.logger import logger, GameLogger
 
 __all__ = [
     "maze",

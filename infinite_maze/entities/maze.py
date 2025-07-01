@@ -98,7 +98,8 @@ class Line:
                 sideA = sideB
                 sideB += 19
 
-        # Create 'maze' structure (will be complete when all 'cells' are connected to each other)
+        # Create 'maze' structure
+        # (will be complete when all 'cells' are connected to each other)
         sets = []
         while len(sets) != 1:
             length = len(lines)

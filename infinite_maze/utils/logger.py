@@ -1,7 +1,8 @@
 """
 Logging configuration for Infinite Maze game.
 
-Provides centralized logging setup with different levels for development and production.
+Provides centralized logging setup with different levels for development and
+production.
 """
 
 import logging

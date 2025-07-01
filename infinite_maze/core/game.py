@@ -1,8 +1,6 @@
 import pygame
-from pygame.locals import *
-from .Clock import Clock
-from .Line import Line
-from .config import config
+from .clock import Clock
+from ..utils.config import config
 
 
 class Game:
@@ -123,7 +121,8 @@ class Game:
             "Time: " + self.clock.getTimeString(), 1, self.FG_COLOR
         )
         self.screen.blit(timeText, (10, 10))
-        scoreText = self.font.render("Score: " + str(self.score), 1, self.FG_COLOR)
+        score_text = f"Score: {self.score}"
+        scoreText = self.font.render(score_text, 1, self.FG_COLOR)
         self.screen.blit(scoreText, (10, 25))
 
         if self.paused:
@@ -138,7 +137,8 @@ class Game:
         # Paint Screen
         self.screen.fill(self.BG_COLOR)
         endText = self.font.render("Continue? (y/n)", 1, self.FG_COLOR)
-        scoreText = self.font.render("Score: " + str(self.score), 1, self.FG_COLOR)
+        score_text = f"Score: {self.score}"
+        scoreText = self.font.render(score_text, 1, self.FG_COLOR)
 
         # Print Display Text
         self.screen.blit(endText, (10, 10))

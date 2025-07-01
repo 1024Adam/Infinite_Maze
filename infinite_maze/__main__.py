@@ -1,4 +1,4 @@
-from .infinite_maze import maze
+from .core.engine import maze
 
 
 def main():

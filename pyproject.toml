@@ -4,7 +4,7 @@ build-backend = "poetry.core.masonry.api"
 
 [tool.poetry]
 name = "infinite-maze"
-version = "0.1.0"
+version = "0.2.0"
 description = "A maze game where users try to progress as far through the maze as possible"
 authors = ["Adam Reid <adamjreid10@gmail.com>"]
 readme = "README.md"
@@ -35,7 +35,7 @@ flake8 = "^6.0.0"
 mypy = "^1.0.0"
 
 [tool.poetry.scripts]
-infinite-maze = "infinite_maze.infinite_maze:maze"
+infinite-maze = "infinite_maze.core.engine:maze"
 
 [tool.black]
 line-length = 88

@@ -1,6 +1,5 @@
 import pygame
-from pygame.locals import *
-from .config import config
+from ..utils.config import config
 
 
 class Player:
@@ -8,9 +7,10 @@ class Player:
         self.headless = headless
         if not headless:
             try:
-                self.cursor = pygame.image.load(config.get_image_path("player"))
+                image_path = config.get_image_path("player")
+                self.cursor = pygame.image.load(image_path)
             except (pygame.error, FileNotFoundError):
-                # If player image can't be loaded, create a simple colored surface
+                # If player image can't be loaded, create a simple shape
                 self.cursor = pygame.Surface((10, 10))
                 self.cursor.fill(pygame.Color(255, 0, 0))  # Red square
         else:
@@ -28,10 +28,12 @@ class Player:
         self.position = (self.position[0], yPosition)
 
     def moveX(self, units):
-        self.position = (self.position[0] + (units * self.speed), self.position[1])
+        new_x = self.position[0] + (units * self.speed)
+        self.position = (new_x, self.position[1])
 
     def moveY(self, units):
-        self.position = (self.position[0], self.position[1] + (units * self.speed))
+        new_y = self.position[1] + (units * self.speed)
+        self.position = (self.position[0], new_y)
 
     def getX(self):
         return self.position[0]
