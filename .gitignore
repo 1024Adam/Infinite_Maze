@@ -7,3 +7,5 @@ infinite_maze/*.swp
 __pycache__/
 **/*logs**
 **/*models**
+.github/
+.vscode/
