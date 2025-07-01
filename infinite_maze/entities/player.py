@@ -1,19 +1,21 @@
 import pygame
-from pygame.locals import *
+from ..utils.config import config
+
 
 class Player:
     def __init__(self, xPosition, yPosition, headless=False):
         self.headless = headless
         if not headless:
             try:
-                self.cursor = pygame.image.load('img/player.png')
+                image_path = config.get_image_path("player")
+                self.cursor = pygame.image.load(image_path)
             except (pygame.error, FileNotFoundError):
-                # If player image can't be loaded, create a simple colored surface
+                # If player image can't be loaded, create a simple shape
                 self.cursor = pygame.Surface((10, 10))
                 self.cursor.fill(pygame.Color(255, 0, 0))  # Red square
         else:
             self.cursor = None
-            
+
         self.position = (xPosition, yPosition)
         self.width = 10
         self.height = 10
@@ -24,24 +26,26 @@ class Player:
 
     def setY(self, yPosition):
         self.position = (self.position[0], yPosition)
-    
+
     def moveX(self, units):
-        self.position = (self.position[0] + (units * self.speed), self.position[1]) 
+        new_x = self.position[0] + (units * self.speed)
+        self.position = (new_x, self.position[1])
 
     def moveY(self, units):
-        self.position = (self.position[0], self.position[1] + (units * self.speed)) 
+        new_y = self.position[1] + (units * self.speed)
+        self.position = (self.position[0], new_y)
 
     def getX(self):
-        return (self.position[0])
+        return self.position[0]
 
     def getY(self):
-        return (self.position[1])
+        return self.position[1]
 
     def getPosition(self):
-        return (self.position)
+        return self.position
 
     def getSpeed(self):
-        return (self.speed)
+        return self.speed
 
     def setCursor(self, image):
         if not self.headless:
@@ -52,11 +56,11 @@ class Player:
                 pass
 
     def getCursor(self):
-        return (self.cursor)
-        
+        return self.cursor
+
     def getWidth(self):
         return self.width
-    
+
     def getHeight(self):
         return self.height
 

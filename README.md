@@ -1,93 +1,202 @@
 # Infinite Maze Game
 
-## Overview
-Infinite Maze is a basic 'maze-style' game, in which participants attempt
-to get as far through the maze as possible while keeping a steady pace. The
-maze is randomly generated with each game, which adds to the difficulty of
-attempting to get as far as possible. 
+A fast-paced, infinitely challenging maze navigation game built with Python and Pygame.
 
-What makes this maze infinite is exactly that - there is no end to the maze. 
-As long as participants are able to keep up with the pace of the maze, the 
-game will never end.
+## 🎮 Overview
+Infinite Maze is a dynamic maze-style game where players navigate through a randomly generated maze, attempting to progress as far as possible while maintaining pace. The maze is infinite - as long as you can keep up with the advancing pace, the game continues indefinitely.
 
-**NEW**: This project now includes a complete **Reinforcement Learning (RL) implementation** that trains AI agents to play the game using Deep Q-Networks (DQN). See the `rl/` directory for details.
+**What makes this truly challenging:** The game's pace increases every 30 seconds, forcing players to move faster while navigating increasingly complex maze layouts. Can you keep up with the relentless advance?
 
-## Setup
-The following commands in this section (**bolded**) should be run in a terminal window after navigating to the root directory of the application.
+## ✨ Key Features
+- **Infinite Gameplay**: Procedurally generated mazes that never end
+- **Progressive Difficulty**: Pace increases every 30 seconds for escalating challenge
+- **Smart Scoring**: Gain points for rightward progress, lose points for backtracking
+- **Responsive Controls**: Smooth WASD or arrow key movement
+- **Pause System**: Take a breather when needed
+- **Modern Architecture**: Clean, extensible Python codebase with Poetry dependency management
 
-1. To install the requirements needed to run the game, type **make**.
-2. To run the setup and initialization of the game, type **python setup.py install**.
+## 🚀 Quick Start
 
-### Execution
-**Human Players:**
-To compile and execute the game, type **python infinite_maze**
+### One-Command Setup (Recommended)
+Get up and running in seconds:
 
-**AI Training:**
-To train an AI agent to play the game:
 ```bash
-cd rl
-python train_agent.py
+# Linux/macOS
+./setup.sh
+
+# Windows
+setup.bat
 ```
 
-To test a trained AI agent:
+These scripts will automatically:
+- Check if Poetry is installed (and guide you to install it if needed)
+- Install all project dependencies
+- Verify everything works correctly
+- Launch the game
+
+### Manual Installation
+If you prefer more control over the installation process:
+
 ```bash
-cd rl
-python train_agent.py --test
+# 1. Install Poetry (one-time setup per machine)
+curl -sSL https://install.python-poetry.org | python3 -
+
+# 2. Install dependencies and run the game
+poetry install
+poetry run infinite-maze
 ```
 
-## Game Definitions
-|  Term      |  Definition  |
-| ---------- | ------------ |
-| **Player** | Represented by the 'dot' in game. |
-| **Pace**   | A game mechanic in which the game tries to catch up to the Player. When the Pace successfully catches up to the Player, the game is over. |
-| **Wall**   | Inhibits the movement of the Player. |
-| **Point**  | Awarded when the Player based on movement. |
+### Alternative Running Methods
+Once installed, you can run the game multiple ways:
 
-## Game Rules
-- Objective is to get as far right through the maze as possible without being caught by the pace.
-- Points are awarded based on each movement the player performs to the **right**.
-- Points are taken away based on each movement the player performs to the **left**.
-- Pace will start at the 30 second mark, and become incrementally quicker every 30 seconds onwards.
+```bash
+# Modern entry point (recommended)
+poetry run infinite-maze
 
-## Controls
-|  Key           |  Action                 |
+# Python module execution
+python -m infinite_maze
+
+# Direct execution (legacy, still supported)
+python run_game.py
+```
+
+### Development Setup
+```bash
+# Install with development dependencies
+poetry install
+
+# Code formatting
+poetry run black infinite_maze/
+
+# Code linting
+poetry run flake8 infinite_maze/
+
+# Type checking
+poetry run mypy infinite_maze/
+```
+
+### First-Time Developer Setup
+If you're new to the project:
+
+1. **Clone the repository**
+2. **Run the setup script**: `./setup.sh` (Linux/macOS) or `setup.bat` (Windows)
+3. **Start developing!**
+
+The setup script will:
+- Check if Poetry is installed (and guide you to install it if needed)
+- Install all project dependencies
+- Verify everything works correctly
+
+## 🎯 Game Mechanics
+
+### Core Elements
+|  Element   |  Description  |
+| ---------- | ------------- |
+| **Player** | Your character (red dot) that moves through the maze |
+| **Pace Line** | The advancing boundary that pursues you - stay ahead or the game ends |
+| **Maze Walls** | Dynamically generated barriers that block your movement |
+| **Scoring** | Points awarded for rightward progress, deducted for leftward movement |
+
+### Game Rules
+- **Objective**: Navigate as far right through the infinite maze as possible
+- **Scoring System**: 
+  - +1 point for each rightward movement
+  - -1 point for each leftward movement (minimum score: 0)
+- **Pace Mechanic**: 
+  - Starts after 30 seconds
+  - Accelerates every 30 seconds thereafter
+  - Forces continuous forward progress
+- **Game Over**: When the pace line catches up to your position
+
+### Strategy Tips
+- **Plan Ahead**: Look for openings in the maze before the pace forces movement
+- **Minimize Backtracking**: Leftward movement costs points and wastes time
+- **Use Vertical Space**: Moving up/down doesn't affect score but can find better paths
+- **Stay Calm**: The pace increases, but panicking leads to poor decisions
+
+## ⌨️ Controls
+|  Key(s)        |  Action                 |
 | -------------- | ----------------------- |
-| **w, a, s, d** | up, left, down, right   |
-| **space**      | pause                   |
-| **esc, q**     | end game                |
-| **y, n**       | yes, no (when prompted) |
+| **W, A, S, D** | Move up, left, down, right |
+| **Arrow Keys** | Alternative movement controls |
+| **Space**      | Pause/unpause game |
+| **Esc, Q**     | Quit game |
+| **Y, N**       | Yes/No responses when prompted |
 
+## 📋 System Requirements
+- **Python**: 3.8+ (tested with Python 3.8-3.12)
+- **Dependencies**: Pygame 2.5+ (automatically managed by Poetry)
+- **Platforms**: Windows, macOS, Linux
+- **Memory**: ~50MB RAM
+- **Storage**: ~10MB disk space
 
-## Specifications
-The only software needed to run this program is Python. Infinite Maze Game
-was developed and tested using Python (v3.10.4).
+## 📚 Documentation
 
-**For RL Training**: Additional dependencies are required for the reinforcement learning implementation. Install them with:
+### Quick Links
+- **[📖 Complete Documentation](docs/)** - Comprehensive guides for players and developers
+- **[🎮 Player Guide](docs/player-guide.md)** - Master the game with strategies and tips
+- **[⚙️ Installation Guide](docs/installation-guide.md)** - Detailed setup instructions
+- **[🛠️ Developer Guide](docs/development.md)** - Development environment and workflow
+- **[🔧 Troubleshooting](docs/troubleshooting.md)** - Solve common issues
+
+### For Different Audiences
+- **New Players**: Start with [Installation Guide](docs/installation-guide.md), then [Player Guide](docs/player-guide.md)
+- **Developers**: Check [Development Guide](docs/development.md) and [Architecture Guide](docs/architecture.md)
+- **Contributors**: Read [Contributing Guide](docs/contributing.md) and [API Reference](docs/api-reference.md)
+
+## Development
+
+### Code Quality Tools
+- **Black**: Code formatting
+- **Flake8**: Code linting and style checking
+- **MyPy**: Static type checking
+- **Pre-commit**: Git hooks for code quality (optional)
+
+### Task Runners (Optional)
+For convenience, you can use modern task runners instead of remembering Poetry commands:
+
+#### Just (Recommended)
 ```bash
-pip install -r requirements.txt
+# Install Just: cargo install just
+just setup     # Setup project
+just run       # Run the game
+just format    # Format code
+just check     # Run all quality checks
 ```
 
-## Special Features
-Infinite Maze Game makes use of the Pygame library, which is a simple and easy way to
-create basic games, import images, and draw shapes. More information on Pygame can be found
-[**here**](https://www.pygame.org/docs/).
+#### Make (Traditional)
+If you prefer the traditional approach, basic commands:
+```bash
+# You can create your own Makefile with Poetry commands
+poetry install  # instead of 'make install'
+poetry run infinite-maze  # instead of 'make run'
+```
 
-## For Developers
-### Code Structure
-|  Directory           |  Description  |
-| -------------------- | ------------- |
-| **./**               | All setup and information files. |
-| **./img/**           | Image resources used in the game. |
-| **./infinite_maze/** | All Python code, and complied files. |
-| **./rl/**            | Reinforcement Learning implementation with DQN agents. |
+### Contributing
+1. Fork the repository
+2. Create a feature branch
+3. Make your changes with proper type hints and documentation
+4. Run the code quality tools
+5. Submit a pull request
 
-### RL Implementation
-The `rl/` directory contains a complete reinforcement learning implementation that trains AI agents to play Infinite Maze using Deep Q-Networks (DQN). Features include:
+## Migration from Legacy Version
+If you're upgrading from an older version using Makefile/setup.py:
 
-- **Custom Gymnasium Environment**: Full RL environment wrapper
-- **DQN Training**: State-of-the-art deep reinforcement learning
-- **Continue Training**: Resume training from saved models
-- **Evaluation Tools**: Test and compare agent performance
-- **TensorBoard Integration**: Monitor training progress
+```bash
+# Run the migration script
+python migrate_to_modern.py
+```
 
-For detailed RL documentation, see `rl/README.md`. 
+This will:
+- Back up your old configuration files
+- Set up Poetry and modern dependencies
+- Verify the new installation works correctly
+
+## Dependencies
+- **Pygame**: Game development library for graphics, sound, and input handling
+
+For more information about Pygame, visit [pygame.org](https://www.pygame.org/docs/).
+
+---
+
+**Infinite Maze Game** - Evolution, not revolution. Modern Python practices with classic gameplay.
