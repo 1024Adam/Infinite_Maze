@@ -1,11 +1,12 @@
 import pygame
 from pygame.locals import *
 
+
 class Clock:
     def __init__(self):
         self.time = pygame.time.Clock()
         self.startTime = self.time.get_time()
-        
+
         self.prevMillis = 0
         self.millis = 0
         self.millisPaused = 0
@@ -16,11 +17,11 @@ class Clock:
         self.time.tick()
         self.millis += self.time.get_time()
         self.tick()
-        
+
     def getTimeString(self):
         minutes = int(self.millis / 60000)
         seconds = int((self.millis / 1000) % 60)
-        return (f'{minutes:02}' + ':' + f'{seconds:02}')
+        return f"{minutes:02}" + ":" + f"{seconds:02}"
 
     def getFps(self):
         return self.time.get_fps()
@@ -28,7 +29,7 @@ class Clock:
     def reset(self):
         self.time = pygame.time.Clock()
         self.startTime = self.time.get_time()
-        
+
         self.prevMillis = 0
         self.millis = 0
         self.ticks = 0
@@ -47,7 +48,7 @@ class Clock:
 
     def rollbackMillis(self, rollback):
         self.millis -= rollback
-    
+
     def getMillisPaused(self):
         return self.millisPaused
 

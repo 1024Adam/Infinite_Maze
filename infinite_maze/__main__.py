@@ -1,7 +1,9 @@
 from .infinite_maze import maze
 
-def main(): 
+
+def main():
     maze()
 
-if __name__ == '__main__':
+
+if __name__ == "__main__":
     main()

@@ -1,11 +1,69 @@
-img/*.xcf
-dist/*
-build/*
-infinite_maze.egg-info/*
-infinite_maze/*.pyc
-infinite_maze/*.swp
+# Byte-compiled / optimized / DLL files
 __pycache__/
+*.py[cod]
+*$py.class
+*.pyc
+*.swp
+
+# C extensions
+*.so
+
+# Distribution / packaging
+.Python
+build/
+develop-eggs/
+dist/
+downloads/
+eggs/
+.eggs/
+lib/
+lib64/
+parts/
+sdist/
+var/
+wheels/
+share/python-wheels/
+*.egg-info/
+.installed.cfg
+*.egg
+MANIFEST
+
+# Poetry
+poetry.lock
+
+# Virtual environments
+.env
+.venv
+env/
+venv/
+ENV/
+env.bak/
+venv.bak/
+
+# IDE
+.vscode/
+.idea/
+
+# OS
+.DS_Store
+.DS_Store?
+._*
+.Spotlight-V100
+.Trashes
+ehthumbs.db
+Thumbs.db
+
+# Logs and models
 **/*logs**
 **/*models**
-.github/
-.vscode/
+
+# Game specific files
+img/*.xcf
+*.save
+game_logs/
+
+# Migration backup
+migration_backup/
+
+# GitHub workflows (uncomment if needed)
+# .github/
