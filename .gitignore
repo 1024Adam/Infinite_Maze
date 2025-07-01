@@ -5,3 +5,7 @@ infinite_maze.egg-info/*
 infinite_maze/*.pyc
 infinite_maze/*.swp
 __pycache__/
+**/*logs**
+**/*models**
+.github/
+.vscode/
