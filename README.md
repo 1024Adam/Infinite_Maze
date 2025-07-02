@@ -179,18 +179,6 @@ poetry run infinite-maze  # instead of 'make run'
 4. Run the code quality tools
 5. Submit a pull request
 
-## Migration from Legacy Version
-If you're upgrading from an older version using Makefile/setup.py:
-
-```bash
-# Run the migration script
-python migrate_to_modern.py
-```
-
-This will:
-- Back up your old configuration files
-- Set up Poetry and modern dependencies
-- Verify the new installation works correctly
 
 ## Dependencies
 - **Pygame**: Game development library for graphics, sound, and input handling
