@@ -1,10 +1,6 @@
 """
-Pytest configuration and shared fixtures for Infinite Maze tests.
-
-This module provides common fixtures, configuration, and utilities
-for testing the Infinite Maze game components.
+Pytest configuration and shared fixtures for the Infinite Maze test suite.
 """
-
 import pytest
 import pygame
 import sys
@@ -57,9 +53,11 @@ def mock_pygame_display():
 @pytest.fixture
 def mock_pygame_image():
     """Mock pygame image loading to avoid file dependencies."""
+    from infinite_maze.utils.config import config
+    
     with patch('pygame.image.load') as mock_load:
         mock_surface = Mock()
-        mock_surface.get_size.return_value = (20, 20)
+        mock_surface.get_size.return_value = (config.PLAYER_WIDTH, config.PLAYER_HEIGHT)
         mock_load.return_value = mock_surface
         yield mock_load
 

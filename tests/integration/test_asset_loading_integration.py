@@ -321,6 +321,8 @@ class TestAssetDisplayIntegration:
     
     def test_sprite_scaling_integration(self):
         """Test sprite scaling integration."""
+        from ..utils.config import config
+        
         with full_pygame_mocks() as mocks:
             # Test different sprite sizes
             sprite_sizes = [(10, 10), (20, 20), (5, 5), (30, 15)]
@@ -333,9 +335,9 @@ class TestAssetDisplayIntegration:
                 
                 player = Player(100, 100, headless=True)
                 
-                # Player should use sprite dimensions
-                assert player.getWidth() == width
-                assert player.getHeight() == height
+                # Player dimensions are now controlled by config, not sprite size
+                assert player.getWidth() == config.PLAYER_WIDTH
+                assert player.getHeight() == config.PLAYER_HEIGHT
     
     def test_sprite_position_integration(self):
         """Test sprite position integration with game coordinates."""
@@ -536,6 +538,8 @@ class TestAssetIntegrationScenarios:
     
     def test_asset_hot_reload_simulation(self):
         """Test asset hot reload simulation."""
+        from ..utils.config import config
+        
         with full_pygame_mocks() as mocks:
             # Initial asset
             initial_surface = Mock()
@@ -551,13 +555,14 @@ class TestAssetIntegrationScenarios:
             mocks['image']['load'].return_value = initial_surface
             player = Player(100, 100, headless=True)
             
-            assert player.getWidth() == 10
-            assert player.getHeight() == 10
+            # Player dimensions are controlled by config, not asset size
+            assert player.getWidth() == config.PLAYER_WIDTH
+            assert player.getHeight() == config.PLAYER_HEIGHT
             
             # Simulate asset reload
             mocks['image']['load'].return_value = updated_surface
             new_player = Player(200, 100, headless=True)
             
-            # New player should use updated asset
-            assert new_player.getWidth() == 20
-            assert new_player.getHeight() == 20
+            # New player should still use config dimensions
+            assert new_player.getWidth() == config.PLAYER_WIDTH
+            assert new_player.getHeight() == config.PLAYER_HEIGHT

@@ -43,15 +43,17 @@ class TestPlayerMazeCollisionDetection:
     
     def test_player_collision_boundary_cases(self):
         """Test collision detection at boundaries."""
-        player_width = 20  # Assuming default player width
-        player_height = 20  # Assuming default player height
+        from infinite_maze.utils.config import config
+        
+        player_width = config.PLAYER_WIDTH
+        player_height = config.PLAYER_HEIGHT
         
         # Player just touching wall (edge case)
         player = Player(80, 100, headless=True)
         wall = Line((100, 100), (140, 100))  # Horizontal wall at x=100
         
-        # Player at x=80 with width=20 should just touch wall at x=100
-        # Behavior depends on exact collision implementation
+        # Player at x=80 with current config width should not reach wall at x=100
+        # (80 + 10 = 90, wall at x=100, so no collision)
         collision_result = is_collision_detected(player, wall)
         # Either touching or not touching is acceptable depending on implementation
         assert isinstance(collision_result, bool)
@@ -60,11 +62,12 @@ class TestPlayerMazeCollisionDetection:
         """Test player collision detection with multiple walls."""
         player = Player(100, 100, headless=True)
         
+        # Adjust wall positions to properly surround a 10x10 player at (100, 100)
         walls = [
-            Line((90, 90), (130, 90)),    # Top wall
-            Line((90, 130), (130, 130)),  # Bottom wall
-            Line((90, 90), (90, 130)),    # Left wall
-            Line((130, 90), (130, 130))   # Right wall
+            Line((95, 95), (115, 95)),    # Top wall 
+            Line((95, 115), (115, 115)),  # Bottom wall
+            Line((95, 95), (95, 115)),    # Left wall
+            Line((115, 95), (115, 115))   # Right wall
         ]
         
         # Player surrounded by walls - should collide with at least one

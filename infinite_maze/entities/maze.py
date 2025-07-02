@@ -62,11 +62,13 @@ class Line:
         return self.isHorizontal
 
     def resetIsHorizontal(self):
-        self.isHorizontal = self.startPos[0] == self.endPos[0]
+        self.isHorizontal = self.start[1] == self.end[1]
 
     @staticmethod
     def getXMax(lines):
-        xMax = 0
+        if not lines:
+            return 0
+        xMax = lines[0].getXEnd()  # Initialize with first line's end
         for line in lines:
             lineEnd = line.getXEnd()
             if lineEnd > xMax:
