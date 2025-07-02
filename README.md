@@ -75,6 +75,34 @@ poetry run flake8 infinite_maze/
 poetry run mypy infinite_maze/
 ```
 
+### Testing
+```bash
+# Install test dependencies
+pip install -r requirements-test.txt
+
+# Run quick tests (unit + integration)
+python run_tests.py
+
+# Run all tests including performance benchmarks
+python run_tests.py all
+
+# Run with coverage report
+python run_tests.py unit --coverage
+
+# Run specific test categories
+pytest -m unit                    # Unit tests only
+pytest -m integration             # Integration tests only
+pytest -m functional              # End-to-end tests
+pytest -m performance --run-performance  # Performance benchmarks
+```
+
+The test suite includes:
+- **293 test methods** across 4 categories
+- **Unit tests**: Individual component testing
+- **Integration tests**: Component interaction testing  
+- **Functional tests**: End-to-end workflow testing
+- **Performance tests**: Efficiency and benchmark testing
+
 ### First-Time Developer Setup
 If you're new to the project:
 
@@ -179,18 +207,6 @@ poetry run infinite-maze  # instead of 'make run'
 4. Run the code quality tools
 5. Submit a pull request
 
-## Migration from Legacy Version
-If you're upgrading from an older version using Makefile/setup.py:
-
-```bash
-# Run the migration script
-python migrate_to_modern.py
-```
-
-This will:
-- Back up your old configuration files
-- Set up Poetry and modern dependencies
-- Verify the new installation works correctly
 
 ## Dependencies
 - **Pygame**: Game development library for graphics, sound, and input handling
