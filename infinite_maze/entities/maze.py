@@ -1,4 +1,5 @@
 from random import randint
+from ..utils.config import config
 
 
 class Line:
@@ -80,10 +81,10 @@ class Line:
             sideA = (19 * x) + 1
             sideB = sideA + 1
 
-            xPos = (22 * x) + game.X_MAX
+            xPos = (config.MAZE_CELL_SIZE * x) + game.X_MAX
             for y in range(1, height - 1):
-                yPos = (22 * y) + game.Y_MIN
-                lines.append(Line((xPos, yPos), (xPos + 22, yPos), sideA, sideB))
+                yPos = (config.MAZE_CELL_SIZE * y) + game.Y_MIN
+                lines.append(Line((xPos, yPos), (xPos + config.MAZE_CELL_SIZE, yPos), sideA, sideB))
                 sideA = sideB
                 sideB += 1
         # Vertical Line Gen
@@ -91,10 +92,10 @@ class Line:
             sideA = y + 1
             sideB = sideA + 19
 
-            yPos = (22 * y) + game.Y_MIN
+            yPos = (config.MAZE_CELL_SIZE * y) + game.Y_MIN
             for x in range(1, width * 2):
-                xPos = (22 * x) + game.X_MAX
-                lines.append(Line((xPos, yPos), (xPos, yPos + 22), sideA, sideB))
+                xPos = (config.MAZE_CELL_SIZE * x) + game.X_MAX
+                lines.append(Line((xPos, yPos), (xPos, yPos + config.MAZE_CELL_SIZE), sideA, sideB))
                 sideA = sideB
                 sideB += 19
 

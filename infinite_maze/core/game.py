@@ -5,13 +5,13 @@ from ..utils.config import config
 
 class Game:
     # Display config
-    WIDTH = 640
-    HEIGHT = 480
-    X_MIN = 80
+    WIDTH = config.SCREEN_WIDTH
+    HEIGHT = config.SCREEN_HEIGHT
+    X_MIN = config.PLAYER_START_X
     Y_MIN = 40
 
     X_MAX = WIDTH / 2
-    Y_MAX = HEIGHT - 32
+    Y_MAX = HEIGHT - config.ICON_SIZE
 
     SCORE_INCREMENT = 1
 
@@ -23,11 +23,11 @@ class Game:
             pygame.init()
 
             # Font Config
-            self.font = pygame.font.SysFont("", 20)
+            self.font = pygame.font.SysFont("", config.PLAYER_HEIGHT * 2)
 
             self.screen = pygame.display.set_mode((self.WIDTH, self.HEIGHT))
 
-            self.icon = pygame.Surface((32, 32))
+            self.icon = pygame.Surface((config.ICON_SIZE, config.ICON_SIZE))
             try:
                 iconImage = pygame.image.load(config.get_image_path("icon"))
                 self.icon.blit(iconImage, (0, 0))
@@ -67,7 +67,7 @@ class Game:
             if (
                 not self.paused
                 and self.clock.getMillis() > 10000
-                and self.clock.getSeconds() % 30 == 0
+                and self.clock.getSeconds() % config.PACE_UPDATE_INTERVAL == 0
                 and self.clock.getPrevSeconds() != self.clock.getSeconds()
             ):
                 self.pace += 1
@@ -92,7 +92,7 @@ class Game:
         if (
             not self.paused
             and self.clock.getMillis() > 10000
-            and self.clock.getSeconds() % 30 == 0
+            and self.clock.getSeconds() % config.PACE_UPDATE_INTERVAL == 0
             and self.clock.getPrevSeconds() != self.clock.getSeconds()
         ):
             self.pace += 1
@@ -108,28 +108,28 @@ class Game:
         pygame.draw.line(
             self.getScreen(),
             self.FG_COLOR,
-            (self.X_MIN, self.Y_MAX + 10),
-            (self.WIDTH, self.Y_MAX + 10),
+            (self.X_MIN, self.Y_MAX + config.BORDER_OFFSET),
+            (self.WIDTH, self.Y_MAX + config.BORDER_OFFSET),
             2,
         )
         pygame.draw.line(
-            self.getScreen(), self.FG_COLOR, (80, self.Y_MIN), (80, self.Y_MAX + 10), 2
+            self.getScreen(), self.FG_COLOR, (config.PLAYER_START_X, self.Y_MIN), (config.PLAYER_START_X, self.Y_MAX + config.BORDER_OFFSET), 2
         )
 
         # Print Display Text
         timeText = self.font.render(
             "Time: " + self.clock.getTimeString(), 1, self.FG_COLOR
         )
-        self.screen.blit(timeText, (10, 10))
+        self.screen.blit(timeText, (config.TEXT_MARGIN, config.TEXT_MARGIN))
         score_text = f"Score: {self.score}"
         scoreText = self.font.render(score_text, 1, self.FG_COLOR)
-        self.screen.blit(scoreText, (10, 25))
+        self.screen.blit(scoreText, (config.TEXT_MARGIN, config.TEXT_MARGIN + 15))
 
         if self.paused:
             scoreText = self.font.render(
                 "Paused (press space to continue)", 1, self.FG_COLOR
             )
-            self.screen.blit(scoreText, (100, 10))
+            self.screen.blit(scoreText, (100, config.TEXT_MARGIN))
 
         pygame.display.flip()
 
@@ -141,8 +141,8 @@ class Game:
         scoreText = self.font.render(score_text, 1, self.FG_COLOR)
 
         # Print Display Text
-        self.screen.blit(endText, (10, 10))
-        self.screen.blit(scoreText, (10, 25))
+        self.screen.blit(endText, (config.TEXT_MARGIN, config.TEXT_MARGIN))
+        self.screen.blit(scoreText, (config.TEXT_MARGIN, config.TEXT_MARGIN + 15))
 
         pygame.display.flip()
 
