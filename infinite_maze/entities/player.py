@@ -11,15 +11,15 @@ class Player:
                 self.cursor = pygame.image.load(image_path)
             except (pygame.error, FileNotFoundError):
                 # If player image can't be loaded, create a simple shape
-                self.cursor = pygame.Surface((10, 10))
+                self.cursor = pygame.Surface((config.PLAYER_WIDTH, config.PLAYER_HEIGHT))
                 self.cursor.fill(pygame.Color(255, 0, 0))  # Red square
         else:
             self.cursor = None
 
         self.position = (xPosition, yPosition)
-        self.width = 10
-        self.height = 10
-        self.speed = 1
+        self.width = config.PLAYER_WIDTH
+        self.height = config.PLAYER_HEIGHT
+        self.speed = config.PLAYER_SPEED
 
     def setX(self, xPosition):
         self.position = (xPosition, self.position[1])
@@ -67,4 +67,4 @@ class Player:
     def reset(self, xPosition, yPosition):
         self.setX(xPosition)
         self.setY(yPosition)
-        self.speed = 1
+        self.speed = config.PLAYER_SPEED

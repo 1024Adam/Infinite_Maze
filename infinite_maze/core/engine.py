@@ -3,12 +3,13 @@ from pygame import time
 from ..entities.player import Player
 from .game import Game
 from ..entities.maze import Line
+from ..utils.config import config
 
-DO_NOTHING = 0
-RIGHT = 1
-LEFT = 2
-UP = 3
-DOWN = 4
+DO_NOTHING = config.get_movement_constant("DO_NOTHING")
+RIGHT = config.get_movement_constant("RIGHT")
+LEFT = config.get_movement_constant("LEFT")
+UP = config.get_movement_constant("UP")
+DOWN = config.get_movement_constant("DOWN")
 
 
 def maze():
@@ -16,10 +17,10 @@ def maze():
     game = Game()
 
     # Player Stats/Position/Details
-    player = Player(80, 223)
+    player = Player(config.PLAYER_START_X, config.PLAYER_START_Y)
 
     # Maze Details
-    lines = Line.generateMaze(game, 15, 20)
+    lines = Line.generateMaze(game, config.MAZE_ROWS, config.MAZE_COLS)
 
     game.getClock().reset()
     keys = pygame.key.get_pressed()
@@ -186,12 +187,12 @@ def maze():
                 for line in lines:
                     start = line.getXStart()
                     end = line.getXEnd()
-                    if start < 80:
+                    if start < config.PLAYER_START_X:
                         line.setXStart(xMax)
                         if start == end:
                             line.setXEnd(xMax)
                         else:
-                            line.setXEnd(xMax + 22)
+                            line.setXEnd(xMax + config.MAZE_CELL_SIZE)
 
             # Pause Event
             if prevKeys[pygame.K_SPACE] and not keys[pygame.K_SPACE]:
@@ -215,8 +216,8 @@ def maze():
             processTime = int(
                 game.getClock().getMillis() - game.getClock().getPrevMillis()
             )
-            if processTime <= 16:
-                time.delay(16 - processTime)
+            if processTime <= config.FPS_DELAY_MS:
+                time.delay(config.FPS_DELAY_MS - processTime)
 
         # Game has ended
         game.printEndDisplay()
@@ -225,10 +226,10 @@ def maze():
         keys = pygame.key.get_pressed()
         if keys[pygame.K_y]:
             game.reset()
-            player.reset(80, (game.HEIGHT / 2))
+            player.reset(config.PLAYER_START_X, (game.HEIGHT / 2))
 
             # Maze Details
-            lines = Line.generateMaze(game, 15, 20)
+            lines = Line.generateMaze(game, config.MAZE_ROWS, config.MAZE_COLS)
 
             game.getClock().reset()
         if keys[pygame.K_n]:
@@ -253,10 +254,10 @@ def controlled_run(wrapper, counter):
     game = Game()
 
     # Player Stats/Position/Details
-    player = Player(80, 223)
+    player = Player(config.PLAYER_START_X, config.PLAYER_START_Y)
 
     # Maze Details
-    lines = Line.generateMaze(game, 15, 20)
+    lines = Line.generateMaze(game, config.MAZE_ROWS, config.MAZE_COLS)
 
     game.getClock().reset()
     keys = pygame.key.get_pressed()
@@ -442,19 +443,19 @@ def controlled_run(wrapper, counter):
                 for line in lines:
                     start = line.getXStart()
                     end = line.getXEnd()
-                    if start < 80:
+                    if start < config.PLAYER_START_X:
                         line.setXStart(xMax)
                         if start == end:
                             line.setXEnd(xMax)
                         else:
-                            line.setXEnd(xMax + 22)
+                            line.setXEnd(xMax + config.MAZE_CELL_SIZE)
 
             # Process FPS
             processTime = int(
                 game.getClock().getMillis() - game.getClock().getPrevMillis()
             )
-            if processTime <= 16:
-                time.delay(16 - processTime)
+            if processTime <= config.FPS_DELAY_MS:
+                time.delay(config.FPS_DELAY_MS - processTime)
 
             closestLine = 1000
             for line in lines:
