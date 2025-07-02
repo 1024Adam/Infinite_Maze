@@ -232,18 +232,77 @@ Display Update → State Persistence
 
 ## 🧪 Testing Architecture
 
+### Test Suite Overview
+The project includes a comprehensive test suite with **293 test methods** across four distinct categories:
+
 ### Test Categories
-1. **Unit Tests**: Individual component testing
-2. **Integration Tests**: Component interaction testing
-3. **Headless Mode**: Game logic testing without GUI
-4. **Performance Tests**: Frame rate and memory usage validation
+1. **Unit Tests (184 tests)**: Individual component testing in isolation
+   - Player movement and collision bounds
+   - Game state management and scoring
+   - Clock timing and FPS monitoring
+   - Maze generation algorithms
+   - Configuration management
+
+2. **Integration Tests (69 tests)**: Component interaction testing
+   - Player-maze collision detection
+   - Game engine coordination
+   - Asset loading integration
+   - State synchronization between components
+
+3. **Functional Tests (21 tests)**: End-to-end workflow testing
+   - Complete gameplay scenarios
+   - Game state transitions (pause/resume, game over)
+   - User interaction simulation
+
+4. **Performance Tests (19 tests)**: Efficiency and benchmark validation
+   - Frame rate stability (60 FPS target)
+   - Memory usage monitoring (<200MB target)
+   - Collision detection speed (>1M checks/sec)
+   - Game loop efficiency (<16.67ms/frame)
+
+### Test Infrastructure
+- **Pygame Mocking**: Headless testing without actual display/audio
+- **Performance Monitoring**: Built-in benchmarking utilities
+- **Deterministic Testing**: Controlled timing and input simulation
+- **CI/CD Ready**: Automated testing environment support
+
+### Test Structure
+```
+tests/
+├── conftest.py                    # Pytest configuration
+├── fixtures/                     # Test utilities
+│   ├── game_fixtures.py          # Game-specific fixtures
+│   ├── pygame_mocks.py           # Pygame mocking framework
+│   └── test_helpers.py           # Common utilities
+├── unit/                         # Component isolation tests
+├── integration/                  # Component interaction tests
+├── functional/                   # End-to-end workflow tests
+└── performance/                  # Efficiency benchmarks
+```
 
 ### Testable Components
-- Configuration system
-- Maze generation algorithms
-- Collision detection logic
-- Scoring system
-- Game state transitions
+- **Configuration System**: Asset paths, game settings validation
+- **Maze Generation**: Algorithm correctness and performance
+- **Collision Detection**: Accuracy and efficiency testing
+- **Scoring System**: Point calculation and boundary enforcement
+- **Game State Management**: Pause/resume, game over, restart workflows
+- **Player Movement**: Position tracking, boundary validation
+- **Clock System**: Timing accuracy, FPS monitoring, rollback functionality
+
+### Running Tests
+```bash
+# Quick development tests
+python run_tests.py
+
+# Comprehensive testing
+python run_tests.py all --coverage
+
+# Category-specific testing
+python run_tests.py unit
+python run_tests.py integration
+python run_tests.py functional
+python run_tests.py performance
+```
 
 ## 🔧 Extension Points
 

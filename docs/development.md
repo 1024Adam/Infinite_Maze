@@ -42,6 +42,33 @@ poetry run mypy infinite_maze/
 poetry run python -c "import shutil, pathlib; [shutil.rmtree(p) for p in pathlib.Path('.').rglob('__pycache__')]"
 ```
 
+### Testing
+```bash
+# Install test dependencies
+pip install -r requirements-test.txt
+
+# Run quick tests (unit + integration)
+python run_tests.py
+
+# Run all tests including performance tests
+python run_tests.py all
+
+# Run specific test categories
+python run_tests.py unit
+python run_tests.py integration
+python run_tests.py functional
+python run_tests.py performance
+
+# Run with coverage report
+python run_tests.py unit --coverage
+
+# Using pytest directly
+pytest                              # Run all tests
+pytest -m unit                      # Unit tests only
+pytest -m integration               # Integration tests only
+pytest --cov=infinite_maze --cov-report=html  # Coverage report
+```
+
 ### Building and Distribution
 ```bash
 # Build the package

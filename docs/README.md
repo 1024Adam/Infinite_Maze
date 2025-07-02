@@ -15,6 +15,7 @@ Welcome to the comprehensive documentation for Infinite Maze! This directory con
 - **[Architecture Guide](architecture.md)** - Technical architecture, design patterns, and system overview
 - **[API Reference](api-reference.md)** - Complete class and method documentation
 - **[Development Guide](development.md)** - Development environment setup and workflow
+- **[Testing Guide](testing-guide.md)** - Comprehensive testing documentation and best practices
 - **[Contributing Guide](contributing.md)** - How to contribute code, documentation, and feedback
 
 ### 📋 Project Information
@@ -31,13 +32,15 @@ Welcome to the comprehensive documentation for Infinite Maze! This directory con
 ### For New Developers
 1. **[Development Guide](development.md)** - Set up your development environment
 2. **[Architecture Guide](architecture.md)** - Understand the codebase structure
-3. **[Contributing Guide](contributing.md)** - Learn our development workflow
-4. **[API Reference](api-reference.md)** - Detailed technical documentation
+3. **[Testing Guide](testing-guide.md)** - Learn the test suite and testing practices
+4. **[Contributing Guide](contributing.md)** - Learn our development workflow
+5. **[API Reference](api-reference.md)** - Detailed technical documentation
 
 ### For Contributors
 1. **[Contributing Guide](contributing.md)** - Comprehensive contribution guidelines
 2. **[Development Guide](development.md)** - Technical setup and tools
-3. **[API Reference](api-reference.md)** - Code reference for modifications
+3. **[Testing Guide](testing-guide.md)** - Test suite usage and best practices
+4. **[API Reference](api-reference.md)** - Code reference for modifications
 
 ## 📖 Documentation Features
 
@@ -90,9 +93,10 @@ Infinite Maze is a fast-paced, procedurally generated maze navigation game where
 - ✅ **Enhanced Documentation**: Comprehensive guides and references
 - ✅ **Code Quality**: Formatted, linted, and type-checked codebase
 - ✅ **Multiple Entry Points**: Flexible installation and execution options
+- ✅ **Comprehensive Testing**: 293 automated tests across 4 categories
 
 ### Development Roadmap
-- 🔄 **Testing Framework**: Automated testing implementation
+- ✅ **Testing Framework**: Complete automated testing implementation
 - 🔄 **Enhanced Graphics**: Improved sprites and visual effects
 - 📋 **Game Modes**: Additional gameplay variants
 - 📋 **Performance Optimization**: Further engine improvements

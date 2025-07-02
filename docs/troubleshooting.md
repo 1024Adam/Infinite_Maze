@@ -649,6 +649,95 @@ Full error message here
 
 ---
 
+## 🧪 Testing Issues
+
+### Test Suite Not Running
+
+**Problem**: `python run_tests.py` fails or tests don't execute
+
+**Solutions:**
+1. **Install Test Dependencies:**
+   ```bash
+   pip install -r requirements-test.txt
+   ```
+
+2. **Check Python Path:**
+   ```bash
+   # Add project to Python path
+   export PYTHONPATH="${PYTHONPATH}:$(pwd)"  # Linux/macOS
+   set PYTHONPATH=%PYTHONPATH%;%CD%          # Windows
+   ```
+
+3. **Use Direct Pytest:**
+   ```bash
+   python -m pytest tests/
+   ```
+
+### Pygame Display Errors in Tests
+
+**Problem**: "pygame.error: video system not initialized" during tests
+
+**Solutions:**
+- Tests should use `headless=True` mode automatically
+- Check that test fixtures are properly configured
+- Verify test imports use mocked pygame components
+
+### Performance Tests Failing
+
+**Problem**: Performance tests fail on slower systems
+
+**Solutions:**
+1. **Skip Performance Tests:**
+   ```bash
+   pytest --skip-slow
+   python run_tests.py unit  # Runs only unit tests
+   ```
+
+2. **Run Performance Tests in Isolation:**
+   ```bash
+   pytest -m performance --run-performance
+   ```
+
+3. **Check System Load:**
+   - Close other applications
+   - Run tests when system is idle
+
+### Import Errors in Tests
+
+**Problem**: "ModuleNotFoundError" when running tests
+
+**Solutions:**
+1. **Install in Development Mode:**
+   ```bash
+   pip install -e .
+   ```
+
+2. **Check Package Structure:**
+   ```bash
+   python -c "import infinite_maze; print(infinite_maze.__file__)"
+   ```
+
+### Coverage Report Issues
+
+**Problem**: Coverage reports show incorrect or missing coverage
+
+**Solutions:**
+1. **Install Coverage Tools:**
+   ```bash
+   pip install pytest-cov
+   ```
+
+2. **Run with Explicit Coverage:**
+   ```bash
+   pytest --cov=infinite_maze --cov-report=html
+   ```
+
+3. **Check Coverage Configuration:**
+   - Verify `.coveragerc` file if present
+   - Ensure source paths are correct
+
+---
+
 ## ✅ Prevention Tips
 
 ### Avoiding Common Issues

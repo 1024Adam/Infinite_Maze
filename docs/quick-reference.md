@@ -76,6 +76,13 @@ poetry run black infinite_maze/  # Format code
 poetry run flake8 infinite_maze/ # Lint code
 poetry run mypy infinite_maze/   # Type check
 
+# Testing
+pip install -r requirements-test.txt  # Install test deps (one-time)
+python run_tests.py             # Quick tests (unit + integration)
+python run_tests.py all         # All tests including performance
+python run_tests.py unit --coverage  # Unit tests with coverage
+pytest -m unit                  # Direct pytest unit tests
+
 # Using Just task runner (optional)
 just setup                     # Setup environment
 just run                       # Run game

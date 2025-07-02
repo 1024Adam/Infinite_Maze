@@ -156,6 +156,26 @@ poetry run infinite-maze
 # - Edge cases and error conditions
 ```
 
+#### Automated Testing
+```bash
+# Install test dependencies
+pip install -r requirements-test.txt
+
+# Run quick tests during development
+python run_tests.py
+
+# Run relevant test categories
+python run_tests.py unit          # Unit tests for component changes
+python run_tests.py integration   # Integration tests for multi-component changes
+python run_tests.py functional    # End-to-end tests for feature changes
+
+# Run with coverage to verify your changes are tested
+python run_tests.py unit --coverage
+
+# Run performance tests if you've made performance-related changes
+python run_tests.py performance
+```
+
 #### Code Quality Checks
 ```bash
 # Run all quality checks
@@ -172,6 +192,9 @@ poetry run mypy infinite_maze/
 - [ ] Code follows style guidelines
 - [ ] No new linting errors
 - [ ] Type checking passes
+- [ ] Automated tests pass: `python run_tests.py`
+- [ ] New functionality has corresponding tests
+- [ ] Test coverage remains high
 
 ### 3. Commit Guidelines
 
@@ -435,6 +458,97 @@ Any additional information or context about the changes.
 ---
 
 ## 🧪 Testing Guidelines
+
+### Test Suite Overview
+
+The project includes a comprehensive test suite with 293 test methods across four categories:
+
+- **Unit Tests**: Test individual components in isolation (184 tests)
+- **Integration Tests**: Test component interactions (69 tests) 
+- **Functional Tests**: Test complete workflows (21 tests)
+- **Performance Tests**: Test efficiency and benchmarks (19 tests)
+
+### Running Tests
+
+#### Quick Testing (Development)
+```bash
+# Install test dependencies (one-time setup)
+pip install -r requirements-test.txt
+
+# Quick tests for daily development
+python run_tests.py              # Unit + integration tests
+python run_tests.py unit         # Unit tests only
+python -m pytest tests/unit/     # Direct pytest for unit tests
+```
+
+#### Comprehensive Testing
+```bash
+# Full test suite with coverage
+python run_tests.py all --coverage
+
+# Performance tests (when making performance changes)
+python run_tests.py performance
+
+# Specific test categories
+python run_tests.py functional   # End-to-end workflows
+python run_tests.py integration  # Component interactions
+```
+
+#### Test Development
+```bash
+# Run specific test files
+python -m pytest tests/unit/test_player.py
+
+# Run tests matching a pattern
+python -m pytest -k "collision"
+
+# Run tests with specific markers
+python -m pytest -m unit
+python -m pytest -m performance --run-performance
+```
+
+### Writing Tests
+
+When adding new features or fixing bugs, include appropriate tests:
+
+#### Test Categories by Change Type
+- **New Components**: Add unit tests in `tests/unit/`
+- **Component Integration**: Add integration tests in `tests/integration/`
+- **New Features**: Add functional tests in `tests/functional/`
+- **Performance Changes**: Update/add performance tests in `tests/performance/`
+
+#### Test Structure Example
+```python
+# tests/unit/test_new_component.py
+class TestNewComponent:
+    def test_initialization(self):
+        component = NewComponent()
+        assert component.is_valid()
+        
+    def test_specific_behavior(self):
+        component = NewComponent()
+        result = component.do_something()
+        assert result == expected_value
+```
+
+#### Using Test Fixtures
+```python
+def test_with_game_fixture(headless_game, test_player):
+    """Test using shared fixtures for consistent setup."""
+    game = headless_game
+    player = test_player
+    
+    # Your test implementation
+    assert game.isActive()
+    assert player.getPosition() == (80, 223)
+```
+
+### Test Quality Standards
+- **Coverage**: Aim for >95% line coverage for new code
+- **Isolation**: Unit tests should not depend on external systems
+- **Deterministic**: Tests should produce consistent results
+- **Fast**: Unit tests should complete quickly (<100ms each)
+- **Clear**: Test names should clearly describe what is being tested
 
 ### Manual Testing Scenarios
 
