@@ -55,7 +55,7 @@ Thumbs.db
 
 # Logs and models
 **/*logs**
-ai_models/**models/**
+**/saved_models/**
 
 # Game specific files
 img/*.xcf
