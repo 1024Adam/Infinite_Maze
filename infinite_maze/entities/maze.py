@@ -126,3 +126,125 @@ class Line:
                     sets.append(tempSideB)
 
         return lines
+
+
+class Maze:
+    """
+    Maze class that wraps the line-based maze representation for AI training.
+    
+    This class provides an interface for the AI environment to interact with the maze
+    while using the existing Line-based implementation underneath.
+    """
+    
+    def __init__(self, game=None, lines=None):
+        """
+        Initialize the Maze with either a game instance or a list of lines.
+        
+        Args:
+            game: The Game instance to generate a maze for
+            lines: Existing line objects that make up the maze
+        """
+        self.game = game
+        self.lines = lines if lines is not None else []
+        self.visited = set()  # Track visited cells for the AI
+        
+        if game is not None and not lines:
+            # Generate a new maze if a game is provided
+            self.lines = Line.generateMaze(game, config.MAZE_ROWS, config.MAZE_COLS)
+    
+    def regenerate(self, game):
+        """Regenerate the maze for a new game"""
+        self.game = game
+        self.lines = Line.generateMaze(game, config.MAZE_ROWS, config.MAZE_COLS)
+        self.visited = set()
+    
+    def get_lines(self):
+        """Get all lines in the maze"""
+        return self.lines
+    
+    def update_lines(self, lines):
+        """Update the maze with new lines"""
+        self.lines = lines
+    
+    def is_wall(self, x, y):
+        """
+        Check if there's a wall at the given coordinates.
+        This is used by the AI to detect collision points.
+        
+        Args:
+            x: X coordinate
+            y: Y coordinate
+            
+        Returns:
+            True if a wall is present at (x,y), False otherwise
+        """
+        # Wall detection logic checks against maze lines
+        # This is an approximate check to see if the point is very close to any wall line
+        buffer = 5  # Increased buffer for more strict collision detection
+        player_size = 10  # Consider player size for collision detection
+        
+        # Check for collisions with wall lines
+        for line in self.lines:
+            if line.getIsHorizontal():
+                # Horizontal line check - expand collision area to account for player size
+                if (abs(y - line.getYStart()) < buffer + (player_size/2) and
+                    x >= line.getXStart() - buffer - (player_size/2) and 
+                    x <= line.getXEnd() + buffer + (player_size/2)):
+                    return True
+            else:
+                # Vertical line check - expand collision area to account for player size
+                if (abs(x - line.getXStart()) < buffer + (player_size/2) and
+                    y >= line.getYStart() - buffer - (player_size/2) and 
+                    y <= line.getYEnd() + buffer + (player_size/2)):
+                    return True
+        
+        # Also check game boundary walls
+        if self.game:
+            if (x < self.game.X_MIN + buffer or
+                y < self.game.Y_MIN + buffer or
+                y > self.game.Y_MAX - buffer):
+                return True
+            
+        return False
+        
+    def check_collision(self, x, y, dx, dy):
+        """
+        Check if moving from (x,y) by (dx,dy) would result in a collision.
+        Performs multiple checks along the path to prevent tunneling through walls.
+        
+        Args:
+            x: Starting X coordinate
+            y: Starting Y coordinate
+            dx: X movement amount
+            dy: Y movement amount
+            
+        Returns:
+            True if collision would occur, False otherwise
+        """
+        # Check multiple points along the path to prevent tunneling
+        steps = max(1, int(max(abs(dx), abs(dy)) / 2))
+        
+        for i in range(steps + 1):
+            # Calculate intermediate position
+            t = i / steps if steps > 0 else 0
+            check_x = x + dx * t
+            check_y = y + dy * t
+            
+            # Check for wall at this position
+            if self.is_wall(check_x, check_y):
+                return True
+                
+        return False
+    
+    def mark_visited(self, x, y):
+        """Mark a cell as visited (for exploration tracking)"""
+        # Convert to grid coordinates for tracking
+        grid_x = int(x // config.MAZE_CELL_SIZE)
+        grid_y = int(y // config.MAZE_CELL_SIZE)
+        self.visited.add((grid_x, grid_y))
+    
+    def is_visited(self, x, y):
+        """Check if a cell has been visited"""
+        grid_x = int(x // config.MAZE_CELL_SIZE)
+        grid_y = int(y // config.MAZE_CELL_SIZE)
+        return (grid_x, grid_y) in self.visited
