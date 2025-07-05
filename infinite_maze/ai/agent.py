@@ -27,10 +27,11 @@ class ReplayBuffer:
     """
     Experience replay buffer for storing and sampling transitions.
     
-    Implements prioritized experience replay for more efficient learning.
+    Implements enhanced prioritized experience replay for more efficient learning,
+    with special handling for balanced action distribution.
     """
     
-    def __init__(self, capacity: int = 1_000_000, alpha: float = 0.6):
+    def __init__(self, capacity: int = 1_000_000, alpha: float = 0.7):  # Increased alpha for stronger prioritization
         """
         Initialize the replay buffer.
         
@@ -44,10 +45,18 @@ class ReplayBuffer:
         self.priorities = np.zeros((capacity,), dtype=np.float32)
         self.alpha = alpha
         
+        # Track action distribution in buffer for balancing
+        self.action_counts = {0: 0, 1: 0, 2: 0, 3: 0, 4: 0}
+        self.total_actions = 0
+        
+        # Track recent additions to boost diversity
+        self.recent_actions = []
+        self.max_recent_track = 100  # Track last 100 added actions
+        
     def add(self, state: Dict[str, np.ndarray], action: int, reward: float, 
             next_state: Dict[str, np.ndarray], done: bool) -> None:
         """
-        Add an experience to the buffer.
+        Add an experience to the buffer with enhanced priority handling.
         
         Args:
             state: Current state
@@ -58,18 +67,57 @@ class ReplayBuffer:
         """
         experience = Experience(state, action, reward, next_state, done)
         
+        # Track action distribution
+        if len(self.memory) >= self.capacity:
+            # Remove old action from counts when overwriting
+            old_action = self.memory[self.position].action
+            self.action_counts[old_action] -= 1
+            self.total_actions -= 1
+            
+        # Add new action to counts
+        self.action_counts[action] += 1
+        self.total_actions += 1
+        
+        # Update recent actions list
+        self.recent_actions.append(action)
+        if len(self.recent_actions) > self.max_recent_track:
+            self.recent_actions.pop(0)
+        
+        # Add experience to memory
         if len(self.memory) < self.capacity:
             self.memory.append(experience)
         else:
             self.memory[self.position] = experience
             
-        # Set max priority for new experiences
+        # Calculate base priority
         max_priority = self.priorities.max() if self.memory else 1.0
+        base_priority = max_priority
         
+        # Apply priority boosting for underrepresented actions
+        if self.total_actions > 100:  # Once we have enough data to calculate distributions
+            action_frequency = self.action_counts[action] / self.total_actions
+            
+            # Boost priority for rare actions (especially RIGHT and LEFT)
+            if action == 1:  # RIGHT action
+                if action_frequency < 0.25:  # We want a good amount of RIGHT actions
+                    boost_factor = 1.5 - (action_frequency / 0.25)  # More boost when more rare
+                    base_priority *= min(2.0, max(1.0, boost_factor))
+            elif action == 3:  # LEFT action
+                if action_frequency < 0.05:  # We want some LEFT exploration
+                    boost_factor = 1.3 - (action_frequency / 0.05)
+                    base_priority *= min(1.8, max(1.0, boost_factor))
+                    
+            # Reduce priority for over-represented actions
+            vertical_freq = (self.action_counts[0] + self.action_counts[2]) / self.total_actions
+            if action in [0, 2] and vertical_freq > 0.4:  # UP or DOWN when already overrepresented
+                reduction_factor = max(0.5, 1.0 - ((vertical_freq - 0.4) / 0.6))
+                base_priority *= reduction_factor
+                
+        # Set priority with calculated adjustments
         if len(self.memory) < self.capacity:
-            self.priorities = np.append(self.priorities, max_priority)
+            self.priorities = np.append(self.priorities, base_priority)
         else:
-            self.priorities[self.position] = max_priority
+            self.priorities[self.position] = base_priority
             
         self.position = (self.position + 1) % self.capacity
     
@@ -585,11 +633,11 @@ class RainbowDQNAgent:
             path: Directory path to load from
         """
         # Load model weights
-        self.policy_net.load_state_dict(torch.load(os.path.join(path, 'policy_net.pt')))
-        self.target_net.load_state_dict(torch.load(os.path.join(path, 'target_net.pt')))
+        self.policy_net.load_state_dict(torch.load(os.path.join(path, 'policy_net.pt'), weights_only=True))
+        self.target_net.load_state_dict(torch.load(os.path.join(path, 'target_net.pt'), weights_only=True))
         
         # Load optimizer state
-        self.optimizer.load_state_dict(torch.load(os.path.join(path, 'optimizer.pt')))
+        self.optimizer.load_state_dict(torch.load(os.path.join(path, 'optimizer.pt'), weights_only=True))
         
         # Load training state
         with open(os.path.join(path, 'training_state.json'), 'r') as f:
