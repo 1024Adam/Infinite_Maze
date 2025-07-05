@@ -15,7 +15,7 @@ import matplotlib.pyplot as plt
 from datetime import datetime
 from typing import Dict, Any, List, Tuple
 
-from infinite_maze.ai.environment import InfiniteMazeEnv
+from infinite_maze.ai.phase1_env import InfiniteMazeEnv
 from infinite_maze.ai.agent import RainbowDQNAgent
 
 def smooth_curve(points: List[float], factor: float = 0.8) -> np.ndarray:
@@ -119,9 +119,9 @@ def check_phase_completion(eval_stats: Dict[str, float], success_criteria: Dict[
     for criterion, threshold in success_criteria.items():
         if criterion in eval_stats:
             results[criterion] = {
-                'value': eval_stats[criterion],
-                'threshold': threshold,
-                'passed': eval_stats[criterion] >= threshold
+                'value': float(eval_stats[criterion]),
+                'threshold': float(threshold),
+                'passed': bool(eval_stats[criterion] >= threshold)
             }
     
     # Overall success if all criteria are met
@@ -246,6 +246,7 @@ def train_phase_1(steps: int = 500000,
         
         # Progress reporting with estimated time
         if steps_done >= last_progress_step + progress_interval:
+            current_timestamp = datetime.now()
             current_time = time.time()
             elapsed = current_time - start_time
             progress_percent = (steps_done / steps) * 100
@@ -264,8 +265,9 @@ def train_phase_1(steps: int = 500000,
                 remaining_mins, remaining_secs = divmod(remainder, 60)
                 
                 progress_speed = (steps_done - last_progress_step) / (current_time - last_progress_time)
-                
-                print(f"\n[Progress: {progress_percent:.1f}%] Steps: {steps_done}/{steps}")
+
+                print(f"\nTimestamp: {current_timestamp}")
+                print(f"[Progress: {progress_percent:.1f}%] Steps: {steps_done}/{steps}")
                 print(f"Time elapsed: {int(elapsed_hrs)}h {int(elapsed_mins)}m {int(elapsed_secs)}s | " 
                      f"Estimated remaining: {int(remaining_hrs)}h {int(remaining_mins)}m {int(remaining_secs)}s")
                 print(f"Training speed: {progress_speed:.1f} steps/sec | Episodes completed: {episode}")
@@ -282,12 +284,15 @@ def train_phase_1(steps: int = 500000,
             print(f"Episode {episode} | Steps: {steps_done}/{steps} | "
                  f"Reward: {episode_stats['reward']:.2f} | Eps: {agent.epsilon:.3f}")
         
-        # Evaluation
-        if steps_done % eval_interval == 0:
+        # Evaluation - check if we've crossed an evaluation threshold
+        next_eval_step = (steps_done // eval_interval) * eval_interval
+        if next_eval_step > 0 and steps_done >= next_eval_step and (last_eval_step := getattr(agent, 'last_eval_step', -eval_interval)) < next_eval_step:
             print("\n=== Running evaluation... ===")
             eval_start_time = time.time()
             eval_stats = agent.evaluate(eval_env, num_episodes=10)
             eval_duration = time.time() - eval_start_time
+            # Store the last evaluation step to avoid repeated evaluations
+            agent.last_eval_step = next_eval_step
             
             progress_percent = (steps_done / steps) * 100
             print(f"[Progress: {progress_percent:.1f}%] Evaluation Results:")
@@ -325,14 +330,18 @@ def train_phase_1(steps: int = 500000,
                 agent.save(os.path.join(run_dir, 'final_model'))
                 training_complete = True
         
-        # Regular checkpoints
-        if steps_done % save_interval == 0:
-            checkpoint_path = os.path.join(run_dir, f'checkpoint_step_{steps_done}')
+        # Regular checkpoints - check if we've crossed a checkpoint threshold
+        next_save_step = (steps_done // save_interval) * save_interval
+        if next_save_step > 0 and steps_done >= next_save_step and (last_save_step := getattr(agent, 'last_save_step', -save_interval)) < next_save_step:
+            checkpoint_path = os.path.join(run_dir, f'checkpoint_step_{next_save_step}')
             agent.save(checkpoint_path)
-            print(f"Checkpoint saved at step {steps_done}")
+            print(f"Checkpoint saved at step {next_save_step}")
             
             # Plot and save training metrics
             plot_training_metrics(agent.training_metrics, os.path.join(run_dir, 'plots'))
+            
+            # Store the last save step to avoid repeated saves
+            agent.last_save_step = next_save_step
     
     # Final save
     if not training_complete:
