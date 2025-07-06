@@ -8,12 +8,50 @@ reinforcement learning agents for the Infinite Maze game.
 import argparse
 import os
 import sys
-from infinite_maze.ai.train_phase1 import train_phase_1
-from infinite_maze.ai.train_phase2 import train_phase_2
-from infinite_maze.ai.evaluate_phase1 import evaluate_agent, load_trained_agent, visualize_evaluation
-from infinite_maze.ai.evaluate_phase2 import run_comprehensive_evaluation
-from infinite_maze.ai.phase1_env import InfiniteMazeEnv
-from infinite_maze.ai.phase2_env import Phase2MazeEnv
+import torch
+
+def run_comprehensive_evaluation(model_path, save_dir, device='cpu', render_mode=None):
+    """
+    Run a comprehensive evaluation of a trained agent.
+    
+    Args:
+        model_path: Path to the trained model
+        save_dir: Directory to save evaluation results
+        device: Device to load the model on
+        render_mode: Rendering mode (None, 'human', 'rgb_array')
+        
+    Returns:
+        Evaluation results
+    """
+    from infinite_maze.ai.evaluation.evaluate_phase2 import evaluate_agent, load_trained_agent, visualize_evaluation
+    from infinite_maze.ai.environments.environment_phase2 import Phase2MazeEnv
+    import os
+    
+    # Create save directory if it doesn't exist
+    os.makedirs(save_dir, exist_ok=True)
+    
+    # Load the agent
+    agent = load_trained_agent(model_path, device)
+    
+    # Create evaluation environments with different configurations
+    # 1. Standard evaluation
+    standard_env = Phase2MazeEnv(
+        pace_enabled=True,
+        pace_speed=0.2,
+        pace_acceleration=False,
+        render_mode=render_mode,
+        start_position_difficulty=0.5
+    )
+    
+    # Run standard evaluation
+    print("Running standard evaluation...")
+    standard_results = evaluate_agent(agent, standard_env, num_episodes=10, render=(render_mode is not None))
+    
+    # Save and visualize results
+    visualize_evaluation(standard_results, save_dir)
+    
+    # Return the standard evaluation results
+    return standard_results
 
 def main():
     """
@@ -26,7 +64,7 @@ def main():
     train_parser = subparsers.add_parser('train', help='Train an agent')
     train_parser.add_argument('--phase', type=int, default=1, choices=[1, 2, 3, 4, 5],
                             help='Training phase (1-5)')
-    train_parser.add_argument('--steps', type=int, default=500000, 
+    train_parser.add_argument('--steps', type=int, default=600000, 
                             help='Number of training steps')
     train_parser.add_argument('--checkpoint-dir', type=str, default='ai/checkpoints',
                             help='Directory to save checkpoints')
@@ -58,6 +96,8 @@ def main():
     
     if args.command == 'train':
         if args.phase == 1:
+            from infinite_maze.ai.training.train_phase1 import train_phase_1
+            
             train_phase_1(
                 steps=args.steps,
                 checkpoint_dir=os.path.join(args.checkpoint_dir, f'phase{args.phase}'),
@@ -65,6 +105,8 @@ def main():
                 render_mode='human' if args.render else None
             )
         elif args.phase == 2:
+            from infinite_maze.ai.training.train_phase2 import train_phase_2
+            
             # For Phase 2, we need to specify the Phase 1 checkpoint to build upon
             phase1_checkpoint = os.path.join(args.checkpoint_dir, 'phase1', 'best_model')
             
@@ -92,10 +134,16 @@ def main():
         if 'phase2' in args.checkpoint_dir.lower():
             phase = 2
         
-        # Load the agent
-        agent = load_trained_agent(args.checkpoint_dir, 'cpu')
-        
+        # Import necessary modules based on phase
         if phase == 1:
+            from infinite_maze.ai.evaluation.evaluate_phase1 import (
+                evaluate_agent, load_trained_agent, visualize_evaluation
+            )
+            from infinite_maze.ai.environments.environment_phase1 import InfiniteMazeEnv
+            
+            # Load the agent
+            agent = load_trained_agent(args.checkpoint_dir, 'cpu')
+            
             # Create Phase 1 evaluation environment
             eval_env = InfiniteMazeEnv(
                 training_phase=1,
@@ -125,32 +173,70 @@ def main():
                 visualize_evaluation(eval_results, args.save_dir)
                 
         elif phase == 2:
+            # Note: This is for future implementation
+            try:
+                from infinite_maze.ai.evaluation.evaluate_phase2 import evaluate_agent, load_trained_agent
+            except ImportError:
+                print("Error: Phase 2 evaluation module is not yet implemented.")
+                print("Please use Phase 1 evaluation instead.")
+                sys.exit(1)
+            
             # For Phase 2, use the specialized evaluation function
             print("\nRunning comprehensive Phase 2 evaluation...")
             save_dir = args.save_dir if args.save_dir else 'evaluation_results'
             
-            # Run the comprehensive evaluation
-            eval_results = run_comprehensive_evaluation(
-                model_path=args.checkpoint_dir,
-                save_dir=save_dir,
-                device='cpu',
-                render_mode='human' if args.render else None
+            # Load the agent
+            agent = load_trained_agent(args.checkpoint_dir, 'cpu')
+            
+            # Create Phase 2 evaluation environment
+            from infinite_maze.ai.environments.environment_phase2 import Phase2MazeEnv
+            eval_env = Phase2MazeEnv(
+                pace_enabled=True,
+                pace_speed=0.2,  # Standard pace speed for evaluation
+                pace_acceleration=False,  # No acceleration for evaluation
+                render_mode='human' if args.render else None,
+                start_position_difficulty=0.5  # Medium difficulty for evaluation
             )
             
-            # Results are automatically saved and displayed by the comprehensive evaluation function
-            print(f"\nDetailed evaluation results saved to: {save_dir}")
+            # Run the evaluation
+            eval_results = evaluate_agent(
+                agent=agent,
+                env=eval_env,
+                num_episodes=args.episodes,
+                render=args.render,
+                verbose=True
+            )
             
-            # Optional: Extract and print key metrics for quick reference
-            if eval_results:
-                criteria_check = eval_results.get('criteria_check', {})
-                if criteria_check:
-                    print("\nSuccess Criteria Check:")
-                    for name, criterion in criteria_check.get('criteria', {}).items():
-                        status = "✅ PASSED" if criterion.get('passed', False) else "❌ FAILED"
-                        print(f"{name}: {criterion.get('value', 0):.2f} vs {criterion.get('target', 'N/A')} - {status}")
-                    
-                    overall = "✅ PASSED" if criteria_check.get('main_criteria_passed', False) else "❌ FAILED"
-                    print(f"\nOverall Phase 2 Criteria: {overall}")
+            # Print results
+            print("\nEvaluation Results (Phase 2):")
+            print(f"Average Reward: {eval_results['avg_reward']:.2f} ± {eval_results['std_reward']:.2f}")
+            print(f"Average Score: {eval_results['avg_score']:.2f} ± {eval_results['std_score']:.2f}")
+            print(f"Average Survival Time: {eval_results['avg_survival_time']:.2f} seconds")
+            print(f"Average Distance to Pace: {eval_results['avg_pace_distance']:.2f}")
+            print(f"Oscillation Rate: {eval_results['oscillation_rate']:.2%}")
+            print(f"Vertical Movement Rate: {eval_results['vertical_movement_rate']:.2%}")
+            
+            # Phase 2 Success Criteria assessment
+            pace_ok = eval_results['avg_pace_distance'] >= 100
+            survival_ok = eval_results['avg_survival_time'] >= 120
+            vertical_ok = 0.25 <= eval_results['vertical_movement_rate'] <= 0.45
+            oscillation_ok = eval_results['oscillation_rate'] < 0.05
+            
+            print("\nPhase 2 Success Criteria:")
+            print(f"Pace Line Distance: {eval_results['avg_pace_distance']:.1f} {'✅' if pace_ok else '❌'} (Target: >100 pixels)")
+            print(f"Survival Time: {eval_results['avg_survival_time']:.1f}s {'✅' if survival_ok else '❌'} (Target: ≥120 seconds)")
+            print(f"Vertical Movement: {eval_results['vertical_movement_rate']:.2%} {'✅' if vertical_ok else '❌'} (Target: 25-45%)")
+            print(f"Oscillation Rate: {eval_results['oscillation_rate']:.2%} {'✅' if oscillation_ok else '❌'} (Target: <5%)")
+            
+            # Overall assessment
+            criteria_met = pace_ok and survival_ok and vertical_ok and oscillation_ok
+            overall = "✅ PASSED" if criteria_met else "❌ FAILED"
+            print(f"\nOverall Phase 2 Criteria: {overall}")
+            
+            # Save results if requested
+            if args.save_dir:
+                from infinite_maze.ai.evaluation.evaluate_phase2 import visualize_evaluation
+                visualize_evaluation(eval_results, save_dir)
     
     elif args.command == 'play':
         # Determine which phase we're playing based on the checkpoint path
@@ -158,11 +244,14 @@ def main():
         if 'phase2' in args.checkpoint_dir.lower():
             phase = 2
         
-        # Load the agent
-        agent = load_trained_agent(args.checkpoint_dir, 'cpu')
-        
-        # Create environment for playing based on the phase
         if phase == 1:
+            from infinite_maze.ai.evaluation.evaluate_phase1 import load_trained_agent
+            from infinite_maze.ai.environments.environment_phase1 import InfiniteMazeEnv
+            
+            # Load the agent
+            agent = load_trained_agent(args.checkpoint_dir, 'cpu')
+            
+            # Create environment for playing
             play_env = InfiniteMazeEnv(
                 training_phase=1,
                 use_maze_from_start=True,
@@ -171,6 +260,18 @@ def main():
             )
             print(f"Watching Phase 1 agent play for {args.episodes} episodes...")
         else:  # phase == 2
+            # Note: This is for future implementation
+            try:
+                from infinite_maze.ai.evaluation.evaluate_phase2 import load_trained_agent
+                from infinite_maze.ai.environments.environment_phase2 import Phase2MazeEnv
+            except ImportError:
+                print("Error: Phase 2 modules are not yet implemented.")
+                print("Please use Phase 1 agent for playing instead.")
+                sys.exit(1)
+            
+            # Load the agent
+            agent = load_trained_agent(args.checkpoint_dir, 'cpu')
+            
             play_env = Phase2MazeEnv(
                 training_phase=2,
                 use_maze_from_start=True,

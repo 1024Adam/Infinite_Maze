@@ -10,7 +10,7 @@ import matplotlib.pyplot as plt
 import argparse
 from typing import Dict, Any, List, Tuple, Optional
 
-from infinite_maze.ai.phase1_env import InfiniteMazeEnv
+from infinite_maze.ai.environments.environment_phase1 import InfiniteMazeEnv
 from infinite_maze.ai.agent import RainbowDQNAgent
 from infinite_maze.utils.config import config
 
@@ -37,6 +37,10 @@ def evaluate_agent(agent: RainbowDQNAgent,
     scores = []
     collisions = []
     actions_taken = {0: 0, 1: 0, 2: 0, 3: 0, 4: 0}  # UP, RIGHT, DOWN, LEFT, NO_ACTION
+    right_attempts = 0
+    right_successes = 0
+    vertical_movements = 0
+    oscillation_incidents = 0
     
     render_mode = env.render_mode
     if not render:
@@ -47,12 +51,38 @@ def evaluate_agent(agent: RainbowDQNAgent,
         total_reward = 0
         episode_collisions = 0
         episode_actions = {0: 0, 1: 0, 2: 0, 3: 0, 4: 0}
+        episode_right_attempts = 0
+        episode_right_successes = 0
+        episode_oscillations = 0
         done = False
         step = 0
         
+        # Store previous position for movement success tracking
+        prev_pos = None
+        
         while not done and step < 10000:
+            # Store previous position
+            if prev_pos is None:
+                prev_pos = (env.player.getX(), env.player.getY())
+                
             action = agent.select_action(state, evaluate=True)
             next_state, reward, terminated, truncated, info = env.step(action)
+            
+            # Get current position
+            curr_pos = (env.player.getX(), env.player.getY())
+            
+            # Track right movement success
+            if action == 1:  # RIGHT
+                episode_right_attempts += 1
+                if curr_pos[0] > prev_pos[0]:  # Successful rightward movement
+                    episode_right_successes += 1
+            
+            # Check for oscillation
+            if hasattr(env, '_detect_oscillation') and env._detect_oscillation(env.action_history, env.position_history):
+                episode_oscillations += 1
+                
+            # Update previous position
+            prev_pos = curr_pos
             
             # Check if episode is done
             done = terminated or truncated
@@ -67,20 +97,26 @@ def evaluate_agent(agent: RainbowDQNAgent,
             step += 1
             
             if render:
-                env.render(mode='human')
+                env.render()
         
         # Update statistics
         rewards.append(total_reward)
         lengths.append(step)
         scores.append(info.get('score', 0))
         collisions.append(episode_collisions)
+        right_attempts += episode_right_attempts
+        right_successes += episode_right_successes
+        oscillation_incidents += episode_oscillations
         
         # Update action counts
         for action, count in episode_actions.items():
             actions_taken[action] += count
         
-        if verbose and ep % 5 == 0:
-            print(f"Episode {ep}/{num_episodes}: Reward={total_reward:.2f}, "
+        # Track vertical movements
+        vertical_movements += episode_actions[0] + episode_actions[2]  # UP + DOWN
+        
+        if verbose and (ep % 5 == 0 or ep == num_episodes - 1):
+            print(f"Episode {ep+1}/{num_episodes}: Reward={total_reward:.2f}, "
                   f"Length={step}, Score={info.get('score', 0)}")
     
     # Restore original render mode
@@ -91,8 +127,7 @@ def evaluate_agent(agent: RainbowDQNAgent,
     action_distribution = {action: count / total_actions for action, count in actions_taken.items()}
     
     # Calculate forward movement success rate
-    # This is a simplification - ideally would track attempted vs successful moves
-    forward_success_rate = 0.90  # Placeholder - would be calculated from detailed logs
+    forward_success_rate = right_successes / max(1, right_attempts)
     
     # Calculate collision rate
     total_collisions = sum(collisions)
@@ -101,6 +136,12 @@ def evaluate_agent(agent: RainbowDQNAgent,
     # Path efficiency (rightward movement / total movement)
     rightward_actions = actions_taken[1]  # Action 1 is RIGHT
     path_efficiency = rightward_actions / total_actions if total_actions > 0 else 0
+    
+    # Calculate vertical movement utilization
+    vertical_movement_rate = vertical_movements / total_actions if total_actions > 0 else 0
+    
+    # Oscillation rate
+    oscillation_rate = oscillation_incidents / num_episodes
     
     return {
         'avg_reward': np.mean(rewards),
@@ -112,13 +153,18 @@ def evaluate_agent(agent: RainbowDQNAgent,
         'collision_rate': collision_rate,
         'forward_success_rate': forward_success_rate,
         'path_efficiency': path_efficiency,
+        'vertical_movement_rate': vertical_movement_rate,
+        'oscillation_rate': oscillation_rate,
         'action_distribution': action_distribution,
         'raw_data': {
             'rewards': rewards,
             'lengths': lengths,
             'scores': scores,
             'collisions': collisions,
-            'actions_taken': actions_taken
+            'actions_taken': actions_taken,
+            'right_attempts': right_attempts,
+            'right_successes': right_successes,
+            'oscillation_incidents': oscillation_incidents
         }
     }
 
@@ -131,7 +177,7 @@ def visualize_evaluation(eval_results: Dict[str, Any], save_path: Optional[str] 
         save_path: Directory to save the plots (if None, will display instead)
     """
     # Create figure with subplots
-    fig, axes = plt.subplots(2, 2, figsize=(15, 10))
+    fig, axes = plt.subplots(3, 2, figsize=(15, 15))
     
     # Plot reward distribution
     rewards = eval_results['raw_data']['rewards']
@@ -170,11 +216,69 @@ def visualize_evaluation(eval_results: Dict[str, Any], save_path: Optional[str] 
     axes[1, 1].set_title('Action Distribution')
     axes[1, 1].set_ylabel('Frequency')
     
-    # Add overall stats as text
+    # Success criteria metrics (specific to Phase 1)
+    metric_names = [
+        'Forward Success',
+        'Collision Rate', 
+        'Path Efficiency', 
+        'Vert. Movement',
+        'Oscillation Rate'
+    ]
+    
+    metric_values = [
+        eval_results['forward_success_rate'],
+        eval_results['collision_rate'],
+        eval_results['path_efficiency'],
+        eval_results['vertical_movement_rate'],
+        eval_results['oscillation_rate']
+    ]
+    
+    # Plot success criteria metrics
+    axes[2, 0].bar(metric_names, metric_values)
+    axes[2, 0].set_title('Success Criteria Metrics')
+    axes[2, 0].set_ylabel('Value')
+    axes[2, 0].set_ylim(0, 1.0)  # All metrics are rates between 0 and 1
+    
+    # Phase 1 success thresholds
+    thresholds = {
+        'Forward Success': 0.85,  # >85% successful rightward attempts
+        'Collision Rate': 0.08,   # <8% of actions result in wall collisions
+        'Path Efficiency': 0.5,   # No specific threshold but higher is better
+        'Vert. Movement': 0.2,    # 15-25% of actions are vertical movement
+        'Oscillation Rate': 0.1   # Lower is better
+    }
+    
+    # Add threshold markers
+    for i, name in enumerate(metric_names):
+        if name in thresholds:
+            threshold = thresholds[name]
+            if name == 'Collision Rate' or name == 'Oscillation Rate':
+                # For these metrics, below threshold is good
+                color = 'green' if metric_values[i] < threshold else 'red'
+            else:
+                # For other metrics, above threshold is good
+                color = 'green' if metric_values[i] >= threshold else 'red'
+                
+            axes[2, 0].axhline(threshold, xmin=i/len(metric_names), xmax=(i+1)/len(metric_names), 
+                              color=color, linestyle='--')
+    
+    # Collisions per episode
+    collisions = eval_results['raw_data']['collisions']
+    axes[2, 1].hist(collisions, bins=range(0, max(collisions) + 2), alpha=0.7)
+    axes[2, 1].set_title('Collisions per Episode')
+    axes[2, 1].set_xlabel('Number of Collisions')
+    axes[2, 1].set_ylabel('Frequency')
+    
+    # Add phase 1 criteria assessment
+    success_criteria = [
+        f"Forward Success: {eval_results['forward_success_rate']:.2%} (Target: >85%)",
+        f"Collision Rate: {eval_results['collision_rate']:.2%} (Target: <8%)",
+        f"Avg Score: {eval_results['avg_score']:.1f} (Target: ≥180)",
+        f"Vertical Movement: {eval_results['vertical_movement_rate']:.2%} (Target: 15-25%)"
+    ]
+    
     fig.text(0.5, 0.01, 
-             f"Collision Rate: {eval_results['collision_rate']:.4f} | "
-             f"Path Efficiency: {eval_results['path_efficiency']:.4f} | "
-             f"Forward Success Rate: {eval_results['forward_success_rate']:.4f}",
+             "Phase 1 Success Criteria:\n" + " | ".join(success_criteria),
              ha='center', fontsize=12, bbox=dict(facecolor='white', alpha=0.5))
     
     plt.tight_layout(rect=[0, 0.03, 1, 0.95])
@@ -331,9 +435,45 @@ def main():
     print(f"Average Reward: {eval_results['avg_reward']:.2f} ± {eval_results['std_reward']:.2f}")
     print(f"Average Score: {eval_results['avg_score']:.2f} ± {eval_results['std_score']:.2f}")
     print(f"Average Length: {eval_results['avg_length']:.2f} ± {eval_results['std_length']:.2f}")
-    print(f"Collision Rate: {eval_results['collision_rate']:.4f}")
-    print(f"Path Efficiency: {eval_results['path_efficiency']:.4f}")
-    print(f"Action Distribution: {eval_results['action_distribution']}")
+    
+    # Print Phase 1 success criteria metrics with pass/fail indicators
+    print("\nPhase 1 Success Criteria:")
+    
+    forward_success = eval_results['forward_success_rate']
+    print(f"Forward Movement Success: {forward_success:.2%} {'✅' if forward_success >= 0.85 else '❌'} (Target: >85%)")
+    
+    collision_rate = eval_results['collision_rate']
+    print(f"Collision Rate: {collision_rate:.2%} {'✅' if collision_rate < 0.08 else '❌'} (Target: <8%)")
+    
+    avg_score = eval_results['avg_score']
+    print(f"Average Score: {avg_score:.1f} {'✅' if avg_score >= 180 else '❌'} (Target: ≥180)")
+    
+    vert_rate = eval_results['vertical_movement_rate']
+    print(f"Vertical Movement: {vert_rate:.2%} {'✅' if 0.15 <= vert_rate <= 0.25 else '❌'} (Target: 15-25%)")
+    
+    print(f"\nOscillation Rate: {eval_results['oscillation_rate']:.2%} (Lower is better)")
+    print(f"Path Efficiency: {eval_results['path_efficiency']:.4f} (Higher is better)")
+    
+    # Print action distribution
+    print("\nAction Distribution:")
+    action_names = ['UP', 'RIGHT', 'DOWN', 'LEFT', 'NO_ACTION']
+    for i, name in enumerate(action_names):
+        print(f"{name}: {eval_results['action_distribution'][i]:.2%}")
+        
+    # Overall assessment
+    criteria_met = (
+        forward_success >= 0.85 and
+        collision_rate < 0.08 and
+        avg_score >= 180 and
+        0.15 <= vert_rate <= 0.25
+    )
+    
+    print("\n" + "=" * 50)
+    if criteria_met:
+        print("🎉 SUCCESS: Phase 1 completion criteria met! 🎉")
+    else:
+        print("❌ INCOMPLETE: Phase 1 completion criteria not fully met.")
+    print("=" * 50)
     
     if args.save_dir:
         print(f"\nSaving evaluation results to {args.save_dir}")

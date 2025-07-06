@@ -192,20 +192,22 @@ class RainbowDQNAgent:
     def __init__(self, 
                  state_shape: Dict[str, tuple],
                  num_actions: int = 5,
-                 learning_rate: float = 2.5e-4,
+                 learning_rate: float = 3.0e-4,  # Slightly increased for faster initial learning
                  gamma: float = 0.99,
                  epsilon_start: float = 1.0,
                  epsilon_end: float = 0.05,
-                 epsilon_decay: float = 1000000,
+                 epsilon_decay: float = 1200000,  # Extended decay for better exploration
+                 epsilon_warmup: int = 50000,     # Maintain high exploration early
                  target_update: int = 8000,
                  batch_size: int = 128,
                  replay_capacity: int = 1000000,
                  device: str = 'cuda' if torch.cuda.is_available() else 'cpu',
-                 n_steps: int = 1,  # Multi-step learning (for future phases)
+                 n_steps: int = 2,  # Increased to multi-step learning from beginning
                  use_dueling: bool = False,  # Use dueling architecture
                  alpha: float = 0.6,  # PER exponent
                  beta_start: float = 0.4,  # IS correction exponent
-                 beta_frames: float = 1000000):  # Frames over which to anneal beta
+                 beta_frames: float = 1000000,  # Frames over which to anneal beta
+                 action_repeat_penalty: float = 0.15):  # Stronger penalty for action repetition
         """
         Initialize the Rainbow DQN agent.
         
@@ -291,7 +293,8 @@ class RainbowDQNAgent:
         
     def select_action(self, state: Dict[str, np.ndarray], evaluate: bool = False) -> int:
         """
-        Select an action using epsilon-greedy policy.
+        Select an action using epsilon-greedy policy with smart exploration.
+        Enhanced for better maze navigation from the start.
         
         Args:
             state: Current state observation
@@ -309,25 +312,58 @@ class RainbowDQNAgent:
         # During evaluation, use less exploration
         eval_epsilon = 0.01 if evaluate else self.epsilon
         
-        # Epsilon-greedy action selection
+        # Extract wall information from grid to guide exploration
+        wall_grid = state['grid'][:,:,0]  # Assuming channel 0 is wall information
+        
+        # Epsilon-greedy action selection with smart exploration
         if random.random() > eval_epsilon:
             # Exploit: select best action
             with torch.no_grad():
                 q_values = self.policy_net(state_tensor)
                 return q_values.max(1)[1].item()
         else:
-            # Explore: select random action
+            # Smart exploration: bias exploration toward directions that don't have walls
+            if hasattr(self, 'steps_done') and self.steps_done < 150000:  # Only during early training
+                # Check available directions based on numerical features
+                # Assuming indices 3-6 of numerical features represent available directions
+                available_dirs = state['numerical'][3:7]
+                
+                if sum(available_dirs) > 0:  # If at least one valid direction
+                    # Create probability distribution favoring available directions
+                    probs = np.array([
+                        0.3 if available_dirs[0] > 0 else 0.05,  # UP
+                        0.4 if available_dirs[1] > 0 else 0.05,  # RIGHT (bias toward right)
+                        0.3 if available_dirs[2] > 0 else 0.05,  # DOWN
+                        0.1 if available_dirs[3] > 0 else 0.01,  # LEFT (avoid left)
+                        0.05  # NO_ACTION - rarely select
+                    ])
+                    # Normalize probabilities
+                    probs = probs / probs.sum()
+                    
+                    # Select action based on this distribution
+                    return np.random.choice(self.num_actions, p=probs)
+            
+            # Default exploration (fallback and after early training)
             return random.randrange(self.num_actions)
     
     def update_epsilon(self) -> None:
         """
         Update the exploration rate based on the current step.
+        Enhanced with warmup period for better early exploration.
         """
-        # Linear annealing from epsilon_start to epsilon_end over epsilon_decay steps
-        self.epsilon = max(
-            self.epsilon_end, 
-            self.epsilon_start - (self.steps_done / self.epsilon_decay) * (self.epsilon_start - self.epsilon_end)
-        )
+        if hasattr(self, 'epsilon_warmup') and self.steps_done < self.epsilon_warmup:
+            # Maintain high exploration during warmup period
+            self.epsilon = self.epsilon_start
+        else:
+            # Apply adjusted annealing after warmup
+            effective_steps = self.steps_done - getattr(self, 'epsilon_warmup', 0)
+            effective_steps = max(0, effective_steps)  # Ensure non-negative
+            
+            # Linear annealing from epsilon_start to epsilon_end over epsilon_decay steps
+            self.epsilon = max(
+                self.epsilon_end, 
+                self.epsilon_start - (effective_steps / self.epsilon_decay) * (self.epsilon_start - self.epsilon_end)
+            )
         
     def calculate_beta(self) -> float:
         """
@@ -554,6 +590,12 @@ class RainbowDQNAgent:
         """
         rewards = []
         lengths = []
+        scores = []
+        actions_taken = {0: 0, 1: 0, 2: 0, 3: 0, 4: 0}  # UP, RIGHT, DOWN, LEFT, NO_ACTION
+        right_attempts = 0
+        right_successes = 0
+        collisions = 0
+        total_actions = 0
         
         # Add timeout tracking
         max_eval_time = 60  # seconds
@@ -564,6 +606,11 @@ class RainbowDQNAgent:
             total_reward = 0
             done = False
             step = 0
+            episode_score = 0
+            episode_collisions = 0
+            episode_right_attempts = 0
+            episode_right_successes = 0
+            prev_x, prev_y = None, None
             
             # Set a reasonable maximum number of steps for evaluation
             max_steps = 500  # Even more reasonable for evaluation during short training runs
@@ -573,12 +620,43 @@ class RainbowDQNAgent:
                 if time.time() - start_time > max_eval_time:
                     print(f"Evaluation episode {episode+1} timed out after {max_eval_time} seconds")
                     break
+                
+                # Store previous position for tracking movement success
+                if hasattr(env, 'player'):
+                    if prev_x is None:
+                        prev_x, prev_y = env.player.getX(), env.player.getY()
                     
                 action = self.select_action(state, evaluate=True)
                 next_state, reward, terminated, truncated, info = env.step(action)
                 
-                # Only print debug info if verbose flag is set (we'll add this parameter)
-                # Removed verbose debug output for cleaner training logs
+                # Track metrics for Phase 1 success criteria
+                actions_taken[action] += 1
+                total_actions += 1
+                
+                # Track right movement attempts and successes
+                if action == 1:  # RIGHT action
+                    right_attempts += 1
+                    episode_right_attempts += 1
+                    
+                    # Check if actually moved right
+                    if hasattr(env, 'player'):
+                        current_x = env.player.getX()
+                        if current_x > prev_x:
+                            right_successes += 1
+                            episode_right_successes += 1
+                
+                # Track collisions
+                if info.get('collision', False):
+                    collisions += 1
+                    episode_collisions += 1
+                
+                # Update position tracking
+                if hasattr(env, 'player'):
+                    prev_x, prev_y = env.player.getX(), env.player.getY()
+                
+                # Track game score (different from reward)
+                if 'score' in info:
+                    episode_score = info['score']
                 
                 # Check if episode is done
                 done = terminated or truncated
@@ -589,14 +667,31 @@ class RainbowDQNAgent:
                 
             rewards.append(total_reward)
             lengths.append(step)
+            scores.append(episode_score)
             
+            if verbose:
+                print(f"Episode {episode+1}: Reward={total_reward:.2f}, Score={episode_score}, "
+                      f"Length={step}, Collisions={episode_collisions}")
+        
+        # Calculate Phase 1 success criteria metrics
+        forward_success_rate = right_successes / max(1, right_attempts)
+        collision_rate = collisions / max(1, total_actions)
+        vertical_movement_count = actions_taken[0] + actions_taken[2]  # UP + DOWN
+        vertical_movement_rate = vertical_movement_count / max(1, total_actions)
+        
         return {
             'avg_reward': np.mean(rewards),
             'std_reward': np.std(rewards),
             'avg_length': np.mean(lengths),
             'std_length': np.std(lengths),
+            'avg_score': np.mean(scores),
+            'std_score': np.std(scores),
+            'forward_success_rate': forward_success_rate,
+            'collision_rate': collision_rate,
+            'vertical_movement_rate': vertical_movement_rate,
             'rewards': rewards,
-            'lengths': lengths
+            'lengths': lengths,
+            'scores': scores
         }
     
     def save(self, path: str) -> None:

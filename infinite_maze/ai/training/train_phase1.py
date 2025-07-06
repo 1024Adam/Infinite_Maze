@@ -15,7 +15,7 @@ import matplotlib.pyplot as plt
 from datetime import datetime
 from typing import Dict, Any, List, Tuple
 
-from infinite_maze.ai.phase1_env import InfiniteMazeEnv
+from infinite_maze.ai.environments.environment_phase1 import InfiniteMazeEnv
 from infinite_maze.ai.agent import RainbowDQNAgent
 
 def smooth_curve(points: List[float], factor: float = 0.8) -> np.ndarray:
@@ -108,20 +108,36 @@ def check_phase_completion(eval_stats: Dict[str, float], success_criteria: Dict[
     Returns:
         Tuple of (success_flag, details)
     """
-    # Phase 1 criteria from the training plan:
-    # - Consistent forward movement (>90% successful rightward attempts)
-    # - Minimal collisions (<5% of actions result in wall collisions)
-    # - Average score of at least 200 points per episode
+    # Phase 1 criteria from the updated training plan:
+    # - Consistent forward movement (>85% successful rightward attempts)
+    # - Minimal collisions (<8% of actions result in wall collisions)
+    # - Average score of at least 180 points per episode
+    # - Appropriate vertical movement utilization (15-25% of actions)
     
     results = {}
     
     # Check each criterion
-    for criterion, threshold in success_criteria.items():
+    for criterion, threshold_info in success_criteria.items():
         if criterion in eval_stats:
+            # Handle different comparison types (greater than or less than)
+            threshold = threshold_info['value']
+            comparison = threshold_info['comparison']
+            
+            if comparison == 'greater':
+                passed = eval_stats[criterion] >= threshold
+            elif comparison == 'less':
+                passed = eval_stats[criterion] <= threshold
+            elif comparison == 'range':
+                min_val, max_val = threshold
+                passed = min_val <= eval_stats[criterion] <= max_val
+            else:
+                passed = False  # Unknown comparison type
+                
             results[criterion] = {
                 'value': float(eval_stats[criterion]),
-                'threshold': float(threshold),
-                'passed': bool(eval_stats[criterion] >= threshold)
+                'threshold': threshold,
+                'comparison': comparison,
+                'passed': bool(passed)
             }
     
     # Overall success if all criteria are met
@@ -129,7 +145,7 @@ def check_phase_completion(eval_stats: Dict[str, float], success_criteria: Dict[
     
     return success, results
 
-def train_phase_1(steps: int = 500000,
+def train_phase_1(steps: int = 600000,  # Updated to 600K steps per training plan
                   log_interval: int = 100,
                   eval_interval: int = 10000,
                   save_interval: int = 50000,
@@ -137,10 +153,10 @@ def train_phase_1(steps: int = 500000,
                   device: str = 'cuda' if torch.cuda.is_available() else 'cpu',
                   render_mode: str = None) -> None:
     """
-    Train the agent for Phase 1 of the curriculum.
+    Train the agent for Phase 1 of the curriculum based on the updated training plan.
     
     Args:
-        steps: Total training steps
+        steps: Total training steps (600K per updated plan)
         log_interval: Episodes between logging
         eval_interval: Steps between evaluations
         save_interval: Steps between saving checkpoints
@@ -180,7 +196,9 @@ def train_phase_1(steps: int = 500000,
         training_phase=1,
         use_maze_from_start=True,  # Start with maze structures for training
         pace_enabled=False,        # No pace line in Phase 1
-        render_mode=render_mode
+        render_mode=render_mode,
+        grid_size=11,             # 11x11 grid as specified in training plan
+        max_steps=10000           # Allow longer episodes for better learning
     )
     
     # Initialize a separate evaluation environment
@@ -188,7 +206,8 @@ def train_phase_1(steps: int = 500000,
         training_phase=1,
         use_maze_from_start=True,
         pace_enabled=False,
-        render_mode=None  # No rendering for evaluation
+        render_mode=None,  # No rendering for evaluation
+        grid_size=11       # Same grid size as training
     )
     
     # Get the observation shape from the environment
@@ -198,27 +217,44 @@ def train_phase_1(steps: int = 500000,
         'numerical': observation['numerical'].shape
     }
     
-    # Initialize the agent
+    # Initialize the agent with enhanced parameters based on evaluation recommendations
     agent = RainbowDQNAgent(
         state_shape=state_shape,
         num_actions=train_env.action_space.n,
-        learning_rate=2.5e-4,
+        learning_rate=3.0e-4,  # Slightly increased from 2.5e-4 for faster learning
         gamma=0.99,
         epsilon_start=1.0,
         epsilon_end=0.05,
-        epsilon_decay=steps // 2,  # Decay over half of the training
-        target_update=8000,
-        batch_size=128,
+        epsilon_decay=250000,  # Increased from 150K to 250K for more exploration
+        epsilon_warmup=50000,  # Kept warmup period for better initial exploration
+        target_update=5000,    # More frequent updates (decreased from 8000)
+        batch_size=256,        # Increased from 128 for more stable learning
         replay_capacity=1000000,
         device=device,
-        use_dueling=False  # Start with basic DQN for Phase 1
+        use_dueling=True,      # Enabled dueling architecture for better performance
+        n_steps=3,             # Increased from 2 to 3 for better credit assignment
+        alpha=0.7,             # Increased from 0.6 for stronger prioritization
+        beta_start=0.4         # Kept the same IS correction exponent
     )
     
-    # Define Phase 1 success criteria
+    # Define Phase 1 success criteria from updated training plan
     success_criteria = {
-        'forward_success_rate': 0.90,  # >90% successful rightward attempts
-        'collision_rate': 0.05,        # <5% of actions result in wall collisions
-        'avg_reward': 200              # Average score of at least 200 points
+        'forward_success_rate': {
+            'value': 0.85,         # >85% successful rightward attempts
+            'comparison': 'greater'
+        },
+        'collision_rate': {
+            'value': 0.08,         # <8% of actions result in wall collisions
+            'comparison': 'less'
+        },
+        'avg_score': {
+            'value': 180,          # Average score of at least 180 points
+            'comparison': 'greater'
+        },
+        'vertical_movement_rate': {
+            'value': (0.15, 0.25), # 15-25% vertical movement utilization
+            'comparison': 'range'
+        }
     }
     
     # Training loop
@@ -312,12 +348,21 @@ def train_phase_1(steps: int = 500000,
             # - Collision rate
             # But for simplicity, we'll just use the reward for now
             
-            # Placeholder for success criteria calculation
+            # Now using actual calculated metrics from evaluation
+            # Create a dictionary with available metrics and safely handle missing keys
             eval_stats_extended = {
-                'avg_reward': eval_stats['avg_reward'],
-                'forward_success_rate': 0.85,  # This would be calculated from detailed evaluation
-                'collision_rate': 0.06         # This would be calculated from detailed evaluation
+                'avg_reward': eval_stats.get('avg_reward', 0.0),
+                'avg_score': eval_stats.get('avg_score', 0.0),
+                'forward_success_rate': eval_stats.get('forward_success_rate', 0.0),
+                'collision_rate': eval_stats.get('collision_rate', 1.0),  # Default to worst case
+                'vertical_movement_rate': eval_stats.get('vertical_movement_rate', 0.0)
             }
+            
+            # Print available metrics for debugging
+            print(f"Forward success: {eval_stats_extended['forward_success_rate']:.2%}, "
+                  f"Collision rate: {eval_stats_extended['collision_rate']:.2%}, "
+                  f"Score: {eval_stats_extended['avg_score']:.1f}, "
+                  f"Vertical movement: {eval_stats_extended['vertical_movement_rate']:.2%}")
             
             success, criteria_results = check_phase_completion(eval_stats_extended, success_criteria)
             
@@ -396,7 +441,7 @@ def train_phase_1(steps: int = 500000,
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(description='Train Phase 1 of Infinite Maze AI')
-    parser.add_argument('--steps', type=int, default=500000, help='Number of training steps')
+    parser.add_argument('--steps', type=int, default=600000, help='Number of training steps (600K default per training plan)')
     parser.add_argument('--log-interval', type=int, default=100, help='Episodes between logging')
     parser.add_argument('--eval-interval', type=int, default=10000, help='Steps between evaluations')
     parser.add_argument('--save-interval', type=int, default=50000, help='Steps between checkpoints')
@@ -416,6 +461,11 @@ if __name__ == "__main__":
     if args.steps < args.save_interval:
         print(f"NOTE: Auto-adjusting save interval to {args.steps // 2} for short training run")
         args.save_interval = max(500, args.steps // 2)
+    
+    print("Starting Phase 1 training with updated parameters from the training plan")
+    print(f"Training for {args.steps} steps with evaluations every {args.eval_interval} steps")
+    print(f"Using device: {args.device}")
+    print(f"Checkpoints will be saved to: {args.checkpoint_dir}")
     
     train_phase_1(
         steps=args.steps,
