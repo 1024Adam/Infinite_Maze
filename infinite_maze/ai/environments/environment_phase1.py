@@ -1,17 +1,8 @@
 """
-Enhanced environment for Phase 1 of the Infinite Maze AI training.
+Training environment for Phase 1 of the Infinite Maze AI.
 
-This module creates a gymnasium-compatible environment with specific enhancements 
-to address the observed issues in training:
-1. Rightward bias ("always go right" problem)
-2. Low vertical movement utilization
-3. Poor score accumulation
-
-Key improvements:
-- Strategic maze configurations that require vertical movement
-- Stronger rewards for path discovery and vertical navigation
-- Comprehensive metrics tracking for bias detection
-- Anti-oscillation mechanics
+This module creates a gymnasium-compatible environment for training the AI agent,
+with specific modifications for the Phase 1 training as outlined in the training plan.
 """
 
 import gymnasium as gym
@@ -20,7 +11,6 @@ from gymnasium import spaces
 import pygame
 import random
 from typing import Dict, Tuple, Optional, List, Any
-from collections import deque
 
 # We'll need to import core game components to leverage the existing maze generation
 from infinite_maze.core.game import Game
@@ -30,10 +20,10 @@ from infinite_maze.utils.config import config
 
 class InfiniteMazeEnv(gym.Env):
     """
-    Enhanced OpenAI Gym environment for the Infinite Maze game.
+    OpenAI Gym environment for the Infinite Maze game.
     
-    This version includes specific improvements to prevent the rightward bias problem
-    and promote proper vertical movement and score accumulation.
+    This environment is specifically designed for training the AI agent through
+    curriculum learning, with modifications for each training phase.
     """
     
     metadata = {'render.modes': ['human', 'rgb_array']}
@@ -45,11 +35,9 @@ class InfiniteMazeEnv(gym.Env):
                  pace_speed: float = 1.0,
                  render_mode: Optional[str] = None,
                  grid_size: int = 11,
-                 max_steps: int = 10000,
-                 vertical_corridor_frequency: float = 0.6,  # NEW: Control frequency of vertical corridors
-                 force_strategic_vertical_movement: bool = True):  # NEW: Force scenarios requiring vertical movement
+                 max_steps: int = 10000):
         """
-        Initialize the enhanced Infinite Maze training environment.
+        Initialize the Infinite Maze training environment.
         
         Args:
             training_phase: The current training phase (1-5)
@@ -59,8 +47,6 @@ class InfiniteMazeEnv(gym.Env):
             render_mode: Mode for visualization ('human', 'rgb_array', or None)
             grid_size: Size of the observation grid (must be odd)
             max_steps: Maximum steps per episode
-            vertical_corridor_frequency: Frequency of vertical corridors in maze (0.0-1.0)
-            force_strategic_vertical_movement: Whether to create scenarios requiring vertical movement
         """
         super().__init__()
         
@@ -73,10 +59,6 @@ class InfiniteMazeEnv(gym.Env):
         self.grid_size = grid_size
         self.max_steps = max_steps
         
-        # Store enhanced configuration
-        self.vertical_corridor_frequency = vertical_corridor_frequency
-        self.force_strategic_vertical_movement = force_strategic_vertical_movement
-        
         # Initialize game components (will be properly set in reset())
         self.config = config  # Use the global config instance
         self.game = None
@@ -88,13 +70,7 @@ class InfiniteMazeEnv(gym.Env):
         # Track episode stats
         self.steps = 0
         self.total_reward = 0
-        self.action_history = deque(maxlen=20)  # Track actions for repetition detection
-        self.position_history = deque(maxlen=20)  # Track positions for oscillation detection
-        
-        # NEW: Track vertical movement statistics
-        self.vertical_movements = 0
-        self.total_movements = 0
-        self.action_counts = [0, 0, 0, 0, 0]  # UP, RIGHT, DOWN, LEFT, NO_ACTION
+        self.action_history = []  # Track actions for repetition detection
         
         # Define action space: UP, RIGHT, DOWN, LEFT, NO_ACTION
         self.action_space = spaces.Discrete(5)
@@ -137,16 +113,15 @@ class InfiniteMazeEnv(gym.Env):
             Tuple of (observation, info)
         """
         # Initialize or reset game components
+        # For training, we modify the standard game to include maze structures from start
+        
+        # Phase 1 specific modifications: start with maze structures
+        # but disable pace line for initial training
         headless = (self.render_mode is None)
         self.game = Game(headless=headless)
         
-        # Generate the maze lines with enhanced vertical corridor frequency
-        if self.force_strategic_vertical_movement:
-            # Create a maze with strategic vertical corridors
-            self.lines = self._generate_strategic_maze()
-        else:
-            # Use standard maze generation with adjusted parameters
-            self.lines = Line.generateMaze(self.game, config.MAZE_ROWS, config.MAZE_COLS)
+        # Generate the maze lines first
+        self.lines = Line.generateMaze(self.game, config.MAZE_ROWS, config.MAZE_COLS)
         
         # Create our Maze wrapper to handle AI interactions
         self.maze = Maze(self.game, self.lines)
@@ -182,17 +157,11 @@ class InfiniteMazeEnv(gym.Env):
         # Reset episode tracking
         self.steps = 0
         self.total_reward = 0
-        self.action_history.clear()
-        self.position_history.clear()
-        self.collision_count = 0
-        self.oscillation_count = 0
-        self.consecutive_oscillations = 0
-        
-        # Reset movement statistics
-        self.vertical_movements = 0
-        self.total_movements = 0
-        self.action_counts = [0, 0, 0, 0, 0]
-        
+        self.action_history = []
+        self.position_history = []  # Track positions to detect oscillation
+        self.collision_count = 0    # Track collisions for adaptive reward
+        self.oscillation_count = 0  # Track detected oscillations
+        self.consecutive_oscillations = 0  # Track consecutive oscillation patterns
         self.game_over = False
         self.pace_line_x = -1000  # Default position for pace line (disabled in Phase 1)
         
@@ -205,61 +174,18 @@ class InfiniteMazeEnv(gym.Env):
         # Initial render to make sure we have a visible game screen
         if self.render_mode == 'human':
             # Process any pending pygame events to prevent freezing
+            import pygame
             pygame.event.pump()
+            
+            # Force initial render
             self.render()
+            
+            # Wait a short moment to ensure window is visible and responsive
             import time
             time.sleep(0.2)
                 
         # Return initial observation and empty info
         return observation, {}
-    
-    def _generate_strategic_maze(self) -> List[Line]:
-        """
-        Generate a maze with strategic vertical corridors that force vertical movement.
-        
-        Returns:
-            List of Line objects representing the maze
-        """
-        # Start with standard maze generation
-        lines = Line.generateMaze(self.game, config.MAZE_ROWS, config.MAZE_COLS)
-        
-        # Now add strategic vertical walls to force vertical movement
-        x_start = config.PLAYER_START_X + 100  # Start placing strategic walls a bit ahead
-        y_mid = config.PLAYER_START_Y
-        
-        # Create some vertical walls with gaps at specific positions to force navigation
-        for i in range(4):  # Create several strategic sections
-            x_pos = x_start + i * 150  # Space them out horizontally
-            
-            # Create a vertical wall with specific gaps to force navigation
-            wall_top = Line((x_pos, config.Y_MIN), (x_pos, y_mid - 50))
-            wall_bottom = Line((x_pos, y_mid + 50), (x_pos, config.Y_MAX))
-            
-            # Add these strategic walls
-            lines.append(wall_top)
-            lines.append(wall_bottom)
-            
-            # Create horizontal obstacles near these gaps to force more complex navigation
-            if random.random() < self.vertical_corridor_frequency:
-                # Add a horizontal line near the gap to create a corridor
-                corridor_y = y_mid + random.choice([-30, 30])
-                corridor_line = Line((x_pos - 50, corridor_y), (x_pos + 50, corridor_y))
-                lines.append(corridor_line)
-        
-        # Create a wall section that requires deliberate up/down navigation
-        if random.random() < self.vertical_corridor_frequency:
-            x_special = x_start + 75
-            # Create a zigzag pattern that forces up then down movement
-            zigzag_lines = [
-                Line((x_special, y_mid - 100), (x_special + 30, y_mid - 100)),
-                Line((x_special + 30, y_mid - 100), (x_special + 30, y_mid)),
-                Line((x_special + 30, y_mid), (x_special + 60, y_mid)),
-                Line((x_special + 60, y_mid), (x_special + 60, y_mid + 100)),
-                Line((x_special + 60, y_mid + 100), (x_special + 90, y_mid + 100))
-            ]
-            lines.extend(zigzag_lines)
-            
-        return lines
     
     def step(self, action: int) -> Tuple[Dict[str, np.ndarray], float, bool, bool, Dict[str, Any]]:
         """
@@ -274,27 +200,18 @@ class InfiniteMazeEnv(gym.Env):
         # Track episode steps
         self.steps += 1
         
-        # Update action counts
-        self.action_counts[action] += 1
-        
         # Store the state before the action for reward calculation
         old_state = self._get_state_snapshot()
-        old_position = (self.player.getX(), self.player.getY())
         
         # Map the action to the player movement
         blocked = False
         current_x, current_y = self.player.getX(), self.player.getY()
         speed = self.player.getSpeed()
         
-        # Store action in history
-        self.action_history.append(action)
-        
         if action == 0:  # UP
             # Check for collision along the entire movement path
             if not self.maze.check_collision(current_x, current_y, 0, -speed):
                 self.player.moveY(-1)  # Move up
-                self.vertical_movements += 1
-                self.total_movements += 1
             else:
                 blocked = True
                 
@@ -303,7 +220,6 @@ class InfiniteMazeEnv(gym.Env):
             if not self.maze.check_collision(current_x, current_y, speed, 0):
                 self.player.moveX(1)  # Move right
                 self.game.incrementScore()
-                self.total_movements += 1
             else:
                 blocked = True
                 
@@ -311,8 +227,6 @@ class InfiniteMazeEnv(gym.Env):
             # Check for collision along the entire movement path
             if not self.maze.check_collision(current_x, current_y, 0, speed):
                 self.player.moveY(1)  # Move down
-                self.vertical_movements += 1
-                self.total_movements += 1
             else:
                 blocked = True
                 
@@ -321,9 +235,10 @@ class InfiniteMazeEnv(gym.Env):
             if not self.maze.check_collision(current_x, current_y, -speed, 0):
                 self.player.moveX(-1)  # Move left
                 self.game.decrementScore()
-                self.total_movements += 1
             else:
                 blocked = True
+                
+        # action 4 is NO_ACTION, so do nothing
         
         # Double-check that we're not inside a wall and correct if needed
         if self.maze.is_wall(self.player.getX(), self.player.getY()):
@@ -349,63 +264,36 @@ class InfiniteMazeEnv(gym.Env):
         # Mark current position as visited
         self.maze.mark_visited(self.player.getX(), self.player.getY())
         
-        # Store position in history
-        self.position_history.append((self.player.getX(), self.player.getY()))
-        
         # Get the new state after action
         new_state = self._get_state_snapshot()
         
         # Check if episode is done (game over or max steps reached)
         done = self.game_over or self.steps >= self.max_steps
         
-        # Analyze path improvement
-        path_improved = self._path_improves(old_state, new_state)
-        path_clearance = self._calculate_path_clearance(new_state)
-        
-        # Detect oscillation
-        oscillation_detected = self._detect_oscillation()
-        if oscillation_detected:
-            self.oscillation_count += 1
-            self.consecutive_oscillations += 1
-        else:
-            self.consecutive_oscillations = 0
+        # Keep track of action history for repetition and oscillation detection
+        self.action_history.append(action)
+        if len(self.action_history) > 20:  # Increased history size for oscillation detection
+            self.action_history.pop(0)
+            
+        # Keep track of position history for oscillation detection
+        self.position_history.append((self.player.getX(), self.player.getY()))
+        if len(self.position_history) > 20:  # Keep recent position history
+            self.position_history.pop(0)
             
         # Calculate the reward
-        reward = self._calculate_enhanced_reward(old_state, action, new_state, done, blocked)
+        reward = self._calculate_reward(old_state, action, new_state, done, blocked)
         self.total_reward += reward
             
         # Get the observation after taking the action
         observation = self._get_observation()
-        
-        # Calculate vertical movement rate
-        vertical_movement_rate = self.vertical_movements / max(1, self.total_movements)
-        
-        # Calculate forward success rate
-        right_attempts = self.action_counts[1]
-        right_successes = self.game.getScore()  # Score increases by 1 for each successful right move
-        forward_success_rate = right_successes / max(1, right_attempts)
-        
-        # Calculate collision rate
-        collision_rate = self.collision_count / max(1, sum(self.action_counts))
         
         # Additional info for monitoring
         info = {
             'score': self.game.getScore(),
             'steps': self.steps,
             'collision': blocked,
-            'episode_reward': self.total_reward,
-            'vertical_movement_rate': vertical_movement_rate,
-            'forward_success_rate': forward_success_rate,
-            'collision_rate': collision_rate,
-            'action_counts': self.action_counts.copy(),
-            'oscillation_detected': oscillation_detected,
-            'oscillation_count': self.oscillation_count,
-            'path_improved': path_improved,
-            'path_clearance': path_clearance
+            'episode_reward': self.total_reward
         }
-        
-        if blocked:
-            self.collision_count += 1
         
         # In gymnasium API, we need to return 5 values:
         # observation, reward, terminated, truncated, info
@@ -549,6 +437,21 @@ class InfiniteMazeEnv(gym.Env):
         # Use the improved collision detection that checks the entire path
         return not self.maze.check_collision(x, y, dx, dy)
     
+    def _detected_collision(self, old_state: Dict[str, Any], new_state: Dict[str, Any]) -> bool:
+        """
+        Detect if a collision occurred between old and new state.
+        
+        Args:
+            old_state: State before action
+            new_state: State after action
+            
+        Returns:
+            True if a collision was detected
+        """
+        # If position didn't change after a move, likely a collision
+        return (old_state['player_x'] == new_state['player_x'] and 
+                old_state['player_y'] == new_state['player_y'])
+    
     def _path_is_open_ahead(self, state: Dict[str, Any], steps: int = 3) -> bool:
         """
         Check if the path ahead (rightward) is open for n steps.
@@ -594,34 +497,6 @@ class InfiniteMazeEnv(gym.Env):
         open_spaces_new = self._count_open_spaces_right(new_x, new_y, 5)
         
         return open_spaces_new > open_spaces_old
-    
-    def _calculate_path_clearance(self, state: Dict[str, Any]) -> float:
-        """
-        Calculate a metric for the clearance of paths ahead.
-        
-        Args:
-            state: Current state
-            
-        Returns:
-            Path clearance metric (higher is better)
-        """
-        x, y = state['player_x'], state['player_y']
-        speed = self.player.getSpeed()
-        clearance = 0.0
-        
-        # Check forward clearance
-        for i in range(1, 6):  # Check 5 steps ahead
-            if not self.maze.is_wall(x + i * speed, y):
-                clearance += 1.0
-                
-        # Check diagonal clearance (up-right and down-right)
-        for i in range(1, 4):  # Check 3 steps in diagonal directions
-            if not self.maze.is_wall(x + i * speed, y - i * speed):  # Up-right
-                clearance += 0.5
-            if not self.maze.is_wall(x + i * speed, y + i * speed):  # Down-right
-                clearance += 0.5
-                
-        return clearance
     
     def _count_open_spaces_right(self, x: float, y: float, steps: int) -> int:
         """
@@ -757,21 +632,23 @@ class InfiniteMazeEnv(gym.Env):
                 
         return count
     
-    def _detect_oscillation(self) -> bool:
+    def _detect_oscillation(self, action_history: List[int], position_history: List[Tuple[float, float]]) -> bool:
         """
         Detect oscillation patterns in recent actions and positions.
         
+        Args:
+            action_history: List of recent actions
+            position_history: List of recent positions
+            
         Returns:
             Boolean indicating whether oscillation is detected
         """
-        # Need enough history to detect patterns
-        if len(self.action_history) < 6 or len(self.position_history) < 6:
+        # We need enough history to detect patterns
+        if len(action_history) < 6 or len(position_history) < 6:
             return False
             
         # Method 1: Check for alternating vertical actions (UP/DOWN pattern)
-        recent_actions = list(self.action_history)
-        vertical_actions = [a for a in recent_actions[-6:] if a in [0, 2]]  # UP(0) and DOWN(2)
-        
+        vertical_actions = [a for a in action_history[-6:] if a in [0, 2]]  # UP(0) and DOWN(2)
         if len(vertical_actions) >= 4:
             # Check for alternating pattern
             alternating = True
@@ -780,19 +657,16 @@ class InfiniteMazeEnv(gym.Env):
                     alternating = False
                     break
             
-            if alternating:
+            if alternating and len(vertical_actions) >= 4:
                 # Check if horizontal progress is minimal
-                recent_positions = list(self.position_history)
-                if len(recent_positions) >= 6:
-                    horizontal_progress = abs(recent_positions[-1][0] - recent_positions[-6][0])
-                    if horizontal_progress < self.player.getSpeed() * 2:
-                        return True
+                horizontal_progress = abs(position_history[-1][0] - position_history[-6][0])
+                if horizontal_progress < self.player.getSpeed() * 2:
+                    return True
                     
         # Method 2: Position-based oscillation detection
-        recent_positions = list(self.position_history)
-        if len(recent_positions) >= 8:
+        if len(position_history) >= 8:
             # Extract y positions
-            y_positions = [pos[1] for pos in recent_positions[-8:]]
+            y_positions = [pos[1] for pos in position_history[-8:]]
             
             # Calculate changes in y direction
             y_changes = []
@@ -807,11 +681,35 @@ class InfiniteMazeEnv(gym.Env):
             
             # Many direction changes with minimal x progress indicates oscillation
             if direction_changes >= 3:
-                x_progress = abs(recent_positions[-1][0] - recent_positions[-8][0])
+                x_progress = abs(position_history[-1][0] - position_history[-8][0])
                 if x_progress < self.player.getSpeed() * 3:
                     return True
         
         return False
+    
+    def _count_consecutive_oscillations(self) -> int:
+        """
+        Count consecutive oscillation detections.
+        
+        Returns:
+            Count of consecutive oscillation detections
+        """
+        # This is a simplified implementation for Phase 1
+        # In a real implementation, we'd track oscillation over time
+        
+        # If we recently detected oscillation, increment the counter
+        if hasattr(self, 'consecutive_oscillations'):
+            if self._detect_oscillation(self.action_history, self.position_history):
+                self.consecutive_oscillations += 1
+            else:
+                # Reset counter if no oscillation is currently detected
+                self.consecutive_oscillations = 0
+                
+            return self.consecutive_oscillations
+        
+        # Initialize if not yet created
+        self.consecutive_oscillations = 0
+        return 0
     
     def _is_near_vertical_wall(self, state: Dict[str, Any]) -> bool:
         """
@@ -833,10 +731,12 @@ class InfiniteMazeEnv(gym.Env):
                 
         return False
     
-    def _calculate_enhanced_reward(self, old_state: Dict[str, Any], action: int, 
-                                 new_state: Dict[str, Any], done: bool, collision: bool) -> float:
+    def _calculate_reward(self, old_state: Dict[str, Any], action: int, 
+                         new_state: Dict[str, Any], done: bool, collision: bool) -> float:
         """
-        Calculate enhanced reward structure to address rightward bias and improve vertical movement.
+        Calculate the reward based on the action and resulting state change.
+        
+        Uses a balanced reward function with anti-bias measures as described in the updated training plan.
         
         Args:
             old_state: State before action
@@ -856,143 +756,88 @@ class InfiniteMazeEnv(gym.Env):
         moved_up = new_state['player_y'] < old_state['player_y']
         moved_down = new_state['player_y'] > old_state['player_y']
         
-        # Get current action distribution to detect and correct bias
-        total_actions = sum(self.action_counts)
-        if total_actions > 0:
-            right_action_percentage = self.action_counts[1] / total_actions
-            vertical_action_percentage = (self.action_counts[0] + self.action_counts[2]) / total_actions
-        else:
-            right_action_percentage = 0
-            vertical_action_percentage = 0
-        
-        # REWARD STRUCTURE ENHANCEMENT #1: Balanced rightward movement rewards
+        # Enhanced early navigation rewards - stronger incentives for rightward progress
         if moved_right and not collision:
-            # Base reward for rightward movement
-            base_right_reward = 1.5
-            
-            # Check if rightward movement is strategic (has open path ahead)
+            # Check if the rightward movement was beneficial (not into a wall soon)
             if self._path_is_open_ahead(new_state, 3):
-                path_bonus = 1.0
+                reward += 2.0  # Doubled reward for successful rightward movement with clear path
             else:
-                path_bonus = 0.3
-                
-            # Apply anti-bias reduction if too much rightward movement
-            if right_action_percentage > 0.6:
-                # Apply progressive reduction based on bias level
-                bias_reduction = min(0.8, (right_action_percentage - 0.6) * 2)
-                reward += base_right_reward * (1 - bias_reduction) + path_bonus
-            else:
-                # Normal reward for balanced behavior
-                reward += base_right_reward + path_bonus
-                
-        # Left movement penalty (slightly reduced to allow strategic left moves)
+                reward += 0.5  # Increased reward for any rightward movement
         elif moved_left:
-            reward -= 0.7  # Less penalty than before (was -1.0)
-            
-            # Check if leftward movement is strategic (enables better path)
-            if self._path_improves(old_state, new_state):
-                # Reduce the penalty if it's strategic
-                reward += 0.4
+            reward -= 1.0  # Stronger penalty for leftward movement
         
-        # REWARD STRUCTURE ENHANCEMENT #2: Much stronger vertical movement rewards
-        if moved_up or moved_down:
-            # Base reward for any vertical movement (was 0.2)
-            vertical_base = 0.3
-            
-            # Calculate strategic value of vertical movement
+        # Strategic vertical movement rewards - enhanced for immediate maze navigation
+        if (moved_up or moved_down):
+            # More nuanced vertical movement reward based on path improvement
             if self._path_improves(old_state, new_state):
-                # Strongly reward beneficial vertical movement
-                strategic_value = 2.0  # Doubled from previous value
+                reward += 1.0  # Increased reward for beneficial vertical movement
             elif self._results_in_clear_path(old_state, new_state):
-                strategic_value = 1.5  # Increased substantially
-            else:
-                strategic_value = 0.5  # Increased base value for any vertical movement
-            
-            # Apply anti-bias boost if we need more vertical movement
-            if vertical_action_percentage < 0.15:  # Below target range
-                # Boost increases as we get further from target
-                vertical_boost = 1.0 + (0.15 - vertical_action_percentage) * 5
-                reward += vertical_base + strategic_value * vertical_boost
-            else:
-                reward += vertical_base + strategic_value
+                reward += 0.8  # Increased reward for movement that leads to clear areas
+            elif not collision:
+                reward += 0.2  # Slightly increased reward for non-colliding vertical movement
         
-        # REWARD STRUCTURE ENHANCEMENT #3: Pathfinding rewards
-        # Moving closer to open paths
+        # Pathfinding rewards (critical with immediate maze presence)
         nearest_path_distance_old = self._calculate_nearest_path_distance(old_state)
         nearest_path_distance_new = self._calculate_nearest_path_distance(new_state)
         if nearest_path_distance_new < nearest_path_distance_old:
-            # Moving closer to open paths is good (increased from 0.4)
-            reward += 0.6
+            # Moving closer to open paths is good
+            reward += 0.4
         
-        # Exploration bonus for finding new areas (useful early in training)
-        if self.steps < 1500 and self._not_previously_visited(new_state):  # Extended window
-            reward += 0.3  # Increased from 0.2
+        # Initial exploration bonus (early training only)
+        if self.steps < 1000 and self._not_previously_visited(new_state):
+            reward += 0.2  # Encourage early exploration of maze
         
-        # REWARD STRUCTURE ENHANCEMENT #4: Score-based rewards
-        # Survival incentive (slightly increased)
-        reward += 0.08  # Was 0.05
+        # Small reward for surviving each step
+        reward += 0.05
         
-        # Score-based bonus to emphasize score accumulation
+        # Penalties - Increased collision penalty to drive down collision rate
+        if collision:
+            self.collision_count += 1
+            reward -= 1.5  # Significantly increased collision penalty (from 0.8)
+            # Add context-aware penalty reduction for initial navigation attempts
+            if self.steps < 300 and self.collision_count < 10:  # Reduced window for early exploration
+                reward += 0.2  # Reduced penalty relaxation during very early exploration
+                
+        # Score-related rewards - explicitly reward score increases
         score_diff = new_state['score'] - old_state['score']
         if score_diff > 0:
-            # Much stronger reward for score increases
-            reward += 3.0 * score_diff
-            
-            # Milestone bonuses
-            current_score = new_state['score']
-            if current_score > 0 and current_score % 20 == 0:  # More frequent milestones
-                reward += 5.0  # Significant milestone bonus
+            reward += 2.0 * score_diff  # Strong reward for score increases
         
-        # Collision penalty (balancing strictness with learning capability)
-        if collision:
-            # Base collision penalty
-            collision_penalty = 1.0  # Decreased from 1.5
+        # Repeated action penalty (discourage mindless direction holding)
+        same_action_count = 0
+        if len(self.action_history) >= 5:
+            last_action = self.action_history[-1]
+            for a in reversed(self.action_history):
+                if a == last_action:
+                    same_action_count += 1
+                else:
+                    break
             
-            # Reduce penalty for early exploratory collisions
-            if self.steps < 500 and self.collision_count < 15:
-                collision_penalty *= 0.7
-                
-            reward -= collision_penalty
+            if same_action_count > 5:
+                reward -= 0.1 * (same_action_count - 5)  # Increasing penalty for repetition
         
-        # REWARD STRUCTURE ENHANCEMENT #5: Anti-oscillation penalty
-        if self._detect_oscillation():
-            # Apply significant penalty to discourage oscillation
-            oscillation_penalty = 0.8
-            
+        # Oscillation detection and penalty
+        oscillation_detected = self._detect_oscillation(self.action_history, self.position_history)
+        if oscillation_detected:
+            # Apply significant penalty to discourage oscillation patterns
+            reward -= 0.7
             # Escalate penalty for persistent oscillation
-            if hasattr(self, 'consecutive_oscillations') and self.consecutive_oscillations > 3:
-                oscillation_penalty += 0.3 * (self.consecutive_oscillations - 3)
-                
-            reward -= oscillation_penalty
+            consecutive_oscillations = self._count_consecutive_oscillations()
+            if consecutive_oscillations > 3:
+                reward -= 0.2 * (consecutive_oscillations - 3)
         
-        # REWARD STRUCTURE ENHANCEMENT #6: Path discovery and strategic movement
-        # Path discovery bonus (increased)
+        # Path discovery rewards (prevent "always go right" bias)
         if self._discovered_better_path(old_state, new_state):
-            reward += 1.2  # Increased from 0.7
+            reward += 0.7  # Significant reward for finding efficient paths
         
-        # Check if near a vertical wall that requires navigation
-        if self._is_near_vertical_wall(old_state):
-            # Reward vertical movement near walls
-            if (moved_up or moved_down) and self._path_improves(old_state, new_state):
-                reward += 1.5  # Strong incentive for strategic navigation around walls
-        
-        # REWARD STRUCTURE ENHANCEMENT #7: Significant terminal and milestone rewards
-        # Terminal state penalty
+        # Terminal state penalty - increased to encourage longer survival
         if done and new_state['game_over']:
-            reward -= 10.0  # Slightly reduced from 15.0
+            reward -= 15.0  # Increased from 10.0
             
-        # Periodic milestone bonus based on survival and progress
-        if self.steps % 50 == 0:  # More frequent milestone bonuses
-            reward += 3.0  # Smaller but more frequent milestone rewards
-            
-        # Larger milestone every 200 steps
-        if self.steps % 200 == 0:
-            reward += 8.0
+        # Additional survival bonus based on steps completed
+        if self.steps % 100 == 0:  # Every 100 steps
+            reward += 5.0  # Significant milestone bonus to encourage longer episodes
         
-        # Major milestone for achieving target score ranges
-        if self.game.getScore() >= 100 and self.steps % 100 == 0:
-            reward += 10.0
-            
         return reward
     
     def render(self) -> Optional[np.ndarray]:
@@ -1052,18 +897,10 @@ class InfiniteMazeEnv(gym.Env):
                 )
                 self.game.screen.blit(pos_text, (config.TEXT_MARGIN, config.TEXT_MARGIN + 50))
                 
-                # Show vertical movement rate
-                vert_rate = self.vertical_movements / max(1, self.total_movements)
-                vert_text = self.game.font.render(
-                    f"Vertical: {vert_rate:.1%} (Target: 15-25%)", 1, self.game.FG_COLOR
-                )
-                self.game.screen.blit(vert_text, (config.TEXT_MARGIN, config.TEXT_MARGIN + 75))
-                
-                # Show last action
-                action_names = ["UP", "RIGHT", "DOWN", "LEFT", "NONE"]
-                action_text = "Last: " + (action_names[self.action_history[-1]] if self.action_history else "None")
-                action_display = self.game.font.render(action_text, 1, self.game.FG_COLOR)
-                self.game.screen.blit(action_display, (config.TEXT_MARGIN, config.TEXT_MARGIN + 100))
+                # Add debug info about training status
+                action_text = "Last action: " + str(self.action_history[-1] if self.action_history else "None")
+                status_text = self.game.font.render(action_text, 1, self.game.FG_COLOR)
+                self.game.screen.blit(status_text, (config.TEXT_MARGIN, config.TEXT_MARGIN + 75))
             
             # Update the display
             pygame.display.flip()

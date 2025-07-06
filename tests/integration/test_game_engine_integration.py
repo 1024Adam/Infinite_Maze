@@ -13,7 +13,6 @@ from infinite_maze.core.engine import maze, controlled_run
 from infinite_maze.core.game import Game
 from infinite_maze.entities.player import Player
 from infinite_maze.entities.maze import Line
-from infinite_maze.utils.config import GameConfig, config
 from tests.fixtures.pygame_mocks import full_pygame_mocks, InputSimulator
 from tests.fixtures.test_helpers import PerformanceMonitor, GameStateCapture
 
@@ -155,13 +154,13 @@ class TestGameEngineMovementSystem:
     def test_boundary_enforcement(self):
         """Test game boundary enforcement."""
         game = Game(headless=True)
-        player = Player(config.X_MIN, game.Y_MIN, headless=True)
+        player = Player(game.X_MIN, game.Y_MIN, headless=True)
         
         # Test left boundary
-        player.setX(config.X_MIN - 10)
-        if player.getX() < config.X_MIN:
+        player.setX(game.X_MIN - 10)
+        if player.getX() < game.X_MIN:
             # Game should end or adjust position
-            assert player.getX() < config.X_MIN  # Or game.end() called
+            assert player.getX() < game.X_MIN  # Or game.end() called
         
         # Test right boundary
         player.setX(game.X_MAX + 10)
@@ -539,7 +538,7 @@ class TestGameEngineIntegration:
             game.getClock().update()
             
             # Check boundaries
-            if player.getX() < config.X_MIN:
+            if player.getX() < game.X_MIN:
                 game.end()
                 break
             if player.getX() > game.X_MAX:
@@ -551,7 +550,7 @@ class TestGameEngineIntegration:
         
         # Verify final state
         assert game.getScore() >= 0
-        assert player.getX() >= config.X_MIN
+        assert player.getX() >= game.X_MIN
         assert player.getY() >= game.Y_MIN
         assert player.getY() <= game.Y_MAX
     
