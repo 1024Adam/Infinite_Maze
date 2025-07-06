@@ -115,7 +115,13 @@ Rainbow combines several DQN improvements:
   - Maintaining safe distance from pace line (average distance >100 pixels)
   - Survival time of at least 2 minutes per episode
   - Vertical movement utilization in 20-40% of actions
+  - Minimal oscillation behavior (<5% of navigation attempts)
 - **Anti-bias Strategy**: Include scenarios with dense maze sections requiring up/down navigation
+- **Gradual Pace Introduction**: Start with pace at 25% speed, gradually increase over 100K steps
+- **Enhanced Vertical Movement Training**: Add specialized corridor scenarios
+- **Model Architecture**: Activate dueling network architecture and add memory mechanism
+- **Reward Function Enhancement**: Improved vertical movement rewards and balanced pace distance incentives
+- **Oscillation Mitigation**: Implement detection and prevention of up-down oscillation patterns at vertical walls (see [oscillation_mitigation.md](oscillation_mitigation.md))
 - **Checkpoint**: Save best-performing model when success criteria are met
 
 ### Phase 3: Varied Maze Structures (1.5M steps)
@@ -224,6 +230,16 @@ def calculate_reward(self, state, action, new_state, done):
     if same_action_count > 5:
         reward -= 0.1 * (same_action_count - 5)  # Increasing penalty for repetition
     
+    # Oscillation detection and penalty (Phase 2+)
+    oscillation_detected = self._detect_oscillation(self.action_history, self.position_history)
+    if oscillation_detected:
+        # Apply significant penalty to discourage oscillation patterns
+        reward -= 0.8
+        # Escalate penalty for persistent oscillation
+        consecutive_oscillations = self._count_consecutive_oscillations()
+        if consecutive_oscillations > 3:
+            reward -= 0.2 * (consecutive_oscillations - 3)
+    
     # Terminal state
     if done:
         reward -= 10.0  # Strong penalty for game over
@@ -315,5 +331,6 @@ This training plan provides a comprehensive approach to developing an AI agent f
 - [Training Safeguards](training_safeguards.md) - Detailed strategies to prevent the "always go right" bias problem and other common training pitfalls
 - [State Representation](state_representation.md) - Detailed explanation of the state representation approach, including the local view grid design and feature encoding
 - [Phase Transition Checklist](phase_transition.md) - Comprehensive guidelines for moving between training phases, including required performance metrics and technical requirements
+- [Oscillation Mitigation](oscillation_mitigation.md) - Specific approaches to address oscillatory behavior where the agent repeatedly alternates between up and down movements when encountering vertical walls
 
 > **Implementation Note**: Each phase builds upon the previous one through transfer learning. Do not proceed to the next phase until all success criteria for the current phase have been fully satisfied. This sequential approach ensures the model develops a strong foundation before tackling more complex challenges.

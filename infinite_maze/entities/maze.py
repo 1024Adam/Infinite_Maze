@@ -83,7 +83,7 @@ class Line:
             sideA = (19 * x) + 1
             sideB = sideA + 1
 
-            xPos = (config.MAZE_CELL_SIZE * x) + game.X_MAX
+            xPos = (config.MAZE_CELL_SIZE * x) + config.MAZE_START_X
             for y in range(1, height - 1):
                 yPos = (config.MAZE_CELL_SIZE * y) + game.Y_MIN
                 lines.append(Line((xPos, yPos), (xPos + config.MAZE_CELL_SIZE, yPos), sideA, sideB))
@@ -96,7 +96,7 @@ class Line:
 
             yPos = (config.MAZE_CELL_SIZE * y) + game.Y_MIN
             for x in range(1, width * 2):
-                xPos = (config.MAZE_CELL_SIZE * x) + game.X_MAX
+                xPos = (config.MAZE_CELL_SIZE * x) + config.MAZE_START_X
                 lines.append(Line((xPos, yPos), (xPos, yPos + config.MAZE_CELL_SIZE), sideA, sideB))
                 sideA = sideB
                 sideB += 19
@@ -135,7 +135,7 @@ class Maze:
     This class provides an interface for the AI environment to interact with the maze
     while using the existing Line-based implementation underneath.
     """
-    
+
     def __init__(self, game=None, lines=None):
         """
         Initialize the Maze with either a game instance or a list of lines.

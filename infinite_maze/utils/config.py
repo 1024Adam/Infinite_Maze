@@ -24,6 +24,7 @@ class GameConfig:
     PLAYER_HEIGHT: int = 10
 
     # Maze generation settings
+    MAZE_START_X: int = 80
     MAZE_ROWS: int = 15
     MAZE_COLS: int = 20
     MAZE_CELL_SIZE: int = 22
