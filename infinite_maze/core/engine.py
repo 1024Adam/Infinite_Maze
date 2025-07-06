@@ -172,15 +172,15 @@ def maze():
                         line.setXEnd(line.getXEnd() - game.getPace())
 
                 # Position Adjustments (to prevent screen overflow)
-                if player.getX() < game.X_MIN:
+                if player.getX() < config.X_MIN:
                     game.end()
-                if player.getX() > game.X_MAX:
-                    player.setX(game.X_MAX)
+                if player.getX() > config.X_MAX:
+                    player.setX(config.X_MAX)
                     for line in lines:
                         line.setXStart(line.getXStart() - player.getSpeed())
                         line.setXEnd(line.getXEnd() - player.getSpeed())
-                player.setY(max(player.getY(), game.Y_MIN))
-                player.setY(min(player.getY(), game.Y_MAX))
+                player.setY(max(player.getY(), config.Y_MIN))
+                player.setY(min(player.getY(), config.Y_MAX))
 
                 # Reposition lines that have been passed
                 xMax = Line.getXMax(lines)
@@ -226,7 +226,7 @@ def maze():
         keys = pygame.key.get_pressed()
         if keys[pygame.K_y]:
             game.reset()
-            player.reset(config.PLAYER_START_X, (game.HEIGHT / 2))
+            player.reset(config.PLAYER_START_X, (config.SCREEN_HEIGHT / 2))
 
             # Maze Details
             lines = Line.generateMaze(game, config.MAZE_ROWS, config.MAZE_COLS)
@@ -428,15 +428,15 @@ def controlled_run(wrapper, counter):
                         line.setXEnd(line.getXEnd() - game.getPace())
 
                 # Position Adjustments (to prevent screen overflow)
-                if player.getX() < game.X_MIN:
+                if player.getX() < config.X_MIN:
                     game.end()
-                if player.getX() > game.X_MAX:
-                    player.setX(game.X_MAX)
+                if player.getX() > config.X_MAX:
+                    player.setX(config.X_MAX)
                     for line in lines:
                         line.setXStart(line.getXStart() - player.getSpeed())
                         line.setXEnd(line.getXEnd() - player.getSpeed())
-                player.setY(max(player.getY(), game.Y_MIN))
-                player.setY(min(player.getY(), game.Y_MAX))
+                player.setY(max(player.getY(), config.Y_MIN))
+                player.setY(min(player.getY(), config.Y_MAX))
 
                 # Reposition lines that have been passed
                 xMax = Line.getXMax(lines)

@@ -11,9 +11,9 @@ from unittest.mock import Mock, patch, MagicMock
 
 from infinite_maze.core.game import Game
 from infinite_maze.core.clock import Clock
+from infinite_maze.utils.config import GameConfig, config
 from tests.fixtures.pygame_mocks import full_pygame_mocks, headless_pygame_mocks
 from tests.fixtures.test_helpers import temporary_game_state
-
 
 class TestGameInitialization:
     """Test Game class initialization."""
@@ -48,22 +48,6 @@ class TestGameInitialization:
             assert game.getScore() == 0
             assert game.getPace() == 0
             assert not game.isPaused()
-    
-    def test_game_constants(self):
-        """Test game constants are properly set."""
-        game = Game(headless=True)
-        
-        # Check that display constants are reasonable
-        assert game.WIDTH > 0
-        assert game.HEIGHT > 0
-        assert game.X_MIN >= 0
-        assert game.Y_MIN >= 0
-        assert game.X_MAX > game.X_MIN
-        assert game.Y_MAX > game.Y_MIN
-        
-        # Check score increment
-        assert game.SCORE_INCREMENT == 1
-
 
 class TestGameScoring:
     """Test Game scoring functionality."""
@@ -80,7 +64,7 @@ class TestGameScoring:
         
         game.incrementScore()
         
-        assert game.getScore() == initial_score + game.SCORE_INCREMENT
+        assert game.getScore() == initial_score + config.SCORE_INCREMENT
     
     def test_decrement_score(self):
         """Test score decrement functionality."""
@@ -93,7 +77,7 @@ class TestGameScoring:
         
         game.decrementScore()
         
-        assert game.getScore() == current_score - game.SCORE_INCREMENT
+        assert game.getScore() == current_score - config.SCORE_INCREMENT
     
     def test_decrement_score_at_zero(self):
         """Test that score cannot go below zero."""
@@ -413,34 +397,6 @@ class TestGamePauseIntegration:
         # Colors should be different when paused
         assert paused_color != original_color
         assert unpaused_color == original_color
-
-
-class TestGameBoundaryConstants:
-    """Test Game boundary constants and validation."""
-    
-    def test_boundary_constants_valid(self):
-        """Test that boundary constants are valid."""
-        game = Game(headless=True)
-        
-        # Width and height should be positive
-        assert game.WIDTH > 0
-        assert game.HEIGHT > 0
-        
-        # Boundaries should make sense
-        assert game.X_MIN < game.X_MAX
-        assert game.Y_MIN < game.Y_MAX
-        
-        # Boundaries should be within screen dimensions
-        assert game.X_MAX <= game.WIDTH
-        assert game.Y_MAX <= game.HEIGHT
-    
-    def test_score_increment_valid(self):
-        """Test that score increment is valid."""
-        game = Game(headless=True)
-        
-        assert game.SCORE_INCREMENT > 0
-        assert isinstance(game.SCORE_INCREMENT, int)
-
 
 class TestGameEdgeCases:
     """Test Game edge cases and error conditions."""

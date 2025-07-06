@@ -85,7 +85,7 @@ class Line:
 
             xPos = (config.MAZE_CELL_SIZE * x) + config.MAZE_START_X
             for y in range(1, height - 1):
-                yPos = (config.MAZE_CELL_SIZE * y) + game.Y_MIN
+                yPos = (config.MAZE_CELL_SIZE * y) + config.Y_MIN
                 lines.append(Line((xPos, yPos), (xPos + config.MAZE_CELL_SIZE, yPos), sideA, sideB))
                 sideA = sideB
                 sideB += 1
@@ -94,7 +94,7 @@ class Line:
             sideA = y + 1
             sideB = sideA + 19
 
-            yPos = (config.MAZE_CELL_SIZE * y) + game.Y_MIN
+            yPos = (config.MAZE_CELL_SIZE * y) + config.Y_MIN
             for x in range(1, width * 2):
                 xPos = (config.MAZE_CELL_SIZE * x) + config.MAZE_START_X
                 lines.append(Line((xPos, yPos), (xPos, yPos + config.MAZE_CELL_SIZE), sideA, sideB))
@@ -200,9 +200,9 @@ class Maze:
         
         # Also check game boundary walls
         if self.game:
-            if (x < self.game.X_MIN + buffer or
-                y < self.game.Y_MIN + buffer or
-                y > self.game.Y_MAX - buffer):
+            if (x < config.X_MIN + buffer or
+                y < config.Y_MIN + buffer or
+                y > config.Y_MAX - buffer):
                 return True
             
         return False

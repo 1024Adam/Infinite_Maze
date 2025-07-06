@@ -13,6 +13,7 @@ from infinite_maze.core.game import Game
 from infinite_maze.entities.player import Player
 from infinite_maze.entities.maze import Line
 from infinite_maze.core.clock import Clock
+from infinite_maze.utils.config import GameConfig, config
 from tests.fixtures.pygame_mocks import full_pygame_mocks, InputSimulator
 from tests.fixtures.test_helpers import PerformanceMonitor, GameStateCapture
 
@@ -161,11 +162,11 @@ class TestBasicGameplayScenarios:
         """Test gameplay at game boundaries."""
         with full_pygame_mocks():
             game = Game(headless=True)
-            player = Player(game.X_MIN + 5, game.Y_MIN + 5, headless=True)
+            player = Player(config.X_MIN + 5, game.Y_MIN + 5, headless=True)
             
             # Test left boundary
-            player.setX(game.X_MIN - 10)
-            if player.getX() < game.X_MIN:
+            player.setX(config.X_MIN - 10)
+            if player.getX() < config.X_MIN:
                 # Game should end or position should be corrected
                 game.end()
                 assert not game.isActive()
@@ -278,7 +279,7 @@ class TestAdvancedGameplayScenarios:
                 game.updateScreen(player, lines)
                 
                 # Check boundaries
-                if player.getX() < game.X_MIN:
+                if player.getX() < config.X_MIN:
                     game.end()
                     break
                     
@@ -438,11 +439,11 @@ class TestPauseResumeScenarios:
         """Test pausing at critical game moments."""
         with full_pygame_mocks():
             game = Game(headless=True)
-            player = Player(game.X_MIN + 5, 200, headless=True)
-            lines = [Line((game.X_MIN + 10, 180), (game.X_MIN + 10, 220))]
+            player = Player(config.X_MIN + 5, 200, headless=True)
+            lines = [Line((config.X_MIN + 10, 180), (config.X_MIN + 10, 220))]
             
             # Move towards danger
-            player.setX(game.X_MIN + 2)
+            player.setX(config.X_MIN + 2)
             
             # Pause just before boundary
             game.changePaused(player)
@@ -466,13 +467,13 @@ class TestGameOverScenarios:
         """Test game over when hitting left boundary."""
         with full_pygame_mocks():
             game = Game(headless=True)
-            player = Player(game.X_MIN + 5, 200, headless=True)
+            player = Player(config.X_MIN + 5, 200, headless=True)
             
             # Move towards left boundary
-            player.setX(game.X_MIN - 10)
+            player.setX(config.X_MIN - 10)
             
             # Check if game should end
-            if player.getX() < game.X_MIN:
+            if player.getX() < config.X_MIN:
                 game.end()
                 assert not game.isActive()
                 assert game.isPlaying()  # Still in game loop, but not active
@@ -574,7 +575,7 @@ class TestEdgeCaseScenarios:
             extreme_positions = [
                 (-1000, -1000),
                 (10000, 10000),
-                (game.X_MIN - 100, game.Y_MIN - 100),
+                (config.X_MIN - 100, game.Y_MIN - 100),
                 (game.X_MAX + 100, game.Y_MAX + 100)
             ]
             
@@ -589,7 +590,7 @@ class TestEdgeCaseScenarios:
                     assert False, f"Game crashed with extreme position ({x}, {y}): {e}"
                 
                 # Correct position if needed
-                player.setX(max(game.X_MIN, min(x, game.X_MAX)))
+                player.setX(max(config.X_MIN, min(x, game.X_MAX)))
                 player.setY(max(game.Y_MIN, min(y, game.Y_MAX)))
     
     def test_zero_time_gameplay(self):
@@ -686,7 +687,7 @@ class TestPerformanceScenarios:
                 game.getClock().update()
                 
                 # Check boundaries
-                if player.getX() < game.X_MIN:
+                if player.getX() < config.X_MIN:
                     game.end()
                     break
                 

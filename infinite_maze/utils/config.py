@@ -16,6 +16,8 @@ class GameConfig:
     SCREEN_HEIGHT: int = 480
     FPS: int = 60
 
+    SCORE_INCREMENT = 1
+
     # Player settings
     PLAYER_START_X: int = 80
     PLAYER_START_Y: int = 223
@@ -35,6 +37,12 @@ class GameConfig:
     BORDER_OFFSET: int = 10
     FPS_DELAY_MS: int = 16
     PACE_UPDATE_INTERVAL: int = 30  # seconds
+
+    X_MIN = PLAYER_START_X
+    Y_MIN = 40
+
+    X_MAX = SCREEN_WIDTH / 2
+    Y_MAX = SCREEN_HEIGHT - ICON_SIZE
 
     # Colors (RGB tuples)
     COLORS: Dict[str, Tuple[int, int, int]] = {
