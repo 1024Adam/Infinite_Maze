@@ -5,15 +5,15 @@ from ..utils.config import config
 
 class Game:
     # Display config
-    WIDTH = config.SCREEN_WIDTH
-    HEIGHT = config.SCREEN_HEIGHT
-    X_MIN = config.PLAYER_START_X
-    Y_MIN = 40
+    # WIDTH = config.SCREEN_WIDTH
+    # HEIGHT = config.SCREEN_HEIGHT
+    # X_MIN = config.PLAYER_START_X
+    # Y_MIN = 40
 
-    X_MAX = WIDTH / 2
-    Y_MAX = HEIGHT - config.ICON_SIZE
+    # X_MAX = WIDTH / 2
+    # Y_MAX = HEIGHT - config.ICON_SIZE
 
-    SCORE_INCREMENT = 1
+    # SCORE_INCREMENT = 1
 
     BG_COLOR = pygame.Color(255, 255, 255)
     FG_COLOR = pygame.Color(0, 0, 0)
@@ -25,7 +25,7 @@ class Game:
             # Font Config
             self.font = pygame.font.SysFont("", config.PLAYER_HEIGHT * 2)
 
-            self.screen = pygame.display.set_mode((self.WIDTH, self.HEIGHT))
+            self.screen = pygame.display.set_mode((config.SCREEN_WIDTH, config.SCREEN_HEIGHT))
 
             self.icon = pygame.Surface((config.ICON_SIZE, config.ICON_SIZE))
             try:
@@ -101,19 +101,19 @@ class Game:
         pygame.draw.line(
             self.getScreen(),
             self.FG_COLOR,
-            (self.X_MIN, self.Y_MIN),
-            (self.WIDTH, self.Y_MIN),
+            (config.X_MIN, config.Y_MIN),
+            (config.SCREEN_WIDTH, config.Y_MIN),
             2,
         )
         pygame.draw.line(
             self.getScreen(),
             self.FG_COLOR,
-            (self.X_MIN, self.Y_MAX + config.BORDER_OFFSET),
-            (self.WIDTH, self.Y_MAX + config.BORDER_OFFSET),
+            (config.X_MIN, config.Y_MAX + config.BORDER_OFFSET),
+            (config.SCREEN_WIDTH, config.Y_MAX + config.BORDER_OFFSET),
             2,
         )
         pygame.draw.line(
-            self.getScreen(), self.FG_COLOR, (config.PLAYER_START_X, self.Y_MIN), (config.PLAYER_START_X, self.Y_MAX + config.BORDER_OFFSET), 2
+            self.getScreen(), self.FG_COLOR, (config.PLAYER_START_X, config.Y_MIN), (config.PLAYER_START_X, config.Y_MAX + config.BORDER_OFFSET), 2
         )
 
         # Print Display Text
@@ -181,10 +181,10 @@ class Game:
         self.score += amount
 
     def incrementScore(self):
-        self.score += self.SCORE_INCREMENT
+        self.score += config.SCORE_INCREMENT
 
     def decrementScore(self):
-        self.score -= self.SCORE_INCREMENT if self.score > 0 else 0
+        self.score -= config.SCORE_INCREMENT if self.score > 0 else 0
 
     def setScore(self, newScore):
         self.score = newScore

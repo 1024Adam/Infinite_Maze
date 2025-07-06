@@ -13,6 +13,7 @@ from infinite_maze.core.engine import maze, controlled_run
 from infinite_maze.core.game import Game
 from infinite_maze.entities.player import Player
 from infinite_maze.entities.maze import Line
+from infinite_maze.utils.config import config
 from tests.fixtures.pygame_mocks import full_pygame_mocks, InputSimulator
 from tests.fixtures.test_helpers import PerformanceMonitor, GameStateCapture
 
@@ -154,32 +155,32 @@ class TestGameEngineMovementSystem:
     def test_boundary_enforcement(self):
         """Test game boundary enforcement."""
         game = Game(headless=True)
-        player = Player(game.X_MIN, game.Y_MIN, headless=True)
+        player = Player(config.X_MIN, config.Y_MIN, headless=True)
         
         # Test left boundary
-        player.setX(game.X_MIN - 10)
-        if player.getX() < game.X_MIN:
+        player.setX(config.X_MIN - 10)
+        if player.getX() < config.X_MIN:
             # Game should end or adjust position
-            assert player.getX() < game.X_MIN  # Or game.end() called
+            assert player.getX() < config.X_MIN  # Or game.end() called
         
         # Test right boundary
-        player.setX(game.X_MAX + 10)
-        if player.getX() > game.X_MAX:
+        player.setX(config.X_MAX + 10)
+        if player.getX() > config.X_MAX:
             # Position should be adjusted
-            adjusted_x = min(player.getX(), game.X_MAX)
+            adjusted_x = min(player.getX(), config.X_MAX)
             player.setX(adjusted_x)
-            assert player.getX() <= game.X_MAX
+            assert player.getX() <= config.X_MAX
         
         # Test vertical boundaries
-        player.setY(game.Y_MIN - 10)
-        adjusted_y = max(player.getY(), game.Y_MIN)
+        player.setY(config.Y_MIN - 10)
+        adjusted_y = max(player.getY(), config.Y_MIN)
         player.setY(adjusted_y)
-        assert player.getY() >= game.Y_MIN
+        assert player.getY() >= config.Y_MIN
         
-        player.setY(game.Y_MAX + 10)
-        adjusted_y = min(player.getY(), game.Y_MAX)
+        player.setY(config.Y_MAX + 10)
+        adjusted_y = min(player.getY(), config.Y_MAX)
         player.setY(adjusted_y)
-        assert player.getY() <= game.Y_MAX
+        assert player.getY() <= config.Y_MAX
     
     def test_maze_line_repositioning(self):
         """Test maze line repositioning system."""
@@ -538,21 +539,21 @@ class TestGameEngineIntegration:
             game.getClock().update()
             
             # Check boundaries
-            if player.getX() < game.X_MIN:
+            if player.getX() < config.X_MIN:
                 game.end()
                 break
-            if player.getX() > game.X_MAX:
-                player.setX(game.X_MAX)
+            if player.getX() > config.X_MAX:
+                player.setX(config.X_MAX)
             
             # Adjust for boundaries
-            player.setY(max(player.getY(), game.Y_MIN))
-            player.setY(min(player.getY(), game.Y_MAX))
+            player.setY(max(player.getY(), config.Y_MIN))
+            player.setY(min(player.getY(), config.Y_MAX))
         
         # Verify final state
         assert game.getScore() >= 0
-        assert player.getX() >= game.X_MIN
-        assert player.getY() >= game.Y_MIN
-        assert player.getY() <= game.Y_MAX
+        assert player.getX() >= config.X_MIN
+        assert player.getY() >= config.Y_MIN
+        assert player.getY() <= config.Y_MAX
     
     def test_game_engine_error_recovery(self):
         """Test game engine error recovery."""

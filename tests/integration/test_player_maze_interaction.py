@@ -11,6 +11,7 @@ from unittest.mock import Mock, patch
 from infinite_maze.entities.player import Player
 from infinite_maze.entities.maze import Line
 from infinite_maze.core.game import Game
+from infinite_maze.utils.config import config
 from tests.fixtures.test_helpers import assert_position_equal, is_collision_detected
 
 
@@ -258,14 +259,14 @@ class TestPlayerMazeGameIntegration:
         """Test player-maze interaction within game boundaries."""
         # Create game and player
         game = Game(headless=True)
-        player = Player(game.X_MIN + 10, game.Y_MIN + 10, headless=True)
+        player = Player(config.X_MIN + 10, config.Y_MIN + 10, headless=True)
         
         # Generate maze
         lines = Line.generateMaze(game, 5, 5)
         
         # Player should start within game boundaries
-        assert game.X_MIN <= player.getX() <= game.X_MAX
-        assert game.Y_MIN <= player.getY() <= game.Y_MAX
+        assert config.X_MIN <= player.getX() <= config.X_MAX
+        assert config.Y_MIN <= player.getY() <= config.Y_MAX
         
         # Test some movements within boundaries
         for _ in range(10):
@@ -275,24 +276,24 @@ class TestPlayerMazeGameIntegration:
             
             if direction == 'right':
                 new_x = player.getX() + player.getSpeed()
-                if new_x <= game.X_MAX:
+                if new_x <= config.X_MAX:
                     player.moveX(1)
             elif direction == 'left':
                 new_x = player.getX() - player.getSpeed()
-                if new_x >= game.X_MIN:
+                if new_x >= config.X_MIN:
                     player.moveX(-1)
             elif direction == 'down':
                 new_y = player.getY() + player.getSpeed()
-                if new_y <= game.Y_MAX:
+                if new_y <= config.Y_MAX:
                     player.moveY(1)
             elif direction == 'up':
                 new_y = player.getY() - player.getSpeed()
-                if new_y >= game.Y_MIN:
+                if new_y >= config.Y_MIN:
                     player.moveY(-1)
             
             # Player should remain within boundaries
-            assert game.X_MIN <= player.getX() <= game.X_MAX
-            assert game.Y_MIN <= player.getY() <= game.Y_MAX
+            assert config.X_MIN <= player.getX() <= config.X_MAX
+            assert config.Y_MIN <= player.getY() <= config.Y_MAX
     
     def test_player_maze_collision_prevents_movement(self):
         """Test that maze collisions prevent player movement."""
