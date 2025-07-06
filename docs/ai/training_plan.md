@@ -46,26 +46,16 @@
 
 #### Hidden Layers
 ```
-CNN Backbone (enhanced for immediate maze pattern recognition):
+CNN Backbone (adapted for smaller input size):
 - Conv2D: 32 filters, 3×3 kernel, stride 1, ReLU
 - Conv2D: 64 filters, 3×3 kernel, stride 1, ReLU
 - Conv2D: 64 filters, 3×3 kernel, stride 1, ReLU
-- Conv2D: 32 filters, 1×1 kernel, stride 1, ReLU (pattern compression)
 - Flatten
 
 Combined Processing:
 - Dense: 256 neurons, ReLU (processing CNN output)
 - Dense: 128 neurons, ReLU (combining with numerical features)
 - Dense: 128 neurons, ReLU
-- Dense: 64 neurons, ReLU (action selection refinement)
-```
-
-#### Attention Mechanism (activated from Phase 1)
-```
-Spatial Attention:
-- Conv2D: 32 filters, 1×1 kernel on CNN features
-- Softmax activation to produce attention weights
-- Apply weights to CNN features before flattening
 ```
 
 #### Output Layer
@@ -105,22 +95,18 @@ Rainbow combines several DQN improvements:
 
 > **Important**: Each phase uses the best model checkpoint from the previous phase as its starting point. Do not proceed to the next phase until all success criteria for the current phase have been fully satisfied.
 
-### Phase 1: Basic Navigation (600K steps)
-- **Environment**: Training-specific environment with varied starting maze configurations, no advancing pace line
-- **Objective**: Master immediate maze navigation from start and strategic rightward progress
-- **Reward Focus**: +1 for rightward movement, -0.8 for collisions, +0.6 for beneficial vertical movement
+### Phase 1: Basic Navigation (500K steps)
+- **Environment**: Training-specific environment with static mazes, no advancing pace line
+- **Objective**: Master basic collision avoidance and strategic rightward progress
+- **Reward Focus**: +1 for rightward movement, -0.8 for collisions
 - **Success Criteria**: 
-  - Consistent forward movement (>85% successful rightward attempts)
-  - Minimal collisions (<8% of actions result in wall collisions) 
-  - Average score of at least 180 points per episode
-  - Appropriate vertical movement utilization (15-25% of actions)
-- **Anti-bias Strategy**: 
-  - Use multiple spawn positions near walls to improve generalization
-  - Implement higher initial exploration rate (epsilon = 1.0, decay over 150K steps)
-  - Ensure variety in initial maze configurations
+  - Consistent forward movement (>90% successful rightward attempts)
+  - Minimal collisions (<5% of actions result in wall collisions) 
+  - Average score of at least 200 points per episode
+- **Anti-bias Strategy**: Start training immediately with maze structures present (in training environment only)
 - **Checkpoint**: Save best-performing model when success criteria are met
 
-### Phase 2: Complex Navigation & Pace Introduction (1.2M steps)
+### Phase 2: Complex Navigation & Pace Introduction (1M steps)
 - **Starting Point**: Best checkpoint from Phase 1
 - **Environment**: Dynamic mazes with constant, slow pace
 - **Objective**: Learn to maintain position ahead of advancing boundary
@@ -128,34 +114,25 @@ Rainbow combines several DQN improvements:
 - **Success Criteria**: 
   - Maintaining safe distance from pace line (average distance >100 pixels)
   - Survival time of at least 2 minutes per episode
-  - Vertical movement utilization in 25-45% of actions
+  - Vertical movement utilization in 20-40% of actions
   - Minimal oscillation behavior (<5% of navigation attempts)
 - **Anti-bias Strategy**: Include scenarios with dense maze sections requiring up/down navigation
-- **Gradual Pace Introduction**: Start with pace at 20% speed (reduced from 25%), gradually increase over 150K steps
-- **Enhanced Vertical Movement Training**: 
-  - Add specialized corridor scenarios
-  - Include "maze bottleneck" scenarios that require precise navigation
-  - Implement corridor sequence challenges that require planning
-- **Model Architecture**: Activate dueling network architecture and enhance spatial attention mechanism
-- **Reward Function Enhancement**: Further improved vertical movement rewards with context-aware incentives
-- **Oscillation Mitigation**: Enhance detection and prevention of up-down oscillation patterns at vertical walls
+- **Gradual Pace Introduction**: Start with pace at 25% speed, gradually increase over 100K steps
+- **Enhanced Vertical Movement Training**: Add specialized corridor scenarios
+- **Model Architecture**: Activate dueling network architecture and add memory mechanism
+- **Reward Function Enhancement**: Improved vertical movement rewards and balanced pace distance incentives
+- **Oscillation Mitigation**: Implement detection and prevention of up-down oscillation patterns at vertical walls (see [oscillation_mitigation.md](oscillation_mitigation.md))
 - **Checkpoint**: Save best-performing model when success criteria are met
 
-### Phase 3: Varied Maze Structures (1.8M steps)
+### Phase 3: Varied Maze Structures (1.5M steps)
 - **Starting Point**: Best checkpoint from Phase 2
-- **Environment**: Multiple maze generation parameters with emphasis on starting area variations
-- **Objective**: Generalize navigation strategies across maze variations with focus on immediate navigation
-- **Reward Focus**: Efficient path finding through complex sections, especially from start positions
+- **Environment**: Multiple maze generation parameters
+- **Objective**: Generalize navigation strategies across maze variations
+- **Reward Focus**: Efficient path finding through complex sections
 - **Success Criteria**: 
   - Consistent performance across maze types (≤15% variance in survival time)
-  - Path efficiency ratio >0.65 (forward progress / total movement)
+  - Path efficiency ratio >0.7 (forward progress / total movement)
   - Successful navigation of narrow corridors and complex junctions (≥80% success rate)
-  - Starting area navigation success rate ≥85% (new metric)
-- **Enhanced Training Strategies**:
-  - Implement dynamic maze difficulty that scales based on agent performance
-  - Curriculum learning for increasingly complex starting positions
-  - Specialized training on "maze entry" patterns common in the game start
-  - Periodically reset to new maze configurations during episodes to improve generalization
 - **Checkpoint**: Save best-performing model when success criteria are met
 
 ### Phase 4: Progressive Difficulty (2M steps)
@@ -186,12 +163,10 @@ Rainbow combines several DQN improvements:
 ### Environment Setup
 - **OpenAI Gym Interface**: Custom environment implementing gym.Env
 - **Observation Processing**:
-  - Visual component: 13×13 multi-channel grid centered on player (expanded from 11×11)
+  - Visual component: 11×11 multi-channel grid centered on player
   - Feature vector: Pace value, distances to nearest walls in 8 directions
   - Stacked frames: Last 4 frames to capture movement
   - Path quality indicators: Openness measures and dead-end detection
-  - Added feature: Direction to nearest open corridor (unit vector)
-  - Added feature: Wall density in each quadrant around player
 - **Action Space**: Discrete(5) for UP, DOWN, LEFT, RIGHT, NO_ACTION
 - **Execution Modes**:
   - **Headless Mode**: Modified game engine for accelerated training without rendering
@@ -199,9 +174,8 @@ Rainbow combines several DQN improvements:
 - **Training-specific Environment**:
   - Custom version separate from the actual game
   - Configurable parameters for training progression
-  - Multiple spawn positions with varied proximity to walls
-  - Randomized initial orientation to avoid direction bias
-  - Variable maze density configurations for robust training
+  - Start with maze structures present with varying complexities
+  - Gradual transition to match the actual game environment in later phases
 - **Anti-bias Mechanisms**:
   - Include varied starting scenarios with different wall configurations
   - Curriculum progression from simple to complex navigation challenges
@@ -223,7 +197,7 @@ Rainbow combines several DQN improvements:
 def calculate_reward(self, state, action, new_state, done):
     reward = 0
     
-    # Enhanced early navigation rewards
+    # Base movement rewards - modified to prevent "always go right" bias
     if rightward_movement and not collision:
         # Check if the rightward movement was beneficial (not into a wall soon)
         if path_is_open_ahead(new_state, 3):  # Look 3 steps ahead
@@ -231,28 +205,11 @@ def calculate_reward(self, state, action, new_state, done):
         else:
             reward += 0.3  # Reduced reward for suboptimal rightward movement
     elif leftward_movement:
-        reward -= 0.8  # Slightly reduced penalty for leftward movement to allow more exploration
+        reward -= 1.0
     
-    # Strategic vertical movement rewards - enhanced for immediate maze navigation
-    if (upward_movement or downward_movement):
-        # More nuanced vertical movement reward
-        if path_improves(state, new_state):
-            reward += 0.6  # Increased reward for beneficial vertical movement
-        elif results_in_clear_path(state, new_state):
-            reward += 0.4  # Medium reward for movement that leads to clear areas
-        elif not collision:
-            reward += 0.1  # Small reward for non-colliding vertical movement
-    
-    # Pathfinding rewards (critical with immediate maze presence)
-    # Distance to nearest open rightward path
-    nearest_path_distance = calculate_nearest_path_distance(new_state)
-    if nearest_path_distance < calculate_nearest_path_distance(state):
-        # Moving closer to open paths is good
-        reward += 0.4
-    
-    # Initial exploration bonus (early training only)
-    if self.steps < 1000 and not previously_visited(new_state.position):
-        reward += 0.2  # Encourage early exploration of maze
+    # Strategic vertical movement rewards
+    if (upward_movement or downward_movement) and path_improves(state, new_state):
+        reward += 0.5  # Reward for vertical movement that leads to better paths
     
     # Distance-based rewards
     pace_line_distance = new_state.player_x - new_state.pace_line_x
@@ -267,20 +224,17 @@ def calculate_reward(self, state, action, new_state, done):
     
     # Penalties
     if collision:
-        reward -= 0.8  # Collision penalty
-        # Add context-aware penalty reduction for initial navigation attempts
-        if self.steps < 500 and self.collision_count < 10:
-            reward += 0.3  # Reduce penalty during very early exploration
+        reward -= 0.8  # Increased collision penalty
     
     # Repeated action penalty (discourage mindless direction holding)
     if same_action_count > 5:
         reward -= 0.1 * (same_action_count - 5)  # Increasing penalty for repetition
     
-    # Oscillation detection and penalty (active from Phase 1 now)
+    # Oscillation detection and penalty (Phase 2+)
     oscillation_detected = self._detect_oscillation(self.action_history, self.position_history)
     if oscillation_detected:
         # Apply significant penalty to discourage oscillation patterns
-        reward -= 0.7
+        reward -= 0.8
         # Escalate penalty for persistent oscillation
         consecutive_oscillations = self._count_consecutive_oscillations()
         if consecutive_oscillations > 3:
