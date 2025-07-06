@@ -20,17 +20,16 @@ Infinite Maze is a unique twist on classic maze games. Instead of finding an exi
 ### Initial Game State
 When you start a new game, you'll notice a unique setup:
 
-- **Starting Position**: Your player (red dot) begins on the far left side of the screen
-- **Safe Zone**: You start in an open area outside the actual maze
-- **Maze Entry**: The maze walls begin several hundred pixels to the right of your starting position
-- **Free Movement**: Initially, you can move freely in all directions without hitting walls
-- **Preparation Time**: This gives you time to get comfortable with the controls before entering the maze proper
+- **Starting Position**: Your player begins on the far left side of the screen
+- **Immediate Challenge**: Maze walls are present from the start of the game
+- **Strategic Planning**: You'll need to navigate the maze right away
+- **Pause Option**: Use the Space key to pause and plan your route
 
-This design allows new players to practice movement and understand the controls before facing the challenge of navigating through maze walls. Use this initial safe zone to:
-- Test all movement keys (WASD or arrows)
-- Practice the pause function (Space)
+This design challenges players to think strategically from the beginning. Make sure to:
+- Use all movement keys (WASD or arrows) to navigate the maze
+- Utilize the pause function (Space) to study the maze layout
 - Get a feel for the movement speed and responsiveness
-- Prepare mentally for entering the maze
+- Plan your path carefully through the maze walls
 
 ### Scoring System
 - **+1 point** for each movement to the right (forward progress)
@@ -84,12 +83,12 @@ There is no traditional "win" condition - the game is about achieving your perso
 - Plan your route by looking ahead for openings
 - Use the pause function to study complex sections
 
-#### 3. **Master the Grace Period**
-- **Utilize the Safe Zone**: Take advantage of the open starting area to practice controls
-- **Gradual Entry**: Move right at your own pace to enter the maze when you're ready
-- **Study the Entrance**: Use the initial area to observe maze wall patterns and openings
-- **Build Confidence**: Gain familiarity with movement before facing navigation challenges
-- **Strategic Timing**: Enter the maze with enough time to establish good positioning before pace begins
+#### 3. **Master the Initial Period**
+- **Plan Your Route**: Study the maze structure to find efficient paths
+- **Build Early Score**: Move right strategically to build points while navigating walls
+- **Use Vertical Movement**: Navigate up and down to find better paths through the maze
+- **Build Confidence**: Gain familiarity with movement while navigating the maze walls
+- **Strategic Timing**: Establish good positioning before the pace line activates
 
 ### Intermediate Strategies
 
@@ -132,20 +131,19 @@ There is no traditional "win" condition - the game is about achieving your perso
 
 ## 🎪 Game Phases & Progression
 
-### Phase 1: Grace Period (0-30 seconds)
+### Phase 1: Initial Period (0-30 seconds)
 **Focus**: Learning and positioning
-- **Safe Zone Practice**: Use the initial open area to master the controls
-- **Maze Entry**: Begin moving right to enter the actual maze structure
+- **Immediate Navigation**: Navigate through the maze from the start
 - **Control Familiarization**: Get comfortable with WASD or arrow keys
-- **Explore Initial Layout**: Study the maze entrance and nearby patterns
+- **Explore Initial Layout**: Study the maze structure and patterns
 - **Build Initial Score**: Start accumulating points through rightward movement
 - **Strategic Positioning**: Position yourself well before the pace challenge begins
 
 **Key Tips for Phase 1:**
-- Don't rush into the maze - use the safe starting area effectively
-- Practice pause functionality while you have time
-- Move right steadily to build up initial score
-- Look ahead to plan your path through the maze entrance
+- Use the pause function to study the maze layout
+- Practice making quick movement decisions
+- Move right strategically to build up initial score
+- Look ahead to plan efficient paths through the maze
 
 ### Phase 2: Early Pace (30-60 seconds)
 **Focus**: Establishing rhythm
@@ -271,11 +269,11 @@ Set personal challenges to enhance your gameplay experience:
 ## 📈 Improvement Roadmap
 
 ### Week 1: Foundation
-- **Master basic controls** in the safe starting zone
-- **Practice maze entry** - smoothly transition from open area to maze walls
+- **Master basic controls** while navigating the maze
+- **Practice quick decision-making** when encountering maze walls
 - **Understand scoring system** and the impact of different movements
-- **Achieve consistent 30+ second survival** after entering the maze
-- **Learn to use pause effectively** both in safe zone and within maze walls
+- **Achieve consistent 30+ second survival** from the start
+- **Learn to use pause effectively** to plan routes through the maze walls
 
 ### Week 2: Building Skills
 - Improve pathfinding efficiency

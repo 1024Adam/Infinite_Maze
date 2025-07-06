@@ -285,7 +285,7 @@ Just is a modern task runner that simplifies development commands:
 ### What to Expect
 1. **Game Window**: An 800x600 window will open with the maze game
 2. **Initial Maze**: A randomly generated maze will appear
-3. **Player Character**: A red dot representing your character
+3. **Player Character**: A dot representing your character
 4. **UI Elements**: Score and time displays at the top
 
 ### First-Time Tips

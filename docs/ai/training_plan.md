@@ -24,7 +24,7 @@
 - **Time Pressure**: Increasing pace requires progressively faster decision-making
 - **Path Planning**: Finding efficient routes through unpredictable maze structures
 - **Exploration-Exploitation Balance**: Weighing immediate rightward progress against longer-term survival
-- **Open Start vs. Maze Structure**: Transitioning from open starting area to constrained maze navigation
+- **Varied Maze Patterns**: Adapting to different maze structures and densities
 
 ## 2. Model Architecture Design
 
@@ -144,7 +144,7 @@ Rainbow combines several DQN improvements:
   - Reaching survival time of ≥4 minutes consistently
   - Adapting to at least 3 pace increases
   - Maintaining navigation skills when transitioning from open area to maze (≤20% performance drop)
-- **Transition Strategy**: Gradually introduce the open starting area as in the actual game
+- **Transition Strategy**: Gradually introduce more complex maze patterns as in the actual game
 - **Checkpoint**: Save best-performing model when success criteria are met
 
 ### Phase 5: Adversarial Training (1M steps)
@@ -174,7 +174,7 @@ Rainbow combines several DQN improvements:
 - **Training-specific Environment**:
   - Custom version separate from the actual game
   - Configurable parameters for training progression
-  - Start with maze structures present (no initial open area) in early phases
+  - Start with maze structures present with varying complexities
   - Gradual transition to match the actual game environment in later phases
 - **Anti-bias Mechanisms**:
   - Include varied starting scenarios with different wall configurations

@@ -120,7 +120,7 @@ The setup script will:
 ### Core Elements
 |  Element   |  Description  |
 | ---------- | ------------- |
-| **Player** | Your character (red dot) that moves through the maze |
+| **Player** | Your character that moves through the maze |
 | **Pace Line** | The advancing boundary that pursues you - stay ahead or the game ends |
 | **Maze Walls** | Dynamically generated barriers that block your movement |
 | **Scoring** | Points awarded for rightward progress, deducted for leftward movement |

@@ -6,12 +6,11 @@ This document outlines specific safeguards to prevent common training pitfalls i
 
 In the Infinite Maze game, the model can develop a strong bias to always move right because:
 1. The game rewards rightward movement (+1 point)
-2. The initial starting area has no walls, allowing unrestricted rightward movement
-3. The simplest policy (always go right) works perfectly in the open starting area
+2. The simplest policy (always attempting to go right) is tempting for the AI
 
-This leads to a model that fails catastrophically once it encounters the actual maze structure, as it continues attempting to move right even when walls block its path.
+This can lead to a model that fails catastrophically when it encounters maze walls, as it continues attempting to move right even when walls block its path.
 
-> **Important Note**: All modifications described in this document apply only to the AI training environment, not to the actual game. The game itself should remain unchanged with its original mechanics including the open starting area.
+> **Important Note**: All modifications described in this document apply only to the AI training environment, not to the actual game. The game itself should remain unchanged with its original mechanics.
 
 ## Implementation Safeguards
 
@@ -20,8 +19,8 @@ This leads to a model that fails catastrophically once it encounters the actual 
 > These modifications are for the training environment only and do not affect the actual game.
 
 - **Start With Maze Structures**: Begin training with maze walls present from the first step
-- **Training-Only Environment**: Create a specialized training version that differs from the actual game
-- **No Open Starting Area**: Remove the open starting area during initial training phases
+- **Training-Only Environment**: Create a specialized training version for optimal learning
+- **Varied Maze Layouts**: Expose the agent to different maze configurations from the start
 - **Variable Starting Positions**: Initialize the agent at different positions within the maze
 - **Wall-Dense Scenarios**: Include training scenarios with high wall density requiring navigation
 
@@ -74,7 +73,7 @@ def calculate_repeated_actions(action_history):
 
 - **Phase 1: Basic Maze Navigation**
   - Begin with simple mazes that require some vertical navigation
-  - No initial open areas allowed
+  - Start with maze walls present from the beginning
   - Verify learning of basic wall avoidance before proceeding
   
 - **Phase 2: Strategic Movement**
@@ -82,13 +81,13 @@ def calculate_repeated_actions(action_history):
   - Test on scenarios requiring backtracking
   - Ensure model recognizes dead-ends and reroutes effectively
   
-- **Phase 3: Gradual Open Area Introduction**
-  - Slowly introduce segments with open areas
-  - Verify model doesn't revert to "always right" behavior when encountering open spaces
-  - Test transitions between open areas and maze sections
+- **Phase 3: Varied Maze Complexity**
+  - Introduce more varied maze generation patterns
+  - Verify model doesn't revert to "always right" behavior in less dense sections
+  - Test transitions between different maze densities and patterns
   
 - **Phase 4: Full Game Conditions**
-  - Train with standard game starting conditions (including the open starting area)
+  - Train with standard game conditions matching the actual gameplay
   - Use transfer learning from previous phases to preserve navigation skills
   - Monitor for bias regression during this phase
   - Implement corrective mini-batches if bias detected
@@ -112,9 +111,9 @@ def calculate_repeated_actions(action_history):
    - Expected: Navigate around wall using up/down movements
    - Failure: Repeatedly attempting to move right into the wall
 
-3. **Maze Entry Test**: Test transition from open area to maze
-   - Expected: Smooth adaptation to maze navigation
-   - Failure: Performance collapse upon maze entry
+3. **Maze Transition Test**: Test navigation between different maze patterns
+   - Expected: Smooth adaptation to changing maze patterns
+   - Failure: Performance collapse upon entering more complex sections
 
 4. **Deliberate Dead-End Test**: Force navigation into dead-end
    - Expected: Recognition and efficient backtracking
@@ -165,7 +164,7 @@ If bias is detected during or after training:
 It's essential to maintain a clear separation between the training environment and the actual game:
 
 1. **Game Environment (Unchanged)**:
-   - Preserves the original game design with open starting area
+   - Preserves the original game design with maze walls from the start
    - Maintains all original game mechanics and scoring
    - Provides the ultimate target environment where the AI will operate
 
@@ -186,4 +185,4 @@ To implement these training safeguards without modifying the game:
 
 ## Conclusion
 
-These safeguards directly address the "always go right" bias problem by modifying the training environment, reward structure, and monitoring processes - all without changing the actual game. By implementing these measures, the model will develop a sophisticated navigation strategy that balances rightward progress with effective maze navigation, resulting in significantly better performance when deployed in the actual game environment with its open starting area.
+These safeguards directly address the "always go right" bias problem by modifying the training environment, reward structure, and monitoring processes - all without changing the actual game. By implementing these measures, the model will develop a sophisticated navigation strategy that balances rightward progress with effective maze navigation, resulting in significantly better performance when deployed in the actual game environment.

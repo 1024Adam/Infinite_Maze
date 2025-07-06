@@ -23,6 +23,7 @@ A handy reference card for players and developers.
 
 ### 🎯 Game Rules
 - **Goal**: Navigate as far right as possible through infinite maze
+- **Maze Challenge**: Maze walls present from the beginning
 - **Pace**: Starts after 30 seconds, accelerates every 30 seconds
 - **Scoring**: +1 for right, -1 for left, 0 for up/down
 - **Game Over**: When pace line catches your position
@@ -221,8 +222,8 @@ git rebase upstream/main
 ## 💡 Pro Tips
 
 ### Gameplay
-- Practice in the 30-second grace period
-- Use vertical movement strategically
+- Navigate strategically from the start
+- Use vertical movement to find better paths
 - Pause to plan complex routes
 - Focus on survival over score initially
 

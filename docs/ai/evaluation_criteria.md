@@ -43,7 +43,7 @@ Evaluate model performance across systematically varied maze configurations:
 | Variation | Description | Acceptance Criteria |
 |-----------|-------------|---------------------|
 | **Pace Variations** | Starting pace and acceleration rates modified ±20% | ≥80% of baseline performance |
-| **Starting Positions** | Different player starting positions within safe area | Consistent performance across positions |
+| **Starting Positions** | Different player starting positions within maze | Consistent performance across positions |
 | **Visual Changes** | Modified visual representation (colors, sizes) | No performance degradation |
 | **FPS Variations** | Running at 30, 60, and variable FPS | Stable performance across framerates |
 
@@ -65,7 +65,7 @@ Evaluate model performance across systematically varied maze configurations:
 | **Minimum Viable Paths** | Mazes with single-cell width corridors | ≥60% of standard performance |
 | **Deceptive Corridors** | Paths that initially appear open but lead to dead ends | Detect and avoid ≥50% of traps |
 | **Pace Spikes** | Sudden acceleration of pace beyond normal rates | Successful adaptation ≥60% of trials |
-| **Open-to-Maze Transition** | Starting in open area then encountering maze structure | Maintain ≥80% performance across transition |
+| **Maze Pattern Transition** | Transition between different maze patterns and densities | Maintain ≥80% performance across transitions |
 | **Right-Wall Tests** | Scenarios with impassable walls to the right | Navigate around without repeated collisions |
 
 ### Stress Testing
