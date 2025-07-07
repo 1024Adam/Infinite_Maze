@@ -68,3 +68,104 @@ class Player:
         self.setX(xPosition)
         self.setY(yPosition)
         self.speed = config.PLAYER_SPEED
+        
+    def is_movement_blocked(self, direction, lines):
+        """
+        Check if movement in a specified direction is blocked by any maze lines.
+        
+        Args:
+            direction: An integer representing the direction (from config.MOVEMENT_CONSTANTS)
+            lines: List of Line objects that make up the maze
+            
+        Returns:
+            bool: True if movement is blocked, False otherwise
+        """
+        RIGHT = config.get_movement_constant("RIGHT")
+        LEFT = config.get_movement_constant("LEFT")
+        UP = config.get_movement_constant("UP")
+        DOWN = config.get_movement_constant("DOWN")
+        
+        blocked = False
+        
+        if direction == RIGHT:
+            for line in lines:
+                if line.getIsHorizontal():
+                    blocked = blocked or (
+                        self.getY() <= line.getYStart()
+                        and self.getY() + self.getHeight() >= line.getYStart()
+                        and self.getX() + self.getWidth() + self.getSpeed() == line.getXStart()
+                    )
+                else:  # vertical line
+                    blocked = blocked or (
+                        self.getX() + self.getWidth() <= line.getXStart()
+                        and self.getX() + self.getWidth() + self.getSpeed() >= line.getXStart()
+                        and (
+                            (self.getY() >= line.getYStart() and self.getY() <= line.getYEnd())
+                            or (
+                                self.getY() + self.getHeight() >= line.getYStart()
+                                and self.getY() + self.getHeight() <= line.getYEnd()
+                            )
+                        )
+                    )
+        elif direction == LEFT:
+            for line in lines:
+                if line.getIsHorizontal():
+                    blocked = blocked or (
+                        self.getY() <= line.getYStart()
+                        and self.getY() + self.getHeight() >= line.getYStart()
+                        and self.getX() - self.getSpeed() == line.getXEnd()
+                    )
+                else:  # vertical line
+                    blocked = blocked or (
+                        self.getX() >= line.getXEnd()
+                        and self.getX() - self.getSpeed() <= line.getXEnd()
+                        and (
+                            (self.getY() >= line.getYStart() and self.getY() <= line.getYEnd())
+                            or (
+                                self.getY() + self.getHeight() >= line.getYStart()
+                                and self.getY() + self.getHeight() <= line.getYEnd()
+                            )
+                        )
+                    )
+        elif direction == DOWN:
+            for line in lines:
+                if line.getIsHorizontal():
+                    blocked = blocked or (
+                        self.getY() + self.getHeight() <= line.getYStart()
+                        and self.getY() + self.getHeight() + self.getSpeed() >= line.getYStart()
+                        and (
+                            (self.getX() >= line.getXStart() and self.getX() <= line.getXEnd())
+                            or (
+                                self.getX() + self.getWidth() >= line.getXStart()
+                                and self.getX() + self.getWidth() <= line.getXEnd()
+                            )
+                        )
+                    )
+                else:  # vertical line
+                    blocked = blocked or (
+                        self.getX() <= line.getXStart()
+                        and self.getX() + self.getWidth() >= line.getXStart()
+                        and self.getY() + self.getHeight() + self.getSpeed() == line.getYStart()
+                    )
+        elif direction == UP:
+            for line in lines:
+                if line.getIsHorizontal():
+                    blocked = blocked or (
+                        self.getY() >= line.getYStart()
+                        and self.getY() - self.getSpeed() <= line.getYStart()
+                        and (
+                            (self.getX() >= line.getXStart() and self.getX() <= line.getXEnd())
+                            or (
+                                self.getX() + self.getWidth() >= line.getXStart()
+                                and self.getX() + self.getWidth() <= line.getXEnd()
+                            )
+                        )
+                    )
+                else:  # vertical line
+                    blocked = blocked or (
+                        self.getX() <= line.getXStart()
+                        and self.getX() + self.getWidth() >= line.getXStart()
+                        and self.getY() - self.getSpeed() == line.getYEnd()
+                    )
+        
+        return blocked

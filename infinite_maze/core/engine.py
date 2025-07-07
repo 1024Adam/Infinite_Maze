@@ -33,135 +33,18 @@ def maze():
             if not game.isPaused():
                 # Arrow Move Events
                 if keys[pygame.K_RIGHT] or keys[pygame.K_d]:
-                    blocked = False
-                    for line in lines:
-                        if line.getIsHorizontal():
-                            blocked = blocked or (
-                                player.getY() <= line.getYStart()
-                                and player.getY() + player.getHeight()
-                                >= line.getYStart()
-                                and player.getX()
-                                + player.getWidth()
-                                + player.getSpeed()
-                                == line.getXStart()
-                            )
-                        else:  # vertical line
-                            blocked = blocked or (
-                                player.getX() + player.getWidth() <= line.getXStart()
-                                and player.getX()
-                                + player.getWidth()
-                                + player.getSpeed()
-                                >= line.getXStart()
-                                and (
-                                    (
-                                        player.getY() >= line.getYStart()
-                                        and player.getY() <= line.getYEnd()
-                                    )
-                                    or (
-                                        player.getY() + player.getHeight()
-                                        >= line.getYStart()
-                                        and player.getY() + player.getHeight()
-                                        <= line.getYEnd()
-                                    )
-                                )
-                            )
-                    if not blocked:
+                    if not player.is_movement_blocked(RIGHT, lines):
                         player.moveX(player.getSpeed())
                         game.incrementScore()
                 elif keys[pygame.K_LEFT] or keys[pygame.K_a]:
-                    blocked = False
-                    for line in lines:
-                        if line.getIsHorizontal():
-                            blocked = blocked or (
-                                player.getY() <= line.getYStart()
-                                and player.getY() + player.getHeight()
-                                >= line.getYStart()
-                                and player.getX() - player.getSpeed() == line.getXEnd()
-                            )
-                        else:  # vertical line
-                            blocked = blocked or (
-                                player.getX() >= line.getXEnd()
-                                and player.getX() - player.getSpeed() <= line.getXEnd()
-                                and (
-                                    (
-                                        player.getY() >= line.getYStart()
-                                        and player.getY() <= line.getYEnd()
-                                    )
-                                    or (
-                                        player.getY() + player.getHeight()
-                                        >= line.getYStart()
-                                        and player.getY() + player.getHeight()
-                                        <= line.getYEnd()
-                                    )
-                                )
-                            )
-                    if not blocked:
+                    if not player.is_movement_blocked(LEFT, lines):
                         player.moveX(-player.getSpeed())
                         game.decrementScore()
                 if keys[pygame.K_DOWN] or keys[pygame.K_s]:
-                    blocked = False
-                    for line in lines:
-                        if line.getIsHorizontal():
-                            blocked = blocked or (
-                                player.getY() + player.getHeight() <= line.getYStart()
-                                and player.getY()
-                                + player.getHeight()
-                                + player.getSpeed()
-                                >= line.getYStart()
-                                and (
-                                    (
-                                        player.getX() >= line.getXStart()
-                                        and player.getX() <= line.getXEnd()
-                                    )
-                                    or (
-                                        player.getX() + player.getWidth()
-                                        >= line.getXStart()
-                                        and player.getX() + player.getWidth()
-                                        <= line.getXEnd()
-                                    )
-                                )
-                            )
-                        else:  # vertical line
-                            blocked = blocked or (
-                                player.getX() <= line.getXStart()
-                                and player.getX() + player.getWidth()
-                                >= line.getXStart()
-                                and player.getY()
-                                + player.getHeight()
-                                + player.getSpeed()
-                                == line.getYStart()
-                            )
-                    if not blocked:
+                    if not player.is_movement_blocked(DOWN, lines):
                         player.moveY(player.getSpeed())
                 elif keys[pygame.K_UP] or keys[pygame.K_w]:
-                    blocked = False
-                    for line in lines:
-                        if line.getIsHorizontal():
-                            blocked = blocked or (
-                                player.getY() >= line.getYStart()
-                                and player.getY() - player.getSpeed()
-                                <= line.getYStart()
-                                and (
-                                    (
-                                        player.getX() >= line.getXStart()
-                                        and player.getX() <= line.getXEnd()
-                                    )
-                                    or (
-                                        player.getX() + player.getWidth()
-                                        >= line.getXStart()
-                                        and player.getX() + player.getWidth()
-                                        <= line.getXEnd()
-                                    )
-                                )
-                            )
-                        else:  # vertical line
-                            blocked = blocked or (
-                                player.getX() <= line.getXStart()
-                                and player.getX() + player.getWidth()
-                                >= line.getXStart()
-                                and player.getY() - player.getSpeed() == line.getYEnd()
-                            )
-                    if not blocked:
+                    if not player.is_movement_blocked(UP, lines):
                         player.moveY(-player.getSpeed())
 
                 # Process game pace adjustments
@@ -286,136 +169,19 @@ def controlled_run(wrapper, counter):
                 values["action"] = action
 
                 if action == RIGHT:
-                    blocked = False
-                    for line in lines:
-                        if line.getIsHorizontal():
-                            blocked = blocked or (
-                                player.getY() <= line.getYStart()
-                                and player.getY() + player.getHeight()
-                                >= line.getYStart()
-                                and player.getX()
-                                + player.getWidth()
-                                + player.getSpeed()
-                                == line.getXStart()
-                            )
-                        else:  # vertical line
-                            blocked = blocked or (
-                                player.getX() + player.getWidth() <= line.getXStart()
-                                and player.getX()
-                                + player.getWidth()
-                                + player.getSpeed()
-                                >= line.getXStart()
-                                and (
-                                    (
-                                        player.getY() >= line.getYStart()
-                                        and player.getY() <= line.getYEnd()
-                                    )
-                                    or (
-                                        player.getY() + player.getHeight()
-                                        >= line.getYStart()
-                                        and player.getY() + player.getHeight()
-                                        <= line.getYEnd()
-                                    )
-                                )
-                            )
-                    if not blocked:
+                    if not player.is_movement_blocked(RIGHT, lines):
                         player.moveX(player.getSpeed())
                         game.incrementScore()
                         scoreIncreased = True
                 elif action == LEFT:
-                    blocked = False
-                    for line in lines:
-                        if line.getIsHorizontal():
-                            blocked = blocked or (
-                                player.getY() <= line.getYStart()
-                                and player.getY() + player.getHeight()
-                                >= line.getYStart()
-                                and player.getX() - player.getSpeed() == line.getXEnd()
-                            )
-                        else:  # vertical line
-                            blocked = blocked or (
-                                player.getX() >= line.getXEnd()
-                                and player.getX() - player.getSpeed() <= line.getXEnd()
-                                and (
-                                    (
-                                        player.getY() >= line.getYStart()
-                                        and player.getY() <= line.getYEnd()
-                                    )
-                                    or (
-                                        player.getY() + player.getHeight()
-                                        >= line.getYStart()
-                                        and player.getY() + player.getHeight()
-                                        <= line.getYEnd()
-                                    )
-                                )
-                            )
-                    if not blocked:
+                    if not player.is_movement_blocked(LEFT, lines):
                         player.moveX(-player.getSpeed())
                         game.decrementScore()
                 if action == DOWN:
-                    blocked = False
-                    for line in lines:
-                        if line.getIsHorizontal():
-                            blocked = blocked or (
-                                player.getY() + player.getHeight() <= line.getYStart()
-                                and player.getY()
-                                + player.getHeight()
-                                + player.getSpeed()
-                                >= line.getYStart()
-                                and (
-                                    (
-                                        player.getX() >= line.getXStart()
-                                        and player.getX() <= line.getXEnd()
-                                    )
-                                    or (
-                                        player.getX() + player.getWidth()
-                                        >= line.getXStart()
-                                        and player.getX() + player.getWidth()
-                                        <= line.getXEnd()
-                                    )
-                                )
-                            )
-                        else:  # vertical line
-                            blocked = blocked or (
-                                player.getX() <= line.getXStart()
-                                and player.getX() + player.getWidth()
-                                >= line.getXStart()
-                                and player.getY()
-                                + player.getHeight()
-                                + player.getSpeed()
-                                == line.getYStart()
-                            )
-                    if not blocked:
+                    if not player.is_movement_blocked(DOWN, lines):
                         player.moveY(player.getSpeed())
                 elif action == UP:
-                    blocked = False
-                    for line in lines:
-                        if line.getIsHorizontal():
-                            blocked = blocked or (
-                                player.getY() >= line.getYStart()
-                                and player.getY() - player.getSpeed()
-                                <= line.getYStart()
-                                and (
-                                    (
-                                        player.getX() >= line.getXStart()
-                                        and player.getX() <= line.getXEnd()
-                                    )
-                                    or (
-                                        player.getX() + player.getWidth()
-                                        >= line.getXStart()
-                                        and player.getX() + player.getWidth()
-                                        <= line.getXEnd()
-                                    )
-                                )
-                            )
-                        else:  # vertical line
-                            blocked = blocked or (
-                                player.getX() <= line.getXStart()
-                                and player.getX() + player.getWidth()
-                                >= line.getXStart()
-                                and player.getY() - player.getSpeed() == line.getYEnd()
-                            )
-                    if not blocked:
+                    if not player.is_movement_blocked(UP, lines):
                         player.moveY(-player.getSpeed())
 
                 values["score_increased"] = scoreIncreased
