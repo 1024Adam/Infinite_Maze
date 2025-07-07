@@ -103,7 +103,7 @@ Rainbow combines several DQN improvements:
   - Consistent forward movement (>90% successful rightward attempts)
   - Minimal collisions (<5% of actions result in wall collisions) 
   - Average score of at least 200 points per episode
-- **Anti-bias Strategy**: Start training immediately with maze structures present (in training environment only)
+- **Anti-bias Strategy**: Start training immediately with maze structures present
 - **Checkpoint**: Save best-performing model when success criteria are met
 
 ### Phase 2: Complex Navigation & Pace Introduction (1M steps)
