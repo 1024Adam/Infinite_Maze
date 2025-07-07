@@ -68,7 +68,7 @@ def evaluate_agent(agent: RainbowDQNAgent,
             step += 1
             
             if render:
-                env.render(mode='human')
+                env.render()
                 if delay > 0:
                     import time
                     time.sleep(delay)
