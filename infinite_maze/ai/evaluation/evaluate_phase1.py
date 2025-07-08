@@ -37,7 +37,7 @@ def evaluate_agent(agent: RainbowDQNAgent,
     lengths = []
     scores = []
     collisions = []
-    actions_taken = {0: 0, 1: 0, 2: 0, 3: 0, 4: 0}  # UP, RIGHT, DOWN, LEFT, NO_ACTION
+    actions_taken = {0: 0, 1: 0, 2: 0, 3: 0, 4: 0}  # DO_NOTHING, RIGHT, LEFT, UP, DOWN
     
     render_mode = env.render_mode
     if not render:
@@ -169,7 +169,7 @@ def visualize_evaluation(eval_results: Dict[str, Any], save_path: Optional[str] 
     
     # Plot action distribution
     actions = eval_results['action_distribution']
-    action_names = ['UP', 'RIGHT', 'DOWN', 'LEFT', 'NO_ACTION']
+    action_names = ['DO_NOTHING', 'RIGHT', 'LEFT', 'UP', 'DOWN']
     axes[1, 1].bar(action_names, [actions[i] for i in range(5)])
     axes[1, 1].set_title('Action Distribution')
     axes[1, 1].set_ylabel('Frequency')

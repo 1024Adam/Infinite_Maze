@@ -102,14 +102,14 @@ class ReplayBuffer:
                 if action_frequency < 0.25:  # We want a good amount of RIGHT actions
                     boost_factor = 1.5 - (action_frequency / 0.25)  # More boost when more rare
                     base_priority *= min(2.0, max(1.0, boost_factor))
-            elif action == 3:  # LEFT action
+            elif action == 2:  # LEFT action
                 if action_frequency < 0.05:  # We want some LEFT exploration
                     boost_factor = 1.3 - (action_frequency / 0.05)
                     base_priority *= min(1.8, max(1.0, boost_factor))
                     
             # Reduce priority for over-represented actions
             vertical_freq = (self.action_counts[0] + self.action_counts[2]) / self.total_actions
-            if action in [0, 2] and vertical_freq > 0.4:  # UP or DOWN when already overrepresented
+            if action in [3, 4] and vertical_freq > 0.4:  # UP or DOWN when already overrepresented
                 reduction_factor = max(0.5, 1.0 - ((vertical_freq - 0.4) / 0.6))
                 base_priority *= reduction_factor
                 
@@ -571,7 +571,7 @@ class RainbowDQNAgent:
             
             # Track collisions and actions
             episode_collisions = 0
-            episode_actions = {0: 0, 1: 0, 2: 0, 3: 0, 4: 0}  # UP, RIGHT, DOWN, LEFT, NO_ACTION
+            episode_actions = {0: 0, 1: 0, 2: 0, 3: 0, 4: 0}  # DO_NOTHING, RIGHT, LEFT, UP, DOWN
             score = 0
             
             while not done and step < max_steps:

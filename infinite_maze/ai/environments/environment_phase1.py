@@ -72,7 +72,7 @@ class InfiniteMazeEnv(gym.Env):
         self.total_reward = 0
         self.action_history = []  # Track actions for repetition detection
         
-        # Define action space: UP, RIGHT, DOWN, LEFT, NO_ACTION
+        # Define action space: DO_NOTHING, RIGHT, LEFT, UP, DOWN
         self.action_space = spaces.Discrete(5)
         
         # Define observation space based on grid representation
@@ -167,7 +167,7 @@ class InfiniteMazeEnv(gym.Env):
         Take a step in the environment using the given action.
         
         Args:
-            action: Action to take (0=UP, 1=RIGHT, 2=DOWN, 3=LEFT, 4=NO_ACTION)
+            action: Action to take (0=DO_NOTHING, 1=RIGHT, 2=LEFT, 3=UP, 4=DOWN)
             
         Returns:
             Tuple of (observation, reward, terminated, truncated, info)
@@ -179,48 +179,21 @@ class InfiniteMazeEnv(gym.Env):
         old_state = self._get_state_snapshot()
         
         # Map the action to the player movement
-        blocked = False
-        current_x, current_y = self.player.getX(), self.player.getY()
+        blocked = self.player.is_movement_blocked(action, self.lines)
         speed = self.player.getSpeed()
         
-        if action == 0:  # UP
-            # Check for collision along the entire movement path
-            if not self.maze.check_collision(current_x, current_y, 0, -speed):
-                self.player.moveY(-1)  # Move up
-            else:
-                blocked = True
-                
-        elif action == 1:  # RIGHT
-            # Check for collision along the entire movement path
-            if not self.maze.check_collision(current_x, current_y, speed, 0):
-                self.player.moveX(1)  # Move right
-                self.game.incrementScore()
-            else:
-                blocked = True
-                
-        elif action == 2:  # DOWN
-            # Check for collision along the entire movement path
-            if not self.maze.check_collision(current_x, current_y, 0, speed):
-                self.player.moveY(1)  # Move down
-            else:
-                blocked = True
-                
-        elif action == 3:  # LEFT
-            # Check for collision along the entire movement path
-            if not self.maze.check_collision(current_x, current_y, -speed, 0):
-                self.player.moveX(-1)  # Move left
+        if not blocked:
+            if action == 1:  # RIGHT
+                self.player.moveX(speed)
+                self.game.incrementScore()    
+            elif action == 2:  # LEFT
+                self.player.moveX(-speed)
                 self.game.decrementScore()
-            else:
-                blocked = True
-                
-        # action 4 is NO_ACTION, so do nothing
-        
-        # Double-check that we're not inside a wall and correct if needed
-        if self.maze.is_wall(self.player.getX(), self.player.getY()):
-            # Emergency correction - reset to previous position
-            self.player.setX(current_x)
-            self.player.setY(current_y)
-            blocked = True
+            elif action == 3:  # UP
+                self.player.moveY(-speed)
+            elif action == 4:  # DOWN
+                self.player.moveY(speed)                    
+            # action 0 is DO_NOTHING, so do nothing
         
         # Update game state (handle pace line if enabled)
         if self.training_phase > 1 and self.pace_enabled:
@@ -301,7 +274,7 @@ class InfiniteMazeEnv(gym.Env):
         
         # 4-7. Available directions (binary features)
         # Check which directions are valid moves (not into walls)
-        dirs = ["UP", "RIGHT", "DOWN", "LEFT"]
+        dirs = ["DO_NOTHING", "RIGHT", "LEFT", "UP", "DOWN"]
         for i, direction in enumerate(dirs):
             numerical[3 + i] = 1.0 if self._is_valid_move(direction) else 0.0
         
@@ -384,28 +357,15 @@ class InfiniteMazeEnv(gym.Env):
         Check if a move in the given direction would be valid (not into a wall).
         
         Args:
-            direction: Direction to check ("UP", "RIGHT", "DOWN", "LEFT")
+            direction: Direction to check ("DO_NOTHING", "RIGHT", "LEFT", "UP", "DOWN")
             
         Returns:
             True if the move is valid, False otherwise
         """
-        # Get the player's current position
-        x, y = self.player.getX(), self.player.getY()
-        speed = self.player.getSpeed()
-        
-        # Calculate movement vector based on direction
-        dx, dy = 0, 0
-        if direction == "UP":
-            dy = -speed
-        elif direction == "RIGHT":
-            dx = speed
-        elif direction == "DOWN":
-            dy = speed
-        elif direction == "LEFT":
-            dx = -speed
-        
+        action = config.get_movement_constant(direction)
+
         # Use the improved collision detection that checks the entire path
-        return not self.maze.check_collision(x, y, dx, dy)
+        return not self.player.is_movement_blocked(action, self.lines)
     
     def _detected_collision(self, old_state: Dict[str, Any], new_state: Dict[str, Any]) -> bool:
         """
