@@ -30,7 +30,7 @@ class MockGameEngine:
         """Setup a test game instance."""
         self.game = Game(headless=headless)
         self.player = Player(80, 223, headless=headless)
-        self.lines = Line.generateMaze(self.game, 15, 20)
+        self.lines = Line.generate_maze(self.game, 15, 20)
         
     def simulate_movement(self, direction: str, frames: int = 1):
         """Simulate player movement for specified frames."""
@@ -45,21 +45,21 @@ class MockGameEngine:
             dx, dy = movements[direction.lower()]
             for _ in range(frames):
                 if dx != 0:
-                    self.player.moveX(dx)
+                    self.player.move_x(dx)
                 if dy != 0:
-                    self.player.moveY(dy)
+                    self.player.move_y(dy)
     
     def get_collision_state(self) -> Dict[str, bool]:
         """Get current collision state in all directions."""
-        current_pos = self.player.getPosition()
+        current_pos = self.player.get_position()
         
         # Test movement in each direction
         collisions = {}
         directions = {
-            'right': (self.player.getSpeed(), 0),
-            'left': (-self.player.getSpeed(), 0),
-            'up': (0, -self.player.getSpeed()),
-            'down': (0, self.player.getSpeed())
+            'right': (self.player.get_speed(), 0),
+            'left': (-self.player.get_speed(), 0),
+            'up': (0, -self.player.get_speed()),
+            'down': (0, self.player.get_speed())
         }
         
         for direction, (dx, dy) in directions.items():
@@ -75,19 +75,19 @@ class MockGameEngine:
     
     def _check_collision_at_position(self, x: int, y: int) -> bool:
         """Check if position would cause collision with maze walls."""
-        player_width = self.player.getWidth()
-        player_height = self.player.getHeight()
+        player_width = self.player.get_width()
+        player_height = self.player.get_height()
         
         for line in self.lines:
-            if line.getIsHorizontal():
+            if line.get_is_horizontal():
                 # Check horizontal line collision
-                if (y <= line.getYStart() <= y + player_height and
-                    x < line.getXEnd() and x + player_width > line.getXStart()):
+                if (y <= line.get_y_start() <= y + player_height and
+                    x < line.get_x_end() and x + player_width > line.get_x_start()):
                     return True
             else:
                 # Check vertical line collision
-                if (x <= line.getXStart() <= x + player_width and
-                    y < line.getYEnd() and y + player_height > line.getYStart()):
+                if (x <= line.get_x_start() <= x + player_width and
+                    y < line.get_y_end() and y + player_height > line.get_y_start()):
                     return True
         
         return False
@@ -104,7 +104,7 @@ def game_with_player(mock_pygame_display, mock_pygame_font, mock_pygame_image):
     """Create a complete game setup with player and maze."""
     game = Game(headless=True)
     player = Player(80, 223, headless=True)
-    lines = Line.generateMaze(game, 15, 20)
+    lines = Line.generate_maze(game, 15, 20)
     
     return {
         'game': game,

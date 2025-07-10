@@ -115,17 +115,17 @@ class GameConfig:
         )
 
     @classmethod
-    def getPlayerImage(cls) -> str:
+    def get_player_image(cls) -> str:
         """Get the player image path."""
         return cls.get_image_path("player")
 
     @classmethod
-    def getPlayerPausedImage(cls) -> str:
+    def get_player_paused_image(cls) -> str:
         """Get the player paused image path."""
         return cls.get_image_path("player_paused")
 
     @classmethod
-    def getIcon(cls) -> str:
+    def get_icon(cls) -> str:
         """Get the icon image path."""
         return cls.get_image_path("icon")
 

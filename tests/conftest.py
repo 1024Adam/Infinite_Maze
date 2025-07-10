@@ -204,7 +204,7 @@ def assert_score_change(initial_score: int, final_score: int, expected_change: i
 def simulate_game_time(game: Game, milliseconds: int):
     """Simulate the passage of game time."""
     if hasattr(game, 'clock') and game.clock:
-        original_millis = game.clock.getMillis()
+        original_millis = game.clock.get_millis()
         game.clock.millis = original_millis + milliseconds
 
 

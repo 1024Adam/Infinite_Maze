@@ -3,127 +3,127 @@ from ..utils.config import config
 
 
 class Line:
-    def __init__(self, startPos=(0, 0), endPos=(0, 0), sideA=0, sideB=0):
-        self.start = startPos
-        self.end = endPos
-        self.sideA = sideA
-        self.sideB = sideB
-        self.isHorizontal = startPos[1] == endPos[1]
+    def __init__(self, start_pos=(0, 0), end_pos=(0, 0), side_a=0, side_b=0):
+        self.start = start_pos
+        self.end = end_pos
+        self.side_a = side_a
+        self.side_b = side_b
+        self.is_horizontal = start_pos[1] == end_pos[1]
 
-    def getStart(self):
+    def get_start(self):
         return self.start
 
-    def setStart(self, newStart):
-        self.start = newStart
+    def set_start(self, new_start):
+        self.start = new_start
 
-    def getEnd(self):
+    def get_end(self):
         return self.end
 
-    def setEnd(self, newEnd):
-        self.end = newEnd
+    def set_end(self, new_end):
+        self.end = new_end
 
-    def getXStart(self):
+    def get_x_start(self):
         return self.start[0]
 
-    def setXStart(self, newX):
-        self.start = (newX, self.start[1])
+    def set_x_start(self, new_x):
+        self.start = (new_x, self.start[1])
 
-    def getYStart(self):
+    def get_y_start(self):
         return self.start[1]
 
-    def setYStart(self, newY):
-        self.start = (self.start[0], newY)
+    def set_y_start(self, new_y):
+        self.start = (self.start[0], new_y)
 
-    def getXEnd(self):
+    def get_x_end(self):
         return self.end[0]
 
-    def setXEnd(self, newX):
-        self.end = (newX, self.end[1])
+    def set_x_end(self, new_x):
+        self.end = (new_x, self.end[1])
 
-    def getYEnd(self):
+    def get_y_end(self):
         return self.end[1]
 
-    def setYEnd(self, newY):
-        self.end = (self.end[0], newY)
+    def set_y_end(self, new_y):
+        self.end = (self.end[0], new_y)
 
-    def getSideA(self):
-        return self.sideA
+    def get_side_a(self):
+        return self.side_a
 
-    def setSideA(self, side):
-        self.sideA = side
+    def set_side_a(self, side):
+        self.side_a = side
 
-    def getSideB(self):
-        return self.sideB
+    def get_side_b(self):
+        return self.side_b
 
-    def setSideB(self, side):
-        self.sideB = side
+    def set_side_b(self, side):
+        self.side_b = side
 
-    def getIsHorizontal(self):
-        return self.isHorizontal
+    def get_is_horizontal(self):
+        return self.is_horizontal
 
-    def resetIsHorizontal(self):
-        self.isHorizontal = self.start[1] == self.end[1]
+    def reset_is_horizontal(self):
+        self.is_horizontal = self.start[1] == self.end[1]
 
     @staticmethod
-    def getXMax(lines):
+    def get_x_max(lines):
         if not lines:
             return 0
-        xMax = lines[0].getXEnd()  # Initialize with first line's end
+        x_max = lines[0].get_x_end()  # Initialize with first line's end
         for line in lines:
-            lineEnd = line.getXEnd()
-            if lineEnd > xMax:
-                xMax = lineEnd
-        return xMax
+            line_end = line.get_x_end()
+            if line_end > x_max:
+                x_max = line_end
+        return x_max
 
     @staticmethod
-    def generateMaze(game, width, height):
+    def generate_maze(game, width, height):
         lines = []
         # Horizontal Line Gen
         for x in range(width * 2):
-            sideA = (19 * x) + 1
-            sideB = sideA + 1
+            side_a = (19 * x) + 1
+            side_b = side_a + 1
 
-            xPos = (config.MAZE_CELL_SIZE * x) + config.MAZE_START_X
+            x_pos = (config.MAZE_CELL_SIZE * x) + config.MAZE_START_X
             for y in range(1, height - 1):
-                yPos = (config.MAZE_CELL_SIZE * y) + config.Y_MIN
-                lines.append(Line((xPos, yPos), (xPos + config.MAZE_CELL_SIZE, yPos), sideA, sideB))
-                sideA = sideB
-                sideB += 1
+                y_pos = (config.MAZE_CELL_SIZE * y) + config.Y_MIN
+                lines.append(Line((x_pos, y_pos), (x_pos + config.MAZE_CELL_SIZE, y_pos), side_a, side_b))
+                side_a = side_b
+                side_b += 1
         # Vertical Line Gen
         for y in range(height - 1):
-            sideA = y + 1
-            sideB = sideA + 19
+            side_a = y + 1
+            side_b = side_a + 19
 
-            yPos = (config.MAZE_CELL_SIZE * y) + config.Y_MIN
+            y_pos = (config.MAZE_CELL_SIZE * y) + config.Y_MIN
             for x in range(1, width * 2):
-                xPos = (config.MAZE_CELL_SIZE * x) + config.MAZE_START_X
-                lines.append(Line((xPos, yPos), (xPos, yPos + config.MAZE_CELL_SIZE), sideA, sideB))
-                sideA = sideB
-                sideB += 19
+                x_pos = (config.MAZE_CELL_SIZE * x) + config.MAZE_START_X
+                lines.append(Line((x_pos, y_pos), (x_pos, y_pos + config.MAZE_CELL_SIZE), side_a, side_b))
+                side_a = side_b
+                side_b += 19
 
         # Create 'maze' structure
         # (will be complete when all 'cells' are connected to each other)
         sets = []
         while len(sets) != 1:
             length = len(lines)
-            lineNum = randint(0, length - 1)
-            tempSideA = lines[lineNum].getSideA()
-            tempSideB = lines[lineNum].getSideB()
-            if tempSideA != tempSideB:
-                del lines[lineNum]
+            line_num = randint(0, length - 1)
+            temp_side_a = lines[line_num].get_side_a()
+            temp_side_b = lines[line_num].get_side_b()
+            if temp_side_a != temp_side_b:
+                del lines[line_num]
                 for line in lines:
-                    if line.getSideA() == tempSideB:
-                        line.setSideA(tempSideA)
-                    if line.getSideB() == tempSideB:
-                        line.setSideB(tempSideA)
+                    if line.get_side_a() == temp_side_b:
+                        line.set_side_a(temp_side_a)
+                    if line.get_side_b() == temp_side_b:
+                        line.set_side_b(temp_side_a)
             sets = []
             for line in lines:
-                tempSideA = line.getSideA()
-                tempSideB = line.getSideB()
-                if tempSideA not in sets:
-                    sets.append(tempSideA)
-                if tempSideB not in sets:
-                    sets.append(tempSideB)
+                temp_side_a = line.get_side_a()
+                temp_side_b = line.get_side_b()
+                if temp_side_a not in sets:
+                    sets.append(temp_side_a)
+                if temp_side_b not in sets:
+                    sets.append(temp_side_b)
 
         return lines
 
@@ -150,12 +150,12 @@ class Maze:
         
         if game is not None and not lines:
             # Generate a new maze if a game is provided
-            self.lines = Line.generateMaze(game, config.MAZE_ROWS, config.MAZE_COLS)
+            self.lines = Line.generate_maze(game, config.MAZE_ROWS, config.MAZE_COLS)
     
     def regenerate(self, game):
         """Regenerate the maze for a new game"""
         self.game = game
-        self.lines = Line.generateMaze(game, config.MAZE_ROWS, config.MAZE_COLS)
+        self.lines = Line.generate_maze(game, config.MAZE_ROWS, config.MAZE_COLS)
         self.visited = set()
     
     def get_lines(self):
@@ -185,17 +185,17 @@ class Maze:
         
         # Check for collisions with wall lines
         for line in self.lines:
-            if line.getIsHorizontal():
+            if line.get_is_horizontal():
                 # Horizontal line check - expand collision area to account for player size
-                if (abs(y - line.getYStart()) < buffer + (player_size/2) and
-                    x >= line.getXStart() - buffer - (player_size/2) and 
-                    x <= line.getXEnd() + buffer + (player_size/2)):
+                if (abs(y - line.get_y_start()) < buffer + (player_size/2) and
+                    x >= line.get_x_start() - buffer - (player_size/2) and 
+                    x <= line.get_x_end() + buffer + (player_size/2)):
                     return True
             else:
                 # Vertical line check - expand collision area to account for player size
-                if (abs(x - line.getXStart()) < buffer + (player_size/2) and
-                    y >= line.getYStart() - buffer - (player_size/2) and 
-                    y <= line.getYEnd() + buffer + (player_size/2)):
+                if (abs(x - line.get_x_start()) < buffer + (player_size/2) and
+                    y >= line.get_y_start() - buffer - (player_size/2) and 
+                    y <= line.get_y_end() + buffer + (player_size/2)):
                     return True
         
         # Also check game boundary walls

@@ -29,8 +29,8 @@ class TestGameEngineInitialization:
              patch('infinite_maze.core.engine.time.delay'):
             
             # Mock the game loop to exit immediately
-            with patch.object(Game, 'isPlaying', return_value=False):
-                with patch.object(Game, 'isActive', return_value=False):
+            with patch.object(Game, 'is_playing', return_value=False):
+                with patch.object(Game, 'is_active', return_value=False):
                     with patch.object(Game, 'cleanup'):
                         try:
                             maze()
@@ -44,8 +44,8 @@ class TestGameEngineInitialization:
         
         with patch('infinite_maze.core.engine.pygame.key.get_pressed', return_value={}):
             # Mock the game to exit immediately
-            with patch.object(Game, 'isPlaying', return_value=False):
-                with patch.object(Game, 'isActive', return_value=False):
+            with patch.object(Game, 'is_playing', return_value=False):
+                with patch.object(Game, 'is_active', return_value=False):
                     result = controlled_run(mock_wrapper, mock_counter)
                     
                     # Should return some result
@@ -61,22 +61,22 @@ class TestGameEngineGameLoop:
             # Set up game to run one iteration then exit
             game = Game(headless=True)
             player = Player(100, 100, headless=True)
-            lines = Line.generateMaze(game, 5, 5)
+            lines = Line.generate_maze(game, 5, 5)
             
             # Mock key state for one frame
             mocks['event']['key_state'][pygame.K_RIGHT] = True
             
             # Simulate one game loop iteration
-            initial_score = game.getScore()
-            initial_pos = player.getPosition()
+            initial_score = game.get_score()
+            initial_pos = player.get_position()
             
             # Simulate right movement
-            player.moveX(1)
-            game.incrementScore()
+            player.move_x(1)
+            game.increment_score()
             
             # Verify state changes
-            assert game.getScore() == initial_score + 1
-            assert player.getX() > initial_pos[0]
+            assert game.get_score() == initial_score + 1
+            assert player.get_x() > initial_pos[0]
     
     def test_game_loop_pause_handling(self):
         """Test game loop pause functionality."""
@@ -84,13 +84,13 @@ class TestGameEngineGameLoop:
         player = Player(100, 100, headless=True)
         
         # Test pause toggle
-        assert not game.isPaused()
+        assert not game.is_paused()
         
-        game.changePaused(player)
-        assert game.isPaused()
+        game.change_paused(player)
+        assert game.is_paused()
         
-        game.changePaused(player)
-        assert not game.isPaused()
+        game.change_paused(player)
+        assert not game.is_paused()
     
     def test_game_loop_input_processing(self):
         """Test input processing in game loop."""
@@ -99,16 +99,16 @@ class TestGameEngineGameLoop:
         
         # Test various inputs
         input_tests = [
-            ('right', lambda: player.moveX(1)),
-            ('left', lambda: player.moveX(-1)),
-            ('up', lambda: player.moveY(-1)),
-            ('down', lambda: player.moveY(1))
+            ('right', lambda: player.move_x(1)),
+            ('left', lambda: player.move_x(-1)),
+            ('up', lambda: player.move_y(-1)),
+            ('down', lambda: player.move_y(1))
         ]
         
         for direction, action in input_tests:
-            initial_pos = player.getPosition()
+            initial_pos = player.get_position()
             action()
-            new_pos = player.getPosition()
+            new_pos = player.get_position()
             
             # Position should change
             assert new_pos != initial_pos
@@ -125,32 +125,32 @@ class TestGameEngineMovementSystem:
         walls = [Line((100, 90), (100, 110))]  # Vertical wall
         
         # Test collision detection
-        initial_x = player.getX()
+        initial_x = player.get_x()
         
         # Simulate collision check before movement
-        test_x = initial_x + player.getSpeed()
+        test_x = initial_x + player.get_speed()
         collision_detected = False
         
         for wall in walls:
-            if wall.getIsHorizontal():
+            if wall.get_is_horizontal():
                 # Check horizontal collision
-                if (player.getY() <= wall.getYStart() <= player.getY() + player.getHeight() and
-                    test_x <= wall.getXEnd() and test_x + player.getWidth() >= wall.getXStart()):
+                if (player.get_y() <= wall.get_y_start() <= player.get_y() + player.get_height() and
+                    test_x <= wall.get_x_end() and test_x + player.get_width() >= wall.get_x_start()):
                     collision_detected = True
             else:
                 # Check vertical collision
-                if (test_x <= wall.getXStart() <= test_x + player.getWidth() and
-                    player.getY() <= wall.getYEnd() and player.getY() + player.getHeight() >= wall.getYStart()):
+                if (test_x <= wall.get_x_start() <= test_x + player.get_width() and
+                    player.get_y() <= wall.get_y_end() and player.get_y() + player.get_height() >= wall.get_y_start()):
                     collision_detected = True
         
         if not collision_detected:
-            player.moveX(1)
+            player.move_x(1)
         
         # Verify movement or blocking
         if collision_detected:
-            assert player.getX() == initial_x  # Should not move
+            assert player.get_x() == initial_x  # Should not move
         else:
-            assert player.getX() > initial_x   # Should move
+            assert player.get_x() > initial_x   # Should move
     
     def test_boundary_enforcement(self):
         """Test game boundary enforcement."""
@@ -158,49 +158,49 @@ class TestGameEngineMovementSystem:
         player = Player(config.X_MIN, config.Y_MIN, headless=True)
         
         # Test left boundary
-        player.setX(config.X_MIN - 10)
-        if player.getX() < config.X_MIN:
+        player.set_x(config.X_MIN - 10)
+        if player.get_x() < config.X_MIN:
             # Game should end or adjust position
-            assert player.getX() < config.X_MIN  # Or game.end() called
+            assert player.get_x() < config.X_MIN  # Or game.end() called
         
         # Test right boundary
-        player.setX(config.X_MAX + 10)
-        if player.getX() > config.X_MAX:
+        player.set_x(config.X_MAX + 10)
+        if player.get_x() > config.X_MAX:
             # Position should be adjusted
-            adjusted_x = min(player.getX(), config.X_MAX)
-            player.setX(adjusted_x)
-            assert player.getX() <= config.X_MAX
+            adjusted_x = min(player.get_x(), config.X_MAX)
+            player.set_x(adjusted_x)
+            assert player.get_x() <= config.X_MAX
         
         # Test vertical boundaries
-        player.setY(config.Y_MIN - 10)
-        adjusted_y = max(player.getY(), config.Y_MIN)
-        player.setY(adjusted_y)
-        assert player.getY() >= config.Y_MIN
+        player.set_y(config.Y_MIN - 10)
+        adjusted_y = max(player.get_y(), config.Y_MIN)
+        player.set_y(adjusted_y)
+        assert player.get_y() >= config.Y_MIN
         
-        player.setY(config.Y_MAX + 10)
-        adjusted_y = min(player.getY(), config.Y_MAX)
-        player.setY(adjusted_y)
-        assert player.getY() <= config.Y_MAX
+        player.set_y(config.Y_MAX + 10)
+        adjusted_y = min(player.get_y(), config.Y_MAX)
+        player.set_y(adjusted_y)
+        assert player.get_y() <= config.Y_MAX
     
     def test_maze_line_repositioning(self):
         """Test maze line repositioning system."""
         game = Game(headless=True)
-        lines = Line.generateMaze(game, 5, 5)
+        lines = Line.generate_maze(game, 5, 5)
         
         # Find initial max X
-        initial_max_x = Line.getXMax(lines)
+        initial_max_x = Line.get_x_max(lines)
         
         # Simulate line repositioning (when lines move off screen)
         for line in lines:
-            if line.getXStart() < 80:  # Line moved off screen
-                line.setXStart(initial_max_x + 22)
-                if line.getXStart() == line.getXEnd():
-                    line.setXEnd(initial_max_x + 22)
+            if line.get_x_start() < 80:  # Line moved off screen
+                line.set_x_start(initial_max_x + 22)
+                if line.get_x_start() == line.get_x_end():
+                    line.set_x_end(initial_max_x + 22)
                 else:
-                    line.setXEnd(initial_max_x + 44)
+                    line.set_x_end(initial_max_x + 44)
         
         # Verify repositioning
-        new_max_x = Line.getXMax(lines)
+        new_max_x = Line.get_x_max(lines)
         assert new_max_x >= initial_max_x
 
 
@@ -212,38 +212,38 @@ class TestGameEngineScoring:
         game = Game(headless=True)
         player = Player(100, 100, headless=True)
         
-        initial_score = game.getScore()
+        initial_score = game.get_score()
         
         # Right movement should increase score
-        player.moveX(1)
-        game.incrementScore()
-        assert game.getScore() == initial_score + 1
+        player.move_x(1)
+        game.increment_score()
+        assert game.get_score() == initial_score + 1
         
         # Left movement should decrease score
-        player.moveX(-1)
-        game.decrementScore()
-        assert game.getScore() == initial_score
+        player.move_x(-1)
+        game.decrement_score()
+        assert game.get_score() == initial_score
         
         # Vertical movement should not affect score
-        player.moveY(1)
-        assert game.getScore() == initial_score
+        player.move_y(1)
+        assert game.get_score() == initial_score
         
-        player.moveY(-1)
-        assert game.getScore() == initial_score
+        player.move_y(-1)
+        assert game.get_score() == initial_score
     
     def test_scoring_minimum_enforcement(self):
         """Test score minimum enforcement in game context."""
         game = Game(headless=True)
         
         # Start with some score
-        game.setScore(2)
+        game.set_score(2)
         
         # Decrement to minimum
-        game.decrementScore()  # Score = 1
-        game.decrementScore()  # Score = 0
-        game.decrementScore()  # Should stay at 0
+        game.decrement_score()  # Score = 1
+        game.decrement_score()  # Score = 0
+        game.decrement_score()  # Should stay at 0
         
-        assert game.getScore() == 0
+        assert game.get_score() == 0
     
     def test_scoring_with_game_progression(self):
         """Test scoring throughout game progression."""
@@ -262,17 +262,17 @@ class TestGameEngineScoring:
         
         for direction, score_change, expected_score in movement_sequence:
             if direction == 'right':
-                player.moveX(1)
-                game.incrementScore()
+                player.move_x(1)
+                game.increment_score()
             elif direction == 'left':
-                player.moveX(-1)
-                game.decrementScore()
+                player.move_x(-1)
+                game.decrement_score()
             elif direction == 'up':
-                player.moveY(-1)
+                player.move_y(-1)
             elif direction == 'down':
-                player.moveY(1)
+                player.move_y(1)
             
-            assert game.getScore() == expected_score
+            assert game.get_score() == expected_score
 
 
 class TestGameEnginePaceSystem:
@@ -281,7 +281,7 @@ class TestGameEnginePaceSystem:
     def test_pace_progression(self):
         """Test pace progression over time."""
         game = Game(headless=True)
-        clock = game.getClock()
+        clock = game.get_clock()
         
         # Simulate time progression
         time_tests = [
@@ -295,9 +295,9 @@ class TestGameEnginePaceSystem:
             clock.millis = millis
             
             # Simulate pace calculation
-            if millis > 10000 and clock.getSeconds() % 30 == 0:
-                current_pace = game.getPace()
-                game.setPace(current_pace + 1)
+            if millis > 10000 and clock.get_seconds() % 30 == 0:
+                current_pace = game.get_pace()
+                game.set_pace(current_pace + 1)
             
             # Note: Exact pace calculation depends on implementation details
             # This test verifies the general progression concept
@@ -306,23 +306,23 @@ class TestGameEnginePaceSystem:
         """Test that pace affects game movement."""
         game = Game(headless=True)
         player = Player(200, 100, headless=True)
-        lines = Line.generateMaze(game, 5, 5)
+        lines = Line.generate_maze(game, 5, 5)
         
         # Set initial pace
-        game.setPace(0)
-        initial_positions = [(line.getXStart(), line.getXEnd()) for line in lines]
+        game.set_pace(0)
+        initial_positions = [(line.get_x_start(), line.get_x_end()) for line in lines]
         
         # Increase pace
-        game.setPace(3)
+        game.set_pace(3)
         
         # Simulate pace effect on lines (moving them left)
-        pace_offset = game.getPace()
+        pace_offset = game.get_pace()
         for line in lines:
-            line.setXStart(line.getXStart() - pace_offset)
-            line.setXEnd(line.getXEnd() - pace_offset)
+            line.set_x_start(line.get_x_start() - pace_offset)
+            line.set_x_end(line.get_x_end() - pace_offset)
         
         # Verify lines moved
-        new_positions = [(line.getXStart(), line.getXEnd()) for line in lines]
+        new_positions = [(line.get_x_start(), line.get_x_end()) for line in lines]
         for initial, new in zip(initial_positions, new_positions):
             assert new[0] < initial[0]  # X positions should decrease
             assert new[1] < initial[1]
@@ -332,14 +332,14 @@ class TestGameEnginePaceSystem:
         game = Game(headless=True)
         player = Player(200, 100, headless=True)
         
-        initial_x = player.getX()
+        initial_x = player.get_x()
         pace = 5
-        game.setPace(pace)
+        game.set_pace(pace)
         
         # Simulate player position adjustment due to pace
-        player.setX(player.getX() - pace)
+        player.set_x(player.get_x() - pace)
         
-        assert player.getX() == initial_x - pace
+        assert player.get_x() == initial_x - pace
 
 
 class TestGameEngineStateManagement:
@@ -350,24 +350,24 @@ class TestGameEngineStateManagement:
         game = Game(headless=True)
         
         # Initial state
-        assert game.isPlaying()
-        assert game.isActive()
-        assert not game.isPaused()
+        assert game.is_playing()
+        assert game.is_active()
+        assert not game.is_paused()
         
         # End game
         game.end()
-        assert game.isPlaying()  # Still playing, but not active
-        assert not game.isActive()
+        assert game.is_playing()  # Still playing, but not active
+        assert not game.is_active()
         
         # Reset game
         game.reset()
-        assert game.isPlaying()
-        assert game.isActive()
-        assert not game.isPaused()
+        assert game.is_playing()
+        assert game.is_active()
+        assert not game.is_paused()
         
         # Quit game
         game.quit()
-        assert not game.isPlaying()
+        assert not game.is_playing()
     
     def test_game_state_with_player(self):
         """Test game state integration with player."""
@@ -379,9 +379,9 @@ class TestGameEngineStateManagement:
         state_capture.capture()
         
         # Modify state
-        game.setScore(50)
-        player.moveX(5)
-        game.setPace(3)
+        game.set_score(50)
+        player.move_x(5)
+        game.set_pace(3)
         
         # Get state differences
         diff = state_capture.get_state_diff()
@@ -390,31 +390,31 @@ class TestGameEngineStateManagement:
         
         # Restore state
         state_capture.restore()
-        assert game.getScore() == 0  # Should be restored
+        assert game.get_score() == 0  # Should be restored
     
     def test_pause_state_effects(self):
         """Test pause state effects on game systems."""
         game = Game(headless=True)
         player = Player(100, 100, headless=True)
-        clock = game.getClock()
+        clock = game.get_clock()
         
         # Normal state
-        assert not game.isPaused()
+        assert not game.is_paused()
         
         # Pause game
-        game.changePaused(player)
-        assert game.isPaused()
+        game.change_paused(player)
+        assert game.is_paused()
         
         # Simulate pause effects on clock
-        pre_pause_millis = clock.getMillis()
+        pre_pause_millis = clock.get_millis()
         clock.update()
-        post_pause_millis = clock.getMillis()
+        post_pause_millis = clock.get_millis()
         
-        if game.isPaused():
+        if game.is_paused():
             # In paused state, might rollback time
             rollback_amount = post_pause_millis - pre_pause_millis
-            clock.rollbackMillis(rollback_amount)
-            assert clock.getMillis() == pre_pause_millis
+            clock.rollback_millis(rollback_amount)
+            assert clock.get_millis() == pre_pause_millis
 
 
 class TestGameEnginePerformance:
@@ -425,7 +425,7 @@ class TestGameEnginePerformance:
         """Test game loop performance."""
         game = Game(headless=True)
         player = Player(100, 100, headless=True)
-        lines = Line.generateMaze(game, 10, 10)
+        lines = Line.generate_maze(game, 10, 10)
         
         monitor = PerformanceMonitor()
         monitor.start()
@@ -433,15 +433,15 @@ class TestGameEnginePerformance:
         # Simulate game loop iterations
         for frame in range(60):  # 1 second at 60 FPS
             # Update game state
-            game.updateScreen(player, lines)
+            game.update_screen(player, lines)
             
             # Simulate movement
             if frame % 4 == 0:
-                player.moveX(1)
-                game.incrementScore()
+                player.move_x(1)
+                game.increment_score()
             
             # Update clock
-            game.getClock().update()
+            game.get_clock().update()
             
             # Record frame
             monitor.sample_frame(60.0, 16.7)  # Target 60 FPS
@@ -462,7 +462,7 @@ class TestGameEnginePerformance:
         """Test collision detection performance in game context."""
         game = Game(headless=True)
         player = Player(100, 100, headless=True)
-        lines = Line.generateMaze(game, 20, 20)  # Large maze
+        lines = Line.generate_maze(game, 20, 20)  # Large maze
         
         import time
         start_time = time.time()
@@ -471,20 +471,20 @@ class TestGameEnginePerformance:
         for _ in range(1000):
             # Test movement in each direction
             for dx, dy in [(1, 0), (-1, 0), (0, 1), (0, -1)]:
-                test_x = player.getX() + dx * player.getSpeed()
-                test_y = player.getY() + dy * player.getSpeed()
+                test_x = player.get_x() + dx * player.get_speed()
+                test_y = player.get_y() + dy * player.get_speed()
                 
                 # Check collision with all lines
                 collision_count = 0
                 for line in lines:
                     # Simplified collision check
-                    if line.getIsHorizontal():
-                        if (test_y <= line.getYStart() <= test_y + player.getHeight() and
-                            test_x < line.getXEnd() and test_x + player.getWidth() > line.getXStart()):
+                    if line.get_is_horizontal():
+                        if (test_y <= line.get_y_start() <= test_y + player.get_height() and
+                            test_x < line.get_x_end() and test_x + player.get_width() > line.get_x_start()):
                             collision_count += 1
                     else:
-                        if (test_x <= line.getXStart() <= test_x + player.getWidth() and
-                            test_y < line.getYEnd() and test_y + player.getHeight() > line.getYStart()):
+                        if (test_x <= line.get_x_start() <= test_x + player.get_width() and
+                            test_y < line.get_y_end() and test_y + player.get_height() > line.get_y_start()):
                             collision_count += 1
         
         end_time = time.time()
@@ -503,7 +503,7 @@ class TestGameEnginePerformance:
         # Generate multiple mazes
         for size in [(5, 5), (10, 10), (15, 15), (20, 20)]:
             for _ in range(10):
-                lines = Line.generateMaze(game, size[0], size[1])
+                lines = Line.generate_maze(game, size[0], size[1])
                 assert len(lines) > 0
         
         end_time = time.time()
@@ -519,41 +519,41 @@ class TestGameEngineIntegration:
         """Test complete game simulation."""
         game = Game(headless=True)
         player = Player(80, 223, headless=True)  # Default start position
-        lines = Line.generateMaze(game, 15, 20)
+        lines = Line.generate_maze(game, 15, 20)
         
         # Simulate short game session
         for step in range(100):
             # Update screen
-            game.updateScreen(player, lines)
+            game.update_screen(player, lines)
             
             # Simulate input
             if step % 5 == 0:
                 # Move right occasionally
-                player.moveX(1)
-                game.incrementScore()
+                player.move_x(1)
+                game.increment_score()
             elif step % 7 == 0:
                 # Move down occasionally
-                player.moveY(1)
+                player.move_y(1)
             
             # Update clock
-            game.getClock().update()
+            game.get_clock().update()
             
             # Check boundaries
-            if player.getX() < config.X_MIN:
+            if player.get_x() < config.X_MIN:
                 game.end()
                 break
-            if player.getX() > config.X_MAX:
-                player.setX(config.X_MAX)
+            if player.get_x() > config.X_MAX:
+                player.set_x(config.X_MAX)
             
             # Adjust for boundaries
-            player.setY(max(player.getY(), config.Y_MIN))
-            player.setY(min(player.getY(), config.Y_MAX))
+            player.set_y(max(player.get_y(), config.Y_MIN))
+            player.set_y(min(player.get_y(), config.Y_MAX))
         
         # Verify final state
-        assert game.getScore() >= 0
-        assert player.getX() >= config.X_MIN
-        assert player.getY() >= config.Y_MIN
-        assert player.getY() <= config.Y_MAX
+        assert game.get_score() >= 0
+        assert player.get_x() >= config.X_MIN
+        assert player.get_y() >= config.Y_MIN
+        assert player.get_y() <= config.Y_MAX
     
     def test_game_engine_error_recovery(self):
         """Test game engine error recovery."""
@@ -563,11 +563,11 @@ class TestGameEngineIntegration:
         # Test various error conditions
         try:
             # Invalid player position
-            player.setX(-1000)
-            player.setY(-1000)
+            player.set_x(-1000)
+            player.set_y(-1000)
             
             # Engine should handle gracefully
-            game.updateScreen(player, [])
+            game.update_screen(player, [])
             
         except Exception as e:
             # Should not crash with unexpected exceptions
@@ -575,7 +575,7 @@ class TestGameEngineIntegration:
         
         # Reset to valid state
         player.reset(100, 100)
-        assert player.getPosition() == (100, 100)
+        assert player.get_position() == (100, 100)
     
     def test_game_engine_resource_cleanup(self):
         """Test game engine resource cleanup."""
@@ -583,11 +583,11 @@ class TestGameEngineIntegration:
         for _ in range(5):
             game = Game(headless=True)
             player = Player(100, 100, headless=True)
-            lines = Line.generateMaze(game, 5, 5)
+            lines = Line.generate_maze(game, 5, 5)
             
             # Use game briefly
-            game.updateScreen(player, lines)
-            game.incrementScore()
+            game.update_screen(player, lines)
+            game.increment_score()
             
             # Cleanup
             game.cleanup()

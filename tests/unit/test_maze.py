@@ -20,11 +20,11 @@ class TestLineInitialization:
         """Test line initialization with default parameters."""
         line = Line()
         
-        assert line.getStart() == (0, 0)
-        assert line.getEnd() == (0, 0)
-        assert line.getSideA() == 0
-        assert line.getSideB() == 0
-        assert line.getIsHorizontal() is True  # Same Y coordinates
+        assert line.get_start() == (0, 0)
+        assert line.get_end() == (0, 0)
+        assert line.get_side_a() == 0
+        assert line.get_side_b() == 0
+        assert line.get_is_horizontal() is True  # Same Y coordinates
     
     def test_line_init_with_parameters(self):
         """Test line initialization with specific parameters."""
@@ -35,31 +35,31 @@ class TestLineInitialization:
         
         line = Line(start_pos, end_pos, side_a, side_b)
         
-        assert line.getStart() == start_pos
-        assert line.getEnd() == end_pos
-        assert line.getSideA() == side_a
-        assert line.getSideB() == side_b
+        assert line.get_start() == start_pos
+        assert line.get_end() == end_pos
+        assert line.get_side_a() == side_a
+        assert line.get_side_b() == side_b
     
     def test_line_horizontal_detection(self):
         """Test horizontal line detection."""
         # Horizontal line (same Y coordinates)
         horizontal_line = Line((10, 20), (30, 20))
-        assert horizontal_line.getIsHorizontal() is True
+        assert horizontal_line.get_is_horizontal() is True
         
         # Vertical line (different Y coordinates)
         vertical_line = Line((10, 20), (10, 40))
-        assert vertical_line.getIsHorizontal() is False
+        assert vertical_line.get_is_horizontal() is False
         
         # Diagonal line
         diagonal_line = Line((10, 20), (30, 40))
-        assert diagonal_line.getIsHorizontal() is False
+        assert diagonal_line.get_is_horizontal() is False
     
     def test_line_negative_coordinates(self):
         """Test line with negative coordinates."""
         line = Line((-10, -20), (-5, -15))
         
-        assert line.getStart() == (-10, -20)
-        assert line.getEnd() == (-5, -15)
+        assert line.get_start() == (-10, -20)
+        assert line.get_end() == (-5, -15)
 
 
 class TestLinePositionGetters:
@@ -69,29 +69,29 @@ class TestLinePositionGetters:
         """Test getting start and end positions."""
         line = Line((10, 20), (30, 40))
         
-        assert line.getStart() == (10, 20)
-        assert line.getEnd() == (30, 40)
+        assert line.get_start() == (10, 20)
+        assert line.get_end() == (30, 40)
     
     def test_get_individual_coordinates(self):
         """Test getting individual coordinate values."""
         line = Line((15, 25), (35, 45))
         
-        assert line.getXStart() == 15
-        assert line.getYStart() == 25
-        assert line.getXEnd() == 35
-        assert line.getYEnd() == 45
+        assert line.get_x_start() == 15
+        assert line.get_y_start() == 25
+        assert line.get_x_end() == 35
+        assert line.get_y_end() == 45
     
     def test_coordinate_consistency(self):
         """Test that coordinates are consistent across methods."""
         line = Line((100, 200), (300, 400))
         
-        start = line.getStart()
-        end = line.getEnd()
+        start = line.get_start()
+        end = line.get_end()
         
-        assert start[0] == line.getXStart()
-        assert start[1] == line.getYStart()
-        assert end[0] == line.getXEnd()
-        assert end[1] == line.getYEnd()
+        assert start[0] == line.get_x_start()
+        assert start[1] == line.get_y_start()
+        assert end[0] == line.get_x_end()
+        assert end[1] == line.get_y_end()
 
 
 class TestLinePositionSetters:
@@ -102,56 +102,56 @@ class TestLinePositionSetters:
         line = Line((10, 20), (30, 40))
         
         new_start = (50, 60)
-        line.setStart(new_start)
+        line.set_start(new_start)
         
-        assert line.getStart() == new_start
-        assert line.getEnd() == (30, 40)  # End should not change
+        assert line.get_start() == new_start
+        assert line.get_end() == (30, 40)  # End should not change
     
     def test_set_end_position(self):
         """Test setting end position."""
         line = Line((10, 20), (30, 40))
         
         new_end = (70, 80)
-        line.setEnd(new_end)
+        line.set_end(new_end)
         
-        assert line.getStart() == (10, 20)  # Start should not change
-        assert line.getEnd() == new_end
+        assert line.get_start() == (10, 20)  # Start should not change
+        assert line.get_end() == new_end
     
     def test_set_individual_coordinates(self):
         """Test setting individual coordinates."""
         line = Line((10, 20), (30, 40))
         
         # Set start coordinates
-        line.setXStart(100)
-        assert line.getXStart() == 100
-        assert line.getYStart() == 20  # Y should not change
+        line.set_x_start(100)
+        assert line.get_x_start() == 100
+        assert line.get_y_start() == 20  # Y should not change
         
-        line.setYStart(200)
-        assert line.getXStart() == 100  # X should not change
-        assert line.getYStart() == 200
+        line.set_y_start(200)
+        assert line.get_x_start() == 100  # X should not change
+        assert line.get_y_start() == 200
         
         # Set end coordinates
-        line.setXEnd(300)
-        assert line.getXEnd() == 300
-        assert line.getYEnd() == 40  # Y should not change
+        line.set_x_end(300)
+        assert line.get_x_end() == 300
+        assert line.get_y_end() == 40  # Y should not change
         
-        line.setYEnd(400)
-        assert line.getXEnd() == 300  # X should not change
-        assert line.getYEnd() == 400
+        line.set_y_end(400)
+        assert line.get_x_end() == 300  # X should not change
+        assert line.get_y_end() == 400
     
     def test_coordinate_setting_updates_position(self):
         """Test that setting coordinates updates position tuples."""
         line = Line((10, 20), (30, 40))
         
-        line.setXStart(50)
-        line.setYStart(60)
+        line.set_x_start(50)
+        line.set_y_start(60)
         
-        assert line.getStart() == (50, 60)
+        assert line.get_start() == (50, 60)
         
-        line.setXEnd(70)
-        line.setYEnd(80)
+        line.set_x_end(70)
+        line.set_y_end(80)
         
-        assert line.getEnd() == (70, 80)
+        assert line.get_end() == (70, 80)
 
 
 class TestLineSideManagement:
@@ -161,28 +161,28 @@ class TestLineSideManagement:
         """Test getting side values."""
         line = Line((0, 0), (10, 10), 5, 7)
         
-        assert line.getSideA() == 5
-        assert line.getSideB() == 7
+        assert line.get_side_a() == 5
+        assert line.get_side_b() == 7
     
     def test_set_sides(self):
         """Test setting side values."""
         line = Line((0, 0), (10, 10), 1, 2)
         
-        line.setSideA(10)
-        line.setSideB(15)
+        line.set_side_a(10)
+        line.set_side_b(15)
         
-        assert line.getSideA() == 10
-        assert line.getSideB() == 15
+        assert line.get_side_a() == 10
+        assert line.get_side_b() == 15
     
     def test_sides_independence(self):
         """Test that side A and B are independent."""
         line = Line((0, 0), (10, 10), 1, 2)
         
-        line.setSideA(100)
-        assert line.getSideB() == 2  # Should not change
+        line.set_side_a(100)
+        assert line.get_side_b() == 2  # Should not change
         
-        line.setSideB(200)
-        assert line.getSideA() == 100  # Should not change
+        line.set_side_b(200)
+        assert line.get_side_a() == 100  # Should not change
 
 
 class TestLineOrientationHandling:
@@ -191,35 +191,35 @@ class TestLineOrientationHandling:
     def test_horizontal_line_detection(self):
         """Test detection of horizontal lines."""
         horizontal_line = Line((10, 50), (100, 50))  # Same Y
-        assert horizontal_line.getIsHorizontal() is True
+        assert horizontal_line.get_is_horizontal() is True
     
     def test_vertical_line_detection(self):
         """Test detection of vertical lines."""
         vertical_line = Line((50, 10), (50, 100))  # Same X
-        assert vertical_line.getIsHorizontal() is False
+        assert vertical_line.get_is_horizontal() is False
     
     def test_orientation_after_position_change(self):
         """Test orientation detection after position changes."""
         line = Line((10, 20), (30, 40))  # Initially diagonal
-        assert line.getIsHorizontal() is False
+        assert line.get_is_horizontal() is False
         
         # Change to horizontal
-        line.setYEnd(20)  # Make Y coordinates same
-        # Note: resetIsHorizontal would need to be called or implemented differently
-        # The current implementation doesn't automatically update isHorizontal
+        line.set_y_end(20)  # Make Y coordinates same
+        # Note: reset_is_horizontal would need to be called or implemented differently
+        # The current implementation doesn't automatically update is_horizontal
     
     def test_reset_is_horizontal(self):
-        """Test resetIsHorizontal method."""
+        """Test reset_is_horizontal method."""
         line = Line((10, 20), (30, 40))
         
         # Change position to horizontal
-        line.setYEnd(20)
+        line.set_y_end(20)
         
         # Reset orientation detection
-        line.resetIsHorizontal()
+        line.reset_is_horizontal()
         
         # Should now detect as horizontal
-        assert line.getIsHorizontal() is True
+        assert line.get_is_horizontal() is True
 
 
 class TestLineMazeGeneration:
@@ -233,7 +233,7 @@ class TestLineMazeGeneration:
         mock_game.Y_MIN = 50
         
         # Generate small maze
-        lines = Line.generateMaze(mock_game, 3, 3)
+        lines = Line.generate_maze(mock_game, 3, 3)
         
         # Should return a list of lines
         assert isinstance(lines, list)
@@ -253,7 +253,7 @@ class TestLineMazeGeneration:
         sizes = [(2, 2), (5, 5), (10, 8)]
         
         for width, height in sizes:
-            lines = Line.generateMaze(mock_game, width, height)
+            lines = Line.generate_maze(mock_game, width, height)
             
             # Should generate lines
             assert len(lines) > 0
@@ -268,12 +268,12 @@ class TestLineMazeGeneration:
         mock_game.X_MAX = 100
         mock_game.Y_MIN = 50
         
-        lines = Line.generateMaze(mock_game, 3, 3)
+        lines = Line.generate_maze(mock_game, 3, 3)
         
         for line in lines:
             # Each line should have valid coordinates
-            start = line.getStart()
-            end = line.getEnd()
+            start = line.get_start()
+            end = line.get_end()
             
             assert isinstance(start[0], int)
             assert isinstance(start[1], int)
@@ -281,8 +281,8 @@ class TestLineMazeGeneration:
             assert isinstance(end[1], int)
             
             # Lines should have valid side values
-            assert isinstance(line.getSideA(), int)
-            assert isinstance(line.getSideB(), int)
+            assert isinstance(line.get_side_a(), int)
+            assert isinstance(line.get_side_b(), int)
     
     def test_generate_maze_with_game_bounds(self):
         """Test that generated maze respects game bounds."""
@@ -290,30 +290,30 @@ class TestLineMazeGeneration:
         mock_game.X_MAX = 300
         mock_game.Y_MIN = 40
         
-        lines = Line.generateMaze(mock_game, 5, 5)
+        lines = Line.generate_maze(mock_game, 5, 5)
         
         for line in lines:
             # Lines should be positioned relative to game bounds
-            assert line.getXStart() >= mock_game.X_MAX
-            assert line.getYStart() >= mock_game.Y_MIN
+            assert line.get_x_start() >= mock_game.X_MAX
+            assert line.get_y_start() >= mock_game.Y_MIN
 
 
 class TestLineUtilityMethods:
     """Test Line utility methods."""
     
     def test_get_x_max_empty_list(self):
-        """Test getXMax with empty line list."""
-        max_x = Line.getXMax([])
+        """Test get_x_max with empty line list."""
+        max_x = Line.get_x_max([])
         assert max_x == 0
     
     def test_get_x_max_single_line(self):
-        """Test getXMax with single line."""
+        """Test get_x_max with single line."""
         line = Line((10, 20), (50, 30))
-        max_x = Line.getXMax([line])
+        max_x = Line.get_x_max([line])
         assert max_x == 50
     
     def test_get_x_max_multiple_lines(self):
-        """Test getXMax with multiple lines."""
+        """Test get_x_max with multiple lines."""
         lines = [
             Line((10, 20), (50, 30)),   # max X = 50
             Line((30, 40), (80, 50)),   # max X = 80
@@ -321,29 +321,29 @@ class TestLineUtilityMethods:
             Line((60, 70), (120, 80))   # max X = 120
         ]
         
-        max_x = Line.getXMax(lines)
+        max_x = Line.get_x_max(lines)
         assert max_x == 120
     
     def test_get_x_max_negative_coordinates(self):
-        """Test getXMax with negative coordinates."""
+        """Test get_x_max with negative coordinates."""
         lines = [
             Line((-50, 0), (-20, 10)),  # max X = -20
             Line((-30, 0), (-10, 10)),  # max X = -10
             Line((-40, 0), (-35, 10))   # max X = -35
         ]
         
-        max_x = Line.getXMax(lines)
+        max_x = Line.get_x_max(lines)
         assert max_x == -10
     
     def test_get_x_max_mixed_coordinates(self):
-        """Test getXMax with mixed positive/negative coordinates."""
+        """Test get_x_max with mixed positive/negative coordinates."""
         lines = [
             Line((-50, 0), (30, 10)),   # max X = 30
             Line((10, 0), (-5, 10)),    # max X = 10
             Line((-10, 0), (50, 10))    # max X = 50
         ]
         
-        max_x = Line.getXMax(lines)
+        max_x = Line.get_x_max(lines)
         assert max_x == 50
 
 
@@ -355,33 +355,33 @@ class TestLineCollisionBoundaries:
         line = Line((100, 200), (200, 200))  # Horizontal line
         
         # Line should span from X=100 to X=200 at Y=200
-        assert line.getXStart() == 100
-        assert line.getXEnd() == 200
-        assert line.getYStart() == 200
-        assert line.getYEnd() == 200
-        assert line.getIsHorizontal() is True
+        assert line.get_x_start() == 100
+        assert line.get_x_end() == 200
+        assert line.get_y_start() == 200
+        assert line.get_y_end() == 200
+        assert line.get_is_horizontal() is True
     
     def test_vertical_line_boundaries(self):
         """Test vertical line collision boundaries."""
         line = Line((150, 100), (150, 300))  # Vertical line
         
         # Line should span from Y=100 to Y=300 at X=150
-        assert line.getXStart() == 150
-        assert line.getXEnd() == 150
-        assert line.getYStart() == 100
-        assert line.getYEnd() == 300
-        assert line.getIsHorizontal() is False
+        assert line.get_x_start() == 150
+        assert line.get_x_end() == 150
+        assert line.get_y_start() == 100
+        assert line.get_y_end() == 300
+        assert line.get_is_horizontal() is False
     
     def test_line_length_calculation(self):
         """Test calculating line length."""
         # Horizontal line
         h_line = Line((10, 50), (110, 50))
-        h_length = h_line.getXEnd() - h_line.getXStart()
+        h_length = h_line.get_x_end() - h_line.get_x_start()
         assert h_length == 100
         
         # Vertical line
         v_line = Line((50, 10), (50, 60))
-        v_length = v_line.getYEnd() - v_line.getYStart()
+        v_length = v_line.get_y_end() - v_line.get_y_start()
         assert v_length == 50
 
 
@@ -392,27 +392,27 @@ class TestLineEdgeCases:
         """Test line with zero length."""
         line = Line((50, 50), (50, 50))
         
-        assert line.getStart() == line.getEnd()
-        assert line.getXStart() == line.getXEnd()
-        assert line.getYStart() == line.getYEnd()
-        assert line.getIsHorizontal() is True  # Same Y coordinates
+        assert line.get_start() == line.get_end()
+        assert line.get_x_start() == line.get_x_end()
+        assert line.get_y_start() == line.get_y_end()
+        assert line.get_is_horizontal() is True  # Same Y coordinates
     
     def test_negative_coordinate_line(self):
         """Test line with negative coordinates."""
         line = Line((-100, -50), (-20, -30))
         
-        assert line.getXStart() == -100
-        assert line.getYStart() == -50
-        assert line.getXEnd() == -20
-        assert line.getYEnd() == -30
+        assert line.get_x_start() == -100
+        assert line.get_y_start() == -50
+        assert line.get_x_end() == -20
+        assert line.get_y_end() == -30
     
     def test_large_coordinate_values(self):
         """Test line with very large coordinates."""
         large_val = 999999
         line = Line((0, 0), (large_val, large_val))
         
-        assert line.getXEnd() == large_val
-        assert line.getYEnd() == large_val
+        assert line.get_x_end() == large_val
+        assert line.get_y_end() == large_val
     
     def test_line_coordinate_modification_sequence(self):
         """Test sequence of coordinate modifications."""
@@ -420,12 +420,12 @@ class TestLineEdgeCases:
         
         # Sequence of modifications
         modifications = [
-            ('setXStart', 100),
-            ('setYStart', 200),
-            ('setXEnd', 300),
-            ('setYEnd', 400),
-            ('setSideA', 5),
-            ('setSideB', 7)
+            ('set_x_start', 100),
+            ('set_y_start', 200),
+            ('set_x_end', 300),
+            ('set_y_end', 400),
+            ('set_side_a', 5),
+            ('set_side_b', 7)
         ]
         
         for method_name, value in modifications:
@@ -433,10 +433,10 @@ class TestLineEdgeCases:
             method(value)
         
         # Check final state
-        assert line.getStart() == (100, 200)
-        assert line.getEnd() == (300, 400)
-        assert line.getSideA() == 5
-        assert line.getSideB() == 7
+        assert line.get_start() == (100, 200)
+        assert line.get_end() == (300, 400)
+        assert line.get_side_a() == 5
+        assert line.get_side_b() == 7
 
 
 class TestLineMazeIntegration:
@@ -447,7 +447,7 @@ class TestLineMazeIntegration:
         # This test uses the actual Game class
         game = Game(headless=True)
         
-        lines = Line.generateMaze(game, 5, 5)
+        lines = Line.generate_maze(game, 5, 5)
         
         # Should generate valid maze
         assert len(lines) > 0
@@ -455,12 +455,12 @@ class TestLineMazeIntegration:
         # Lines should be positioned relative to game boundaries
         for line in lines:
             # All lines should be within reasonable bounds
-            assert line.getXStart() >= 0
-            assert line.getYStart() >= 0
-            assert line.getXEnd() >= line.getXStart()
+            assert line.get_x_start() >= 0
+            assert line.get_y_start() >= 0
+            assert line.get_x_end() >= line.get_x_start()
             
-            if not line.getIsHorizontal():
-                assert line.getYEnd() >= line.getYStart()
+            if not line.get_is_horizontal():
+                assert line.get_y_end() >= line.get_y_start()
     
     def test_generated_maze_connectivity(self):
         """Test that generated maze has proper connectivity."""
@@ -468,15 +468,15 @@ class TestLineMazeIntegration:
         mock_game.X_MAX = 100
         mock_game.Y_MIN = 50
         
-        lines = Line.generateMaze(mock_game, 4, 4)
+        lines = Line.generate_maze(mock_game, 4, 4)
         
         # Generated maze should form a connected structure
         # (specific connectivity tests would depend on maze algorithm)
         assert len(lines) > 0
         
         # Should have both horizontal and vertical lines
-        horizontal_lines = [line for line in lines if line.getIsHorizontal()]
-        vertical_lines = [line for line in lines if not line.getIsHorizontal()]
+        horizontal_lines = [line for line in lines if line.get_is_horizontal()]
+        vertical_lines = [line for line in lines if not line.get_is_horizontal()]
         
         # In a proper maze, we expect both types of lines
         # (unless it's a very simple maze)
@@ -488,7 +488,7 @@ class TestLineMazeIntegration:
         mock_game.X_MAX = 100
         mock_game.Y_MIN = 50
         
-        lines = Line.generateMaze(mock_game, 3, 3)
+        lines = Line.generate_maze(mock_game, 3, 3)
         
         # Lines should follow grid-based positioning
         # (specific pattern depends on maze generation algorithm)
@@ -496,10 +496,10 @@ class TestLineMazeIntegration:
         y_positions = set()
         
         for line in lines:
-            x_positions.add(line.getXStart())
-            x_positions.add(line.getXEnd())
-            y_positions.add(line.getYStart())
-            y_positions.add(line.getYEnd())
+            x_positions.add(line.get_x_start())
+            x_positions.add(line.get_x_end())
+            y_positions.add(line.get_y_start())
+            y_positions.add(line.get_y_end())
         
         # Should have multiple distinct positions
         assert len(x_positions) > 1
@@ -535,12 +535,12 @@ class TestLinePerformance:
         
         # Perform many coordinate access operations
         for _ in range(100000):
-            _ = line.getXStart()
-            _ = line.getYStart()
-            _ = line.getXEnd()
-            _ = line.getYEnd()
-            _ = line.getStart()
-            _ = line.getEnd()
+            _ = line.get_x_start()
+            _ = line.get_y_start()
+            _ = line.get_x_end()
+            _ = line.get_y_end()
+            _ = line.get_start()
+            _ = line.get_end()
         
         end_time = time.time()
         duration = end_time - start_time
@@ -558,7 +558,7 @@ class TestLinePerformance:
         
         # Generate multiple mazes
         for _ in range(100):
-            lines = Line.generateMaze(mock_game, 10, 10)
+            lines = Line.generate_maze(mock_game, 10, 10)
             assert len(lines) > 0
         
         end_time = time.time()

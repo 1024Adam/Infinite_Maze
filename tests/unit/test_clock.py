@@ -20,11 +20,11 @@ class TestClockInitialization:
         clock = Clock()
         
         # Check initial values
-        assert clock.getMillis() == 0
-        assert clock.getPrevMillis() == 0
-        assert clock.getTicks() == 0
-        assert clock.getSeconds() == 0
-        assert clock.getPrevSeconds() == 0
+        assert clock.get_millis() == 0
+        assert clock.get_prev_millis() == 0
+        assert clock.get_ticks() == 0
+        assert clock.get_seconds() == 0
+        assert clock.get_prev_seconds() == 0
     
     def test_clock_pygame_integration(self):
         """Test that clock initializes pygame Clock."""
@@ -51,13 +51,13 @@ class TestClockTiming:
             mock_clock_class.return_value = mock_clock_instance
             
             clock = Clock()
-            initial_millis = clock.getMillis()
+            initial_millis = clock.get_millis()
             
             clock.update()
             
             # Time should have advanced
-            assert clock.getMillis() > initial_millis
-            assert clock.getPrevMillis() == initial_millis
+            assert clock.get_millis() > initial_millis
+            assert clock.get_prev_millis() == initial_millis
     
     def test_multiple_updates(self):
         """Test multiple consecutive updates."""
@@ -72,29 +72,29 @@ class TestClockTiming:
             # Perform multiple updates
             times = []
             for i in range(5):
-                times.append(clock.getMillis())
+                times.append(clock.get_millis())
                 clock.update()
             
             # Each update should advance time
             for i in range(1, len(times)):
-                assert times[i] < clock.getMillis()
+                assert times[i] < clock.get_millis()
     
     def test_tick_counter(self):
         """Test tick counter functionality."""
         clock = Clock()
         
-        initial_ticks = clock.getTicks()
+        initial_ticks = clock.get_ticks()
         
         # Manually call tick
         clock.tick()
         
-        assert clock.getTicks() == initial_ticks + 1
+        assert clock.get_ticks() == initial_ticks + 1
         
         # Multiple ticks
         for i in range(10):
             clock.tick()
         
-        assert clock.getTicks() == initial_ticks + 11
+        assert clock.get_ticks() == initial_ticks + 11
     
     def test_update_calls_tick(self):
         """Test that update calls tick method."""
@@ -105,12 +105,12 @@ class TestClockTiming:
             mock_clock_class.return_value = mock_clock_instance
             
             clock = Clock()
-            initial_ticks = clock.getTicks()
+            initial_ticks = clock.get_ticks()
             
             clock.update()
             
             # Ticks should have incremented
-            assert clock.getTicks() == initial_ticks + 1
+            assert clock.get_ticks() == initial_ticks + 1
 
 
 class TestClockSeconds:
@@ -139,7 +139,7 @@ class TestClockSeconds:
             
             for millis, expected_seconds in test_cases:
                 clock.millis = millis
-                assert clock.getSeconds() == expected_seconds
+                assert clock.get_seconds() == expected_seconds
     
     def test_prev_seconds_tracking(self):
         """Test previous seconds tracking."""
@@ -152,18 +152,18 @@ class TestClockSeconds:
             clock = Clock()
             
             # Initial state
-            assert clock.getSeconds() == 0
-            assert clock.getPrevSeconds() == 0
+            assert clock.get_seconds() == 0
+            assert clock.get_prev_seconds() == 0
             
             # After first update
             clock.update()
-            assert clock.getPrevSeconds() == 0  # Previous millis was 0
+            assert clock.get_prev_seconds() == 0  # Previous millis was 0
             
             # After second update
             clock.update()
             # Previous millis should be 1000, so prev seconds should be 1
-            prev_seconds = int((clock.getPrevMillis() / 1000) % 60)
-            assert clock.getPrevSeconds() == prev_seconds
+            prev_seconds = int((clock.get_prev_millis() / 1000) % 60)
+            assert clock.get_prev_seconds() == prev_seconds
 
 
 class TestClockTimeString:
@@ -185,7 +185,7 @@ class TestClockTimeString:
         
         for millis, expected_string in test_cases:
             clock.millis = millis
-            assert clock.getTimeString() == expected_string
+            assert clock.get_time_string() == expected_string
     
     def test_time_string_zero_padding(self):
         """Test that time string properly zero-pads values."""
@@ -193,11 +193,11 @@ class TestClockTimeString:
         
         # Test single digit values are zero-padded
         clock.millis = 5000  # 5 seconds
-        time_string = clock.getTimeString()
+        time_string = clock.get_time_string()
         assert time_string == "00:05"
         
         clock.millis = 65000  # 1 minute 5 seconds
-        time_string = clock.getTimeString()
+        time_string = clock.get_time_string()
         assert time_string == "01:05"
 
 
@@ -212,7 +212,7 @@ class TestClockFPS:
             mock_clock_class.return_value = mock_clock_instance
             
             clock = Clock()
-            fps = clock.getFps()
+            fps = clock.get_fps()
             
             assert fps == 60.0
             mock_clock_instance.get_fps.assert_called_once()
@@ -230,7 +230,7 @@ class TestClockFPS:
             
             for expected_fps in fps_values:
                 mock_clock_instance.get_fps.return_value = expected_fps
-                assert clock.getFps() == expected_fps
+                assert clock.get_fps() == expected_fps
 
 
 class TestClockReset:
@@ -247,16 +247,16 @@ class TestClockReset:
             
             # Advance clock state
             clock.millis = 5000
-            clock.prevMillis = 4000
+            clock.prev_millis = 4000
             clock.ticks = 100
             
             # Reset
             clock.reset()
             
             # Values should be reset
-            assert clock.getMillis() == 0
-            assert clock.getPrevMillis() == 0
-            assert clock.getTicks() == 0
+            assert clock.get_millis() == 0
+            assert clock.get_prev_millis() == 0
+            assert clock.get_ticks() == 0
     
     def test_reset_creates_new_pygame_clock(self):
         """Test that reset creates new pygame Clock instance."""
@@ -287,9 +287,9 @@ class TestClockMillisManagement:
         
         # Rollback some time
         rollback_amount = 1000
-        clock.rollbackMillis(rollback_amount)
+        clock.rollback_millis(rollback_amount)
         
-        assert clock.getMillis() == 4000
+        assert clock.get_millis() == 4000
     
     def test_rollback_millis_multiple(self):
         """Test multiple rollback operations."""
@@ -298,14 +298,14 @@ class TestClockMillisManagement:
         clock.millis = 10000
         
         # Multiple rollbacks
-        clock.rollbackMillis(2000)
-        assert clock.getMillis() == 8000
+        clock.rollback_millis(2000)
+        assert clock.get_millis() == 8000
         
-        clock.rollbackMillis(3000)
-        assert clock.getMillis() == 5000
+        clock.rollback_millis(3000)
+        assert clock.get_millis() == 5000
         
-        clock.rollbackMillis(1000)
-        assert clock.getMillis() == 4000
+        clock.rollback_millis(1000)
+        assert clock.get_millis() == 4000
     
     def test_rollback_millis_to_negative(self):
         """Test rollback that would result in negative time."""
@@ -314,10 +314,10 @@ class TestClockMillisManagement:
         clock.millis = 1000
         
         # Rollback more than current time
-        clock.rollbackMillis(2000)
+        clock.rollback_millis(2000)
         
         # Should result in negative time (or whatever the implementation allows)
-        assert clock.getMillis() == -1000
+        assert clock.get_millis() == -1000
     
     def test_get_prev_millis(self):
         """Test getting previous milliseconds."""
@@ -330,16 +330,16 @@ class TestClockMillisManagement:
             clock = Clock()
             
             # Initial state
-            assert clock.getPrevMillis() == 0
+            assert clock.get_prev_millis() == 0
             
             # After update
             clock.update()
-            assert clock.getPrevMillis() == 0  # Was 0 before update
+            assert clock.get_prev_millis() == 0  # Was 0 before update
             
             # After another update
-            prev_millis = clock.getMillis()
+            prev_millis = clock.get_millis()
             clock.update()
-            assert clock.getPrevMillis() == prev_millis
+            assert clock.get_prev_millis() == prev_millis
 
 
 class TestClockPausedTime:
@@ -350,25 +350,25 @@ class TestClockPausedTime:
         clock = Clock()
         
         # Initial state
-        assert clock.getMillisPaused() == 0
+        assert clock.get_millis_paused() == 0
         
         # Set paused time
-        clock.setMillisPaused(5000)
-        assert clock.getMillisPaused() == 5000
+        clock.set_millis_paused(5000)
+        assert clock.get_millis_paused() == 5000
         
         # Update paused time
-        clock.setMillisPaused(8000)
-        assert clock.getMillisPaused() == 8000
+        clock.set_millis_paused(8000)
+        assert clock.get_millis_paused() == 8000
     
     def test_millis_paused_reset(self):
         """Test that reset clears paused time."""
         clock = Clock()
         
-        clock.setMillisPaused(3000)
-        assert clock.getMillisPaused() == 3000
+        clock.set_millis_paused(3000)
+        assert clock.get_millis_paused() == 3000
         
         clock.reset()
-        assert clock.getMillisPaused() == 0
+        assert clock.get_millis_paused() == 0
 
 
 class TestClockEdgeCases:
@@ -383,8 +383,8 @@ class TestClockEdgeCases:
         clock.millis = large_time
         
         # Should handle large values gracefully
-        seconds = clock.getSeconds()
-        time_string = clock.getTimeString()
+        seconds = clock.get_seconds()
+        time_string = clock.get_time_string()
         
         # Should not raise exceptions
         assert isinstance(seconds, int)
@@ -398,7 +398,7 @@ class TestClockEdgeCases:
         clock.millis = -1000
         
         # Should handle negative values
-        seconds = clock.getSeconds()
+        seconds = clock.get_seconds()
         # The behavior may vary based on implementation
         assert isinstance(seconds, int)
     
@@ -409,9 +409,9 @@ class TestClockEdgeCases:
         # Ensure time is zero
         clock.millis = 0
         
-        assert clock.getMillis() == 0
-        assert clock.getSeconds() == 0
-        assert clock.getTimeString() == "00:00"
+        assert clock.get_millis() == 0
+        assert clock.get_seconds() == 0
+        assert clock.get_time_string() == "00:00"
     
     def test_rapid_updates(self):
         """Test rapid consecutive updates."""
@@ -428,8 +428,8 @@ class TestClockEdgeCases:
                 clock.update()
             
             # Should handle rapid updates without issues
-            assert clock.getTicks() == 1000
-            assert clock.getMillis() >= 0
+            assert clock.get_ticks() == 1000
+            assert clock.get_millis() >= 0
 
 
 class TestClockIntegration:
@@ -452,11 +452,11 @@ class TestClockIntegration:
                 
                 # Check that time advances reasonably
                 expected_min_time = frame * 16
-                assert clock.getMillis() >= expected_min_time
+                assert clock.get_millis() >= expected_min_time
             
             # After 60 frames, should be around 1 second
-            assert clock.getSeconds() <= 1  # Might be 0 due to modulo
-            assert clock.getTicks() == 60
+            assert clock.get_seconds() <= 1  # Might be 0 due to modulo
+            assert clock.get_ticks() == 60
     
     def test_clock_pause_simulation(self):
         """Test clock behavior during pause simulation."""
@@ -467,13 +467,13 @@ class TestClockIntegration:
         
         # Simulate pause by rolling back time
         pause_duration = 2000
-        clock.rollbackMillis(pause_duration)
+        clock.rollback_millis(pause_duration)
         
-        assert clock.getMillis() == 3000
+        assert clock.get_millis() == 3000
         
         # Track paused time
-        clock.setMillisPaused(pause_duration)
-        assert clock.getMillisPaused() == pause_duration
+        clock.set_millis_paused(pause_duration)
+        assert clock.get_millis_paused() == pause_duration
 
 
 @pytest.mark.performance
@@ -513,8 +513,8 @@ class TestClockPerformance:
         # Perform many time calculations
         for i in range(10000):
             clock.millis = i * 1000
-            _ = clock.getSeconds()
-            _ = clock.getTimeString()
+            _ = clock.get_seconds()
+            _ = clock.get_time_string()
         
         end_time = time.time()
         duration = end_time - start_time

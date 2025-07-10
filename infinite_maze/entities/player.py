@@ -3,7 +3,7 @@ from ..utils.config import config
 
 
 class Player:
-    def __init__(self, xPosition, yPosition, headless=False):
+    def __init__(self, x_position, y_position, headless=False):
         self.headless = headless
         if not headless:
             try:
@@ -16,38 +16,38 @@ class Player:
         else:
             self.cursor = None
 
-        self.position = (xPosition, yPosition)
+        self.position = (x_position, y_position)
         self.width = config.PLAYER_WIDTH
         self.height = config.PLAYER_HEIGHT
         self.speed = config.PLAYER_SPEED
 
-    def setX(self, xPosition):
-        self.position = (xPosition, self.position[1])
+    def set_x(self, x_position):
+        self.position = (x_position, self.position[1])
 
-    def setY(self, yPosition):
-        self.position = (self.position[0], yPosition)
+    def set_y(self, y_position):
+        self.position = (self.position[0], y_position)
 
-    def moveX(self, units):
+    def move_x(self, units):
         new_x = self.position[0] + (units * self.speed)
         self.position = (new_x, self.position[1])
 
-    def moveY(self, units):
+    def move_y(self, units):
         new_y = self.position[1] + (units * self.speed)
         self.position = (self.position[0], new_y)
 
-    def getX(self):
+    def get_x(self):
         return self.position[0]
 
-    def getY(self):
+    def get_y(self):
         return self.position[1]
 
-    def getPosition(self):
+    def get_position(self):
         return self.position
 
-    def getSpeed(self):
+    def get_speed(self):
         return self.speed
 
-    def setCursor(self, image):
+    def set_cursor(self, image):
         if not self.headless:
             try:
                 self.cursor = pygame.image.load(image)
@@ -55,18 +55,18 @@ class Player:
                 # If image can't be loaded, keep current cursor
                 pass
 
-    def getCursor(self):
+    def get_cursor(self):
         return self.cursor
 
-    def getWidth(self):
+    def get_width(self):
         return self.width
 
-    def getHeight(self):
+    def get_height(self):
         return self.height
 
-    def reset(self, xPosition, yPosition):
-        self.setX(xPosition)
-        self.setY(yPosition)
+    def reset(self, x_position, y_position):
+        self.set_x(x_position)
+        self.set_y(y_position)
         self.speed = config.PLAYER_SPEED
         
     def is_movement_blocked(self, direction, lines):
@@ -89,83 +89,83 @@ class Player:
         
         if direction == RIGHT:
             for line in lines:
-                if line.getIsHorizontal():
+                if line.get_is_horizontal():
                     blocked = blocked or (
-                        self.getY() <= line.getYStart()
-                        and self.getY() + self.getHeight() >= line.getYStart()
-                        and self.getX() + self.getWidth() + self.getSpeed() == line.getXStart()
+                        self.get_y() <= line.get_y_start()
+                        and self.get_y() + self.get_height() >= line.get_y_start()
+                        and self.get_x() + self.get_width() + self.get_speed() == line.get_x_start()
                     )
                 else:  # vertical line
                     blocked = blocked or (
-                        self.getX() + self.getWidth() <= line.getXStart()
-                        and self.getX() + self.getWidth() + self.getSpeed() >= line.getXStart()
+                        self.get_x() + self.get_width() <= line.get_x_start()
+                        and self.get_x() + self.get_width() + self.get_speed() >= line.get_x_start()
                         and (
-                            (self.getY() >= line.getYStart() and self.getY() <= line.getYEnd())
+                            (self.get_y() >= line.get_y_start() and self.get_y() <= line.get_y_end())
                             or (
-                                self.getY() + self.getHeight() >= line.getYStart()
-                                and self.getY() + self.getHeight() <= line.getYEnd()
+                                self.get_y() + self.get_height() >= line.get_y_start()
+                                and self.get_y() + self.get_height() <= line.get_y_end()
                             )
                         )
                     )
         elif direction == LEFT:
             for line in lines:
-                if line.getIsHorizontal():
+                if line.get_is_horizontal():
                     blocked = blocked or (
-                        self.getY() <= line.getYStart()
-                        and self.getY() + self.getHeight() >= line.getYStart()
-                        and self.getX() - self.getSpeed() == line.getXEnd()
+                        self.get_y() <= line.get_y_start()
+                        and self.get_y() + self.get_height() >= line.get_y_start()
+                        and self.get_x() - self.get_speed() == line.get_x_end()
                     )
                 else:  # vertical line
                     blocked = blocked or (
-                        self.getX() >= line.getXEnd()
-                        and self.getX() - self.getSpeed() <= line.getXEnd()
+                        self.get_x() >= line.get_x_end()
+                        and self.get_x() - self.get_speed() <= line.get_x_end()
                         and (
-                            (self.getY() >= line.getYStart() and self.getY() <= line.getYEnd())
+                            (self.get_y() >= line.get_y_start() and self.get_y() <= line.get_y_end())
                             or (
-                                self.getY() + self.getHeight() >= line.getYStart()
-                                and self.getY() + self.getHeight() <= line.getYEnd()
+                                self.get_y() + self.get_height() >= line.get_y_start()
+                                and self.get_y() + self.get_height() <= line.get_y_end()
                             )
                         )
                     )
         elif direction == DOWN:
             for line in lines:
-                if line.getIsHorizontal():
+                if line.get_is_horizontal():
                     blocked = blocked or (
-                        self.getY() + self.getHeight() <= line.getYStart()
-                        and self.getY() + self.getHeight() + self.getSpeed() >= line.getYStart()
+                        self.get_y() + self.get_height() <= line.get_y_start()
+                        and self.get_y() + self.get_height() + self.get_speed() >= line.get_y_start()
                         and (
-                            (self.getX() >= line.getXStart() and self.getX() <= line.getXEnd())
+                            (self.get_x() >= line.get_x_start() and self.get_x() <= line.get_x_end())
                             or (
-                                self.getX() + self.getWidth() >= line.getXStart()
-                                and self.getX() + self.getWidth() <= line.getXEnd()
+                                self.get_x() + self.get_width() >= line.get_x_start()
+                                and self.get_x() + self.get_width() <= line.get_x_end()
                             )
                         )
                     )
                 else:  # vertical line
                     blocked = blocked or (
-                        self.getX() <= line.getXStart()
-                        and self.getX() + self.getWidth() >= line.getXStart()
-                        and self.getY() + self.getHeight() + self.getSpeed() == line.getYStart()
+                        self.get_x() <= line.get_x_start()
+                        and self.get_x() + self.get_width() >= line.get_x_start()
+                        and self.get_y() + self.get_height() + self.get_speed() == line.get_y_start()
                     )
         elif direction == UP:
             for line in lines:
-                if line.getIsHorizontal():
+                if line.get_is_horizontal():
                     blocked = blocked or (
-                        self.getY() >= line.getYStart()
-                        and self.getY() - self.getSpeed() <= line.getYStart()
+                        self.get_y() >= line.get_y_start()
+                        and self.get_y() - self.get_speed() <= line.get_y_start()
                         and (
-                            (self.getX() >= line.getXStart() and self.getX() <= line.getXEnd())
+                            (self.get_x() >= line.get_x_start() and self.get_x() <= line.get_x_end())
                             or (
-                                self.getX() + self.getWidth() >= line.getXStart()
-                                and self.getX() + self.getWidth() <= line.getXEnd()
+                                self.get_x() + self.get_width() >= line.get_x_start()
+                                and self.get_x() + self.get_width() <= line.get_x_end()
                             )
                         )
                     )
                 else:  # vertical line
                     blocked = blocked or (
-                        self.getX() <= line.getXStart()
-                        and self.getX() + self.getWidth() >= line.getXStart()
-                        and self.getY() - self.getSpeed() == line.getYEnd()
+                        self.get_x() <= line.get_x_start()
+                        and self.get_x() + self.get_width() >= line.get_x_start()
+                        and self.get_y() - self.get_speed() == line.get_y_end()
                     )
         
         return blocked

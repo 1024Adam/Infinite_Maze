@@ -30,7 +30,7 @@ class TestFrameRatePerformance:
         with full_pygame_mocks():
             game = Game(headless=True)
             player = Player(150, 200, headless=True)
-            lines = Line.generateMaze(game, 15, 20)
+            lines = Line.generate_maze(game, 15, 20)
             
             monitor = PerformanceMonitor()
             target_fps = 60.0
@@ -43,12 +43,12 @@ class TestFrameRatePerformance:
                 frame_start = time.perf_counter()
                 
                 # Simulate game loop
-                player.moveX(1 if frame % 4 == 0 else 0)
+                player.move_x(1 if frame % 4 == 0 else 0)
                 if frame % 4 == 0:
-                    game.incrementScore()
+                    game.increment_score()
                 
-                game.updateScreen(player, lines)
-                game.getClock().update()
+                game.update_screen(player, lines)
+                game.get_clock().update()
                 
                 frame_end = time.perf_counter()
                 frame_time_ms = (frame_end - frame_start) * 1000
@@ -74,7 +74,7 @@ class TestFrameRatePerformance:
         with full_pygame_mocks():
             game = Game(headless=True)
             player = Player(100, 200, headless=True)
-            lines = Line.generateMaze(game, 10, 15)
+            lines = Line.generate_maze(game, 10, 15)
             
             frame_times = []
             
@@ -83,10 +83,10 @@ class TestFrameRatePerformance:
                 frame_start = time.perf_counter()
                 
                 # Consistent workload
-                player.moveX(1)
-                game.incrementScore()
-                game.updateScreen(player, lines)
-                game.getClock().update()
+                player.move_x(1)
+                game.increment_score()
+                game.update_screen(player, lines)
+                game.get_clock().update()
                 
                 frame_end = time.perf_counter()
                 frame_times.append((frame_end - frame_start) * 1000)
@@ -106,10 +106,10 @@ class TestFrameRatePerformance:
         with full_pygame_mocks():
             game = Game(headless=True)
             player = Player(200, 200, headless=True)
-            lines = Line.generateMaze(game, 20, 25)
+            lines = Line.generate_maze(game, 20, 25)
             
             # Set high pace
-            game.setPace(8)
+            game.set_pace(8)
             
             frame_times = []
             
@@ -117,15 +117,15 @@ class TestFrameRatePerformance:
                 frame_start = time.perf_counter()
                 
                 # High-pace workload
-                pace = game.getPace()
+                pace = game.get_pace()
                 for line in lines:
-                    line.setXStart(line.getXStart() - pace)
-                    line.setXEnd(line.getXEnd() - pace)
+                    line.set_x_start(line.get_x_start() - pace)
+                    line.set_x_end(line.get_x_end() - pace)
                 
-                player.moveX(pace // 2)
-                game.incrementScore()
-                game.updateScreen(player, lines)
-                game.getClock().update()
+                player.move_x(pace // 2)
+                game.increment_score()
+                game.update_screen(player, lines)
+                game.get_clock().update()
                 
                 frame_end = time.perf_counter()
                 frame_times.append((frame_end - frame_start) * 1000)
@@ -150,7 +150,7 @@ class TestMemoryPerformance:
         with full_pygame_mocks():
             game = Game(headless=True)
             player = Player(100, 200, headless=True)
-            lines = Line.generateMaze(game, 10, 15)
+            lines = Line.generate_maze(game, 10, 15)
             
             # Measure after initialization
             gc.collect()
@@ -174,16 +174,16 @@ class TestMemoryPerformance:
             for session in range(5):
                 game = Game(headless=True)
                 player = Player(100 + session * 20, 200, headless=True)
-                lines = Line.generateMaze(game, 15, 20)
+                lines = Line.generate_maze(game, 15, 20)
                 
                 # Play session
                 for frame in range(300):  # 5 second session
-                    player.moveX(1 if frame % 3 == 0 else 0)
+                    player.move_x(1 if frame % 3 == 0 else 0)
                     if frame % 3 == 0:
-                        game.incrementScore()
+                        game.increment_score()
                     
-                    game.updateScreen(player, lines)
-                    game.getClock().update()
+                    game.update_screen(player, lines)
+                    game.get_clock().update()
                 
                 # Cleanup
                 game.cleanup()
@@ -214,7 +214,7 @@ class TestMemoryPerformance:
             
             for width, height in maze_sizes:
                 game = Game(headless=True)
-                lines = Line.generateMaze(game, width, height)
+                lines = Line.generate_maze(game, width, height)
                 
                 monitor.sample_memory()
                 
@@ -268,7 +268,7 @@ class TestComputationalPerformance:
         with full_pygame_mocks():
             game = Game(headless=True)
             player = Player(100, 200, headless=True)
-            lines = Line.generateMaze(game, 30, 40)  # Large maze
+            lines = Line.generate_maze(game, 30, 40)  # Large maze
             
             # Benchmark collision detection
             start_time = time.perf_counter()
@@ -279,18 +279,18 @@ class TestComputationalPerformance:
             for iteration in range(test_iterations):
                 # Test movement in each direction
                 for dx, dy in [(1, 0), (-1, 0), (0, 1), (0, -1)]:
-                    test_x = player.getX() + dx * player.getSpeed()
-                    test_y = player.getY() + dy * player.getSpeed()
+                    test_x = player.get_x() + dx * player.get_speed()
+                    test_y = player.get_y() + dy * player.get_speed()
                     
                     # Check collision with all lines
                     for line in lines:
-                        if line.getIsHorizontal():
-                            if (test_y <= line.getYStart() <= test_y + player.getHeight() and
-                                test_x < line.getXEnd() and test_x + player.getWidth() > line.getXStart()):
+                        if line.get_is_horizontal():
+                            if (test_y <= line.get_y_start() <= test_y + player.get_height() and
+                                test_x < line.get_x_end() and test_x + player.get_width() > line.get_x_start()):
                                 collision_count += 1
                         else:
-                            if (test_x <= line.getXStart() <= test_x + player.getWidth() and
-                                test_y < line.getYEnd() and test_y + player.getHeight() > line.getYStart()):
+                            if (test_x <= line.get_x_start() <= test_x + player.get_width() and
+                                test_y < line.get_y_end() and test_y + player.get_height() > line.get_y_start()):
                                 collision_count += 1
             
             end_time = time.perf_counter()
@@ -316,7 +316,7 @@ class TestComputationalPerformance:
                 
                 # Generate multiple mazes of this size
                 for _ in range(10):
-                    lines = Line.generateMaze(game, width, height)
+                    lines = Line.generate_maze(game, width, height)
                     assert len(lines) > 0
                 
                 end_time = time.perf_counter()
@@ -340,13 +340,13 @@ class TestComputationalPerformance:
             operations = 1000000
             for i in range(operations):
                 if i % 2 == 0:
-                    game.incrementScore()
+                    game.increment_score()
                 else:
-                    game.decrementScore()
+                    game.decrement_score()
                 
                 # Occasionally check score
                 if i % 1000 == 0:
-                    score = game.getScore()
+                    score = game.get_score()
                     assert score >= 0
             
             end_time = time.perf_counter()
@@ -368,8 +368,8 @@ class TestComputationalPerformance:
             
             # Occasionally access clock values
             if _ % 1000 == 0:
-                millis = clock.getMillis()
-                seconds = clock.getSeconds()
+                millis = clock.get_millis()
+                seconds = clock.get_seconds()
                 assert millis >= 0
                 assert seconds >= 0
         
@@ -397,13 +397,13 @@ class TestConcurrencyPerformance:
                 try:
                     for i in range(1000):
                         # Simulate concurrent access
-                        score = game.getScore()
-                        pos = player.getPosition()
+                        score = game.get_score()
+                        pos = player.get_position()
                         
                         # Safe operations only
                         if thread_id == 0:  # Only one thread modifies
                             if i % 10 == 0:
-                                game.incrementScore()
+                                game.increment_score()
                         
                         results.append((thread_id, i, score, pos))
                 except Exception as e:
@@ -440,23 +440,23 @@ class TestConcurrencyPerformance:
                 # Rapid movement
                 direction = i % 4
                 if direction == 0:
-                    player.moveX(1)
+                    player.move_x(1)
                 elif direction == 1:
-                    player.moveX(-1)
+                    player.move_x(-1)
                 elif direction == 2:
-                    player.moveY(1)
+                    player.move_y(1)
                 else:
-                    player.moveY(-1)
+                    player.move_y(-1)
                 
                 # Rapid score changes
                 if i % 2 == 0:
-                    game.incrementScore()
+                    game.increment_score()
                 else:
-                    game.decrementScore()
+                    game.decrement_score()
                 
                 # Rapid pause/unpause
                 if i % 100 == 0:
-                    game.changePaused(player)
+                    game.change_paused(player)
             
             end_time = time.perf_counter()
             duration = end_time - start_time
@@ -481,15 +481,15 @@ class TestScalabilityPerformance:
             sizes = [(5, 8), (10, 15), (20, 25), (30, 35), (40, 45)]
             
             for width, height in sizes:
-                lines = Line.generateMaze(game, width, height)
+                lines = Line.generate_maze(game, width, height)
                 
                 # Measure update performance
                 start_time = time.perf_counter()
                 
                 for frame in range(100):
-                    game.updateScreen(player, lines)
-                    player.moveX(1)
-                    game.incrementScore()
+                    game.update_screen(player, lines)
+                    player.move_x(1)
+                    game.increment_score()
                 
                 end_time = time.perf_counter()
                 duration = end_time - start_time
@@ -518,7 +518,7 @@ class TestScalabilityPerformance:
         with full_pygame_mocks():
             game = Game(headless=True)
             player = Player(150, 200, headless=True)
-            lines = Line.generateMaze(game, 15, 20)
+            lines = Line.generate_maze(game, 15, 20)
             
             monitor = PerformanceMonitor()
             
@@ -531,11 +531,11 @@ class TestScalabilityPerformance:
                 
                 # Standard gameplay
                 if frame % 4 == 0:
-                    player.moveX(1)
-                    game.incrementScore()
+                    player.move_x(1)
+                    game.increment_score()
                 
-                game.updateScreen(player, lines)
-                game.getClock().update()
+                game.update_screen(player, lines)
+                game.get_clock().update()
                 
                 frame_end = time.perf_counter()
                 frame_time = (frame_end - frame_start) * 1000
@@ -570,7 +570,7 @@ class TestResourceUtilizationPerformance:
         with full_pygame_mocks():
             game = Game(headless=True)
             player = Player(100, 200, headless=True)
-            lines = Line.generateMaze(game, 20, 25)
+            lines = Line.generate_maze(game, 20, 25)
             
             # Measure active vs idle CPU usage
             start_time = time.perf_counter()
@@ -578,12 +578,12 @@ class TestResourceUtilizationPerformance:
             
             # Run game for specific duration
             for frame in range(600):  # 10 seconds at 60 FPS
-                player.moveX(1 if frame % 3 == 0 else 0)
+                player.move_x(1 if frame % 3 == 0 else 0)
                 if frame % 3 == 0:
-                    game.incrementScore()
+                    game.increment_score()
                 
-                game.updateScreen(player, lines)
-                game.getClock().update()
+                game.update_screen(player, lines)
+                game.get_clock().update()
                 
                 # Simulate frame timing
                 time.sleep(0.001)  # Small sleep to simulate real timing
@@ -614,9 +614,9 @@ class TestResourceUtilizationPerformance:
             
             # Short gameplay session
             for frame in range(300):
-                player.moveX(1 if frame % 2 == 0 else 0)
-                game.updateScreen(player, [])
-                game.getClock().update()
+                player.move_x(1 if frame % 2 == 0 else 0)
+                game.update_screen(player, [])
+                game.get_clock().update()
             
             end_objects = len(gc.get_objects())
             object_growth = end_objects - start_objects
@@ -642,9 +642,9 @@ class TestResourceUtilizationPerformance:
             ]
             
             paths = [
-                config.getPlayerImage(),
-                config.getPlayerPausedImage(),
-                config.getIcon()
+                config.get_player_image(),
+                config.get_player_paused_image(),
+                config.get_icon()
             ]
             
             # Verify all values returned
@@ -671,57 +671,57 @@ class TestBenchmarkSuite:
             # Comprehensive benchmark
             game = Game(headless=True)
             player = Player(100, 200, headless=True)
-            lines = Line.generateMaze(game, 25, 30)
+            lines = Line.generate_maze(game, 25, 30)
             
             benchmark_results = {}
             
             # Test 1: Basic gameplay
             start_time = time.perf_counter()
             for frame in range(300):
-                player.moveX(1 if frame % 2 == 0 else 0)
+                player.move_x(1 if frame % 2 == 0 else 0)
                 if frame % 2 == 0:
-                    game.incrementScore()
-                game.updateScreen(player, lines)
-                game.getClock().update()
+                    game.increment_score()
+                game.update_screen(player, lines)
+                game.get_clock().update()
             basic_time = time.perf_counter() - start_time
             benchmark_results['basic_gameplay'] = 300 / basic_time  # FPS
             
             # Test 2: High-pace gameplay
-            game.setPace(5)
+            game.set_pace(5)
             start_time = time.perf_counter()
             for frame in range(300):
                 for line in lines:
-                    line.setXStart(line.getXStart() - 5)
-                    line.setXEnd(line.getXEnd() - 5)
-                player.moveX(2)
-                game.incrementScore()
-                game.updateScreen(player, lines)
-                game.getClock().update()
+                    line.set_x_start(line.get_x_start() - 5)
+                    line.set_x_end(line.get_x_end() - 5)
+                player.move_x(2)
+                game.increment_score()
+                game.update_screen(player, lines)
+                game.get_clock().update()
             high_pace_time = time.perf_counter() - start_time
             benchmark_results['high_pace_gameplay'] = 300 / high_pace_time  # FPS
             
             # Test 3: Collision-heavy scenario
-            dense_lines = Line.generateMaze(game, 40, 50)
+            dense_lines = Line.generate_maze(game, 40, 50)
             start_time = time.perf_counter()
             for frame in range(200):
                 # Test collision detection
                 for dx, dy in [(1, 0), (-1, 0), (0, 1), (0, -1)]:
-                    test_x = player.getX() + dx
-                    test_y = player.getY() + dy
+                    test_x = player.get_x() + dx
+                    test_y = player.get_y() + dy
                     
                     for line in dense_lines[:20]:  # Test subset for speed
                         # Collision check
-                        if line.getIsHorizontal():
-                            if (test_y <= line.getYStart() <= test_y + player.getHeight() and
-                                test_x < line.getXEnd() and test_x + player.getWidth() > line.getXStart()):
+                        if line.get_is_horizontal():
+                            if (test_y <= line.get_y_start() <= test_y + player.get_height() and
+                                test_x < line.get_x_end() and test_x + player.get_width() > line.get_x_start()):
                                 pass
                         else:
-                            if (test_x <= line.getXStart() <= test_x + player.getWidth() and
-                                test_y < line.getYEnd() and test_y + player.getHeight() > line.getYStart()):
+                            if (test_x <= line.get_x_start() <= test_x + player.get_width() and
+                                test_y < line.get_y_end() and test_y + player.get_height() > line.get_y_start()):
                                 pass
                 
-                game.updateScreen(player, dense_lines)
-                game.getClock().update()
+                game.update_screen(player, dense_lines)
+                game.get_clock().update()
             collision_time = time.perf_counter() - start_time
             benchmark_results['collision_heavy'] = 200 / collision_time  # FPS
             

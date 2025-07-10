@@ -52,13 +52,13 @@ def calculate_distance(pos1: Tuple[int, int], pos2: Tuple[int, int]) -> float:
 
 def is_collision_detected(player: Player, line: Line) -> bool:
     """Check if player would collide with a specific line."""
-    px, py = player.getPosition()
-    pw, ph = player.getWidth(), player.getHeight()
+    px, py = player.get_position()
+    pw, ph = player.get_width(), player.get_height()
     
-    if line.getIsHorizontal():
+    if line.get_is_horizontal():
         # Horizontal line collision
-        line_y = line.getYStart()
-        line_x1, line_x2 = line.getXStart(), line.getXEnd()
+        line_y = line.get_y_start()
+        line_x1, line_x2 = line.get_x_start(), line.get_x_end()
         
         # Check Y overlap
         if py <= line_y <= py + ph:
@@ -66,8 +66,8 @@ def is_collision_detected(player: Player, line: Line) -> bool:
             return not (px + pw <= line_x1 or px >= line_x2)
     else:
         # Vertical line collision
-        line_x = line.getXStart()
-        line_y1, line_y2 = line.getYStart(), line.getYEnd()
+        line_x = line.get_x_start()
+        line_y1, line_y2 = line.get_y_start(), line.get_y_end()
         
         # Check X overlap
         if px <= line_x <= px + pw:
@@ -81,8 +81,8 @@ def get_valid_moves(player: Player, lines: List[Line],
                    bounds: Dict[str, int]) -> Dict[str, bool]:
     """Get dictionary of valid moves for player in current position."""
     valid_moves = {}
-    current_pos = player.getPosition()
-    speed = player.getSpeed()
+    current_pos = player.get_position()
+    speed = player.get_speed()
     
     # Test each direction
     test_positions = {
@@ -101,9 +101,9 @@ def get_valid_moves(player: Player, lines: List[Line],
         no_collision = True
         if in_bounds:
             # Temporarily move player to test position
-            original_pos = player.getPosition()
-            player.setX(test_x)
-            player.setY(test_y)
+            original_pos = player.get_position()
+            player.set_x(test_x)
+            player.set_y(test_y)
             
             # Check for collisions
             for line in lines:
@@ -112,8 +112,8 @@ def get_valid_moves(player: Player, lines: List[Line],
                     break
             
             # Restore original position
-            player.setX(original_pos[0])
-            player.setY(original_pos[1])
+            player.set_x(original_pos[0])
+            player.set_y(original_pos[1])
         
         valid_moves[direction] = in_bounds and no_collision
     
@@ -202,19 +202,19 @@ class GameStateCapture:
         """Capture current game state."""
         self.captured_state = {
             'game': {
-                'score': self.game.getScore(),
-                'pace': self.game.getPace(),
-                'paused': self.game.isPaused(),
+                'score': self.game.get_score(),
+                'pace': self.game.get_pace(),
+                'paused': self.game.is_paused(),
                 'over': self.game.over if hasattr(self.game, 'over') else False,
                 'shutdown': self.game.shutdown if hasattr(self.game, 'shutdown') else False
             },
             'player': {
-                'position': self.player.getPosition(),
-                'speed': self.player.getSpeed()
+                'position': self.player.get_position(),
+                'speed': self.player.get_speed()
             },
             'clock': {
-                'millis': self.game.getClock().getMillis() if self.game.getClock() else 0,
-                'ticks': self.game.getClock().getTicks() if self.game.getClock() else 0
+                'millis': self.game.get_clock().get_millis() if self.game.get_clock() else 0,
+                'ticks': self.game.get_clock().get_ticks() if self.game.get_clock() else 0
             }
         }
         
@@ -224,8 +224,8 @@ class GameStateCapture:
             raise ValueError("No state has been captured")
             
         # Restore game state
-        self.game.setScore(self.captured_state['game']['score'])
-        self.game.setPace(self.captured_state['game']['pace'])
+        self.game.set_score(self.captured_state['game']['score'])
+        self.game.set_pace(self.captured_state['game']['pace'])
         if hasattr(self.game, 'paused'):
             self.game.paused = self.captured_state['game']['paused']
         if hasattr(self.game, 'over'):
@@ -235,8 +235,8 @@ class GameStateCapture:
             
         # Restore player state
         pos = self.captured_state['player']['position']
-        self.player.setX(pos[0])
-        self.player.setY(pos[1])
+        self.player.set_x(pos[0])
+        self.player.set_y(pos[1])
         
         # Note: Clock state restoration would require more complex logic
         
@@ -247,13 +247,13 @@ class GameStateCapture:
             
         current_state = {
             'game': {
-                'score': self.game.getScore(),
-                'pace': self.game.getPace(),
-                'paused': self.game.isPaused()
+                'score': self.game.get_score(),
+                'pace': self.game.get_pace(),
+                'paused': self.game.is_paused()
             },
             'player': {
-                'position': self.player.getPosition(),
-                'speed': self.player.getSpeed()
+                'position': self.player.get_position(),
+                'speed': self.player.get_speed()
             }
         }
         
@@ -285,9 +285,9 @@ def run_game_simulation(game: Game, player: Player, lines: List[Line],
     """Run a simulation of the game for specified steps."""
     results = {
         'initial_state': {
-            'score': game.getScore(),
-            'position': player.getPosition(),
-            'pace': game.getPace()
+            'score': game.get_score(),
+            'position': player.get_position(),
+            'pace': game.get_pace()
         },
         'movements': [],
         'collisions': [],
@@ -296,8 +296,8 @@ def run_game_simulation(game: Game, player: Player, lines: List[Line],
     }
     
     for step in range(steps):
-        initial_score = game.getScore()
-        initial_pos = player.getPosition()
+        initial_score = game.get_score()
+        initial_pos = player.get_position()
         
         # Get movement from function
         movement = movement_function(step, game, player, lines)
@@ -311,7 +311,7 @@ def run_game_simulation(game: Game, player: Player, lines: List[Line],
         results['collisions'].append(collision)
         
         # Record score change
-        final_score = game.getScore()
+        final_score = game.get_score()
         score_change = final_score - initial_score
         results['score_changes'].append(score_change)
         
@@ -320,9 +320,9 @@ def run_game_simulation(game: Game, player: Player, lines: List[Line],
             game.clock.tick()
     
     results['final_state'] = {
-        'score': game.getScore(),
-        'position': player.getPosition(),
-        'pace': game.getPace()
+        'score': game.get_score(),
+        'position': player.get_position(),
+        'pace': game.get_pace()
     }
     
     return results

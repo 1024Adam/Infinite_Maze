@@ -102,23 +102,23 @@ class TestPlayerMazeMovement:
         wall = Line((100, 90), (100, 130))  # Vertical wall at x=100
         
         # Move player right - should be blocked before hitting wall
-        initial_x = player.getX()
+        initial_x = player.get_x()
         
         # In a real game, collision detection would prevent this movement
         # For testing, we simulate the check
-        new_x = initial_x + player.getSpeed()
+        new_x = initial_x + player.get_speed()
         
         # Create temporary player at new position to test collision
-        test_player = Player(new_x, player.getY(), headless=True)
+        test_player = Player(new_x, player.get_y(), headless=True)
         would_collide = is_collision_detected(test_player, wall)
         
         if would_collide:
             # Movement should be blocked
-            assert player.getX() == initial_x  # Position unchanged
+            assert player.get_x() == initial_x  # Position unchanged
         else:
             # Movement allowed
-            player.moveX(1)
-            assert player.getX() == new_x
+            player.move_x(1)
+            assert player.get_x() == new_x
     
     def test_player_movement_along_wall(self):
         """Test player movement parallel to walls."""
@@ -127,12 +127,12 @@ class TestPlayerMazeMovement:
         wall = Line((40, 150), (80, 150))  # Wall below player
         
         # Vertical movement should be possible
-        initial_y = player.getY()
-        player.moveY(1)  # Move down
+        initial_y = player.get_y()
+        player.move_y(1)  # Move down
         
         # Should not collide with horizontal wall yet
         assert not is_collision_detected(player, wall)
-        assert player.getY() > initial_y
+        assert player.get_y() > initial_y
     
     def test_player_maze_navigation_sequence(self):
         """Test sequence of movements through maze."""
@@ -152,15 +152,15 @@ class TestPlayerMazeMovement:
             (-1, 0)   # Left back to start
         ]
         
-        positions = [player.getPosition()]
+        positions = [player.get_position()]
         
         for dx, dy in movements:
             if dx != 0:
-                player.moveX(dx)
+                player.move_x(dx)
             if dy != 0:
-                player.moveY(dy)
+                player.move_y(dy)
             
-            positions.append(player.getPosition())
+            positions.append(player.get_position())
             
             # Check no collisions with walls
             for wall in walls:
@@ -171,7 +171,7 @@ class TestPlayerMazeMovement:
         # Should end up back near start
         start_pos = positions[0]
         end_pos = positions[-1]
-        assert_position_equal(start_pos, end_pos, tolerance=player.getSpeed())
+        assert_position_equal(start_pos, end_pos, tolerance=player.get_speed())
 
 
 class TestPlayerMazeBoundaryInteraction:
@@ -189,18 +189,18 @@ class TestPlayerMazeBoundaryInteraction:
         ]
         
         # Player should be able to move through entrance gap
-        while player.getX() < 105:  # Move into maze
-            player.moveX(1)
+        while player.get_x() < 105:  # Move into maze
+            player.move_x(1)
             
             # Check collisions
             for wall in entrance_walls:
                 collision = is_collision_detected(player, wall)
                 if collision:
                     # Should not happen in entrance gap
-                    assert False, f"Unexpected collision at position {player.getPosition()}"
+                    assert False, f"Unexpected collision at position {player.get_position()}"
         
         # Player should be inside maze now
-        assert player.getX() >= 105
+        assert player.get_x() >= 105
     
     def test_player_maze_exit_attempt(self):
         """Test player attempting to exit maze."""
@@ -211,18 +211,18 @@ class TestPlayerMazeBoundaryInteraction:
         exit_wall = Line((200, 80), (200, 120))  # Vertical wall blocking exit
         
         # Try to move toward exit
-        while player.getX() < 195:
-            new_x = player.getX() + player.getSpeed()
-            test_player = Player(new_x, player.getY(), headless=True)
+        while player.get_x() < 195:
+            new_x = player.get_x() + player.get_speed()
+            test_player = Player(new_x, player.get_y(), headless=True)
             
             if is_collision_detected(test_player, exit_wall):
                 # Should be blocked
                 break
             
-            player.moveX(1)
+            player.move_x(1)
         
         # Should be stopped before wall
-        assert player.getX() < 200
+        assert player.get_x() < 200
     
     def test_player_maze_corner_navigation(self):
         """Test player navigating maze corners."""
@@ -236,20 +236,20 @@ class TestPlayerMazeBoundaryInteraction:
         
         # Navigate around corner
         # First move right to corner
-        while player.getX() < 95:
-            player.moveX(1)
+        while player.get_x() < 95:
+            player.move_x(1)
         
         # Then move down to clear the corner
-        while player.getY() < 125:
-            player.moveY(1)
+        while player.get_y() < 125:
+            player.move_y(1)
         
         # Then move right past the corner
-        while player.getX() < 105:
-            player.moveX(1)
+        while player.get_x() < 105:
+            player.move_x(1)
         
         # Should have successfully navigated corner
-        assert player.getX() >= 105
-        assert player.getY() >= 125
+        assert player.get_x() >= 105
+        assert player.get_y() >= 125
 
 
 class TestPlayerMazeGameIntegration:
@@ -262,11 +262,11 @@ class TestPlayerMazeGameIntegration:
         player = Player(config.X_MIN + 10, config.Y_MIN + 10, headless=True)
         
         # Generate maze
-        lines = Line.generateMaze(game, 5, 5)
+        lines = Line.generate_maze(game, 5, 5)
         
         # Player should start within game boundaries
-        assert config.X_MIN <= player.getX() <= config.X_MAX
-        assert config.Y_MIN <= player.getY() <= config.Y_MAX
+        assert config.X_MIN <= player.get_x() <= config.X_MAX
+        assert config.Y_MIN <= player.get_y() <= config.Y_MAX
         
         # Test some movements within boundaries
         for _ in range(10):
@@ -275,25 +275,25 @@ class TestPlayerMazeGameIntegration:
             direction = random.choice(['right', 'left', 'up', 'down'])
             
             if direction == 'right':
-                new_x = player.getX() + player.getSpeed()
+                new_x = player.get_x() + player.get_speed()
                 if new_x <= config.X_MAX:
-                    player.moveX(1)
+                    player.move_x(1)
             elif direction == 'left':
-                new_x = player.getX() - player.getSpeed()
+                new_x = player.get_x() - player.get_speed()
                 if new_x >= config.X_MIN:
-                    player.moveX(-1)
+                    player.move_x(-1)
             elif direction == 'down':
-                new_y = player.getY() + player.getSpeed()
+                new_y = player.get_y() + player.get_speed()
                 if new_y <= config.Y_MAX:
-                    player.moveY(1)
+                    player.move_y(1)
             elif direction == 'up':
-                new_y = player.getY() - player.getSpeed()
+                new_y = player.get_y() - player.get_speed()
                 if new_y >= config.Y_MIN:
-                    player.moveY(-1)
+                    player.move_y(-1)
             
             # Player should remain within boundaries
-            assert config.X_MIN <= player.getX() <= config.X_MAX
-            assert config.Y_MIN <= player.getY() <= config.Y_MAX
+            assert config.X_MIN <= player.get_x() <= config.X_MAX
+            assert config.Y_MIN <= player.get_y() <= config.Y_MAX
     
     def test_player_maze_collision_prevents_movement(self):
         """Test that maze collisions prevent player movement."""
@@ -302,26 +302,26 @@ class TestPlayerMazeGameIntegration:
         # Wall directly in front of player
         blocking_wall = Line((120, 90), (120, 110))  # Vertical wall
         
-        initial_position = player.getPosition()
+        initial_position = player.get_position()
         
         # Attempt to move right into wall
         for _ in range(5):  # Try multiple times
             # Check if movement would cause collision
-            test_x = player.getX() + player.getSpeed()
-            test_player = Player(test_x, player.getY(), headless=True)
+            test_x = player.get_x() + player.get_speed()
+            test_player = Player(test_x, player.get_y(), headless=True)
             
             if is_collision_detected(test_player, blocking_wall):
                 # Don't move - collision detected
                 break
             else:
                 # Move allowed
-                player.moveX(1)
+                player.move_x(1)
         
         # Player should either be stopped by wall or have moved only until blocked
-        final_position = player.getPosition()
+        final_position = player.get_position()
         
         # Should not have moved far past the wall
-        assert player.getX() <= 120  # Should not be past the wall
+        assert player.get_x() <= 120  # Should not be past the wall
     
     def test_player_maze_pathfinding_simulation(self):
         """Test simulated pathfinding through maze."""
@@ -350,17 +350,17 @@ class TestPlayerMazeGameIntegration:
                 collision_detected = False
                 
                 if direction == 'right':
-                    test_x = player.getX() + player.getSpeed()
-                    test_player = Player(test_x, player.getY(), headless=True)
+                    test_x = player.get_x() + player.get_speed()
+                    test_player = Player(test_x, player.get_y(), headless=True)
                 elif direction == 'left':
-                    test_x = player.getX() - player.getSpeed()
-                    test_player = Player(test_x, player.getY(), headless=True)
+                    test_x = player.get_x() - player.get_speed()
+                    test_player = Player(test_x, player.get_y(), headless=True)
                 elif direction == 'down':
-                    test_y = player.getY() + player.getSpeed()
-                    test_player = Player(player.getX(), test_y, headless=True)
+                    test_y = player.get_y() + player.get_speed()
+                    test_player = Player(player.get_x(), test_y, headless=True)
                 elif direction == 'up':
-                    test_y = player.getY() - player.getSpeed()
-                    test_player = Player(player.getX(), test_y, headless=True)
+                    test_y = player.get_y() - player.get_speed()
+                    test_player = Player(player.get_x(), test_y, headless=True)
                 
                 # Check collision with all walls
                 for wall in maze_walls:
@@ -371,19 +371,19 @@ class TestPlayerMazeGameIntegration:
                 # Only move if no collision
                 if not collision_detected:
                     if direction == 'right':
-                        player.moveX(1)
+                        player.move_x(1)
                     elif direction == 'left':
-                        player.moveX(-1)
+                        player.move_x(-1)
                     elif direction == 'down':
-                        player.moveY(1)
+                        player.move_y(1)
                     elif direction == 'up':
-                        player.moveY(-1)
+                        player.move_y(-1)
                 else:
                     # Stop this direction if collision detected
                     break
         
         # Player should have made some progress through the maze
-        assert player.getX() > 100  # Should have moved right through the gaps
+        assert player.get_x() > 100  # Should have moved right through the gaps
 
 
 class TestPlayerMazeDynamicInteraction:
@@ -400,15 +400,15 @@ class TestPlayerMazeDynamicInteraction:
         assert not is_collision_detected(player, wall)
         
         # Move wall closer to player (simulating maze repositioning)
-        wall.setXStart(110)
-        wall.setXEnd(110)
+        wall.set_x_start(110)
+        wall.set_x_end(110)
         
         # Now should be closer to collision
         collision_close = is_collision_detected(player, wall)
         
         # Move wall even closer
-        wall.setXStart(105)
-        wall.setXEnd(105)
+        wall.set_x_start(105)
+        wall.set_x_end(105)
         
         # Should definitely collide now
         collision_very_close = is_collision_detected(player, wall)
@@ -429,8 +429,8 @@ class TestPlayerMazeDynamicInteraction:
         for step in range(10):
             # Move left wall right (advancing pace)
             new_x = 150 + step * 5
-            left_wall.setXStart(new_x)
-            left_wall.setXEnd(new_x)
+            left_wall.set_x_start(new_x)
+            left_wall.set_x_end(new_x)
             
             # Check if player is caught between walls
             left_collision = is_collision_detected(player, left_wall)
@@ -468,11 +468,11 @@ class TestPlayerMazeDynamicInteraction:
             for _ in range(steps):
                 # Calculate next position
                 if direction == 'down':
-                    test_player = Player(player.getX(), player.getY() + player.getSpeed(), headless=True)
+                    test_player = Player(player.get_x(), player.get_y() + player.get_speed(), headless=True)
                 elif direction == 'left':
-                    test_player = Player(player.getX() - player.getSpeed(), player.getY(), headless=True)
+                    test_player = Player(player.get_x() - player.get_speed(), player.get_y(), headless=True)
                 elif direction == 'right':
-                    test_player = Player(player.getX() + player.getSpeed(), player.getY(), headless=True)
+                    test_player = Player(player.get_x() + player.get_speed(), player.get_y(), headless=True)
                 
                 # Check collision with all walls
                 collision = False
@@ -484,14 +484,14 @@ class TestPlayerMazeDynamicInteraction:
                 if not collision:
                     # Move allowed
                     if direction == 'down':
-                        player.moveY(1)
+                        player.move_y(1)
                     elif direction == 'left':
-                        player.moveX(-1)
+                        player.move_x(-1)
                     elif direction == 'right':
-                        player.moveX(1)
+                        player.move_x(1)
                     
                     # Check if escaped (moved past bottom wall Y coordinate)
-                    if player.getY() > 120:
+                    if player.get_y() > 120:
                         escape_found = True
                         break
                 else:
@@ -540,7 +540,7 @@ class TestPlayerMazePerformance:
         player = Player(100, 100, headless=True)
         
         # Generate large maze
-        lines = Line.generateMaze(game, 20, 20)
+        lines = Line.generate_maze(game, 20, 20)
         
         import time
         start_time = time.time()
@@ -549,13 +549,13 @@ class TestPlayerMazePerformance:
         for i in range(1000):
             direction = i % 4
             if direction == 0:
-                player.moveX(1)
+                player.move_x(1)
             elif direction == 1:
-                player.moveX(-1)
+                player.move_x(-1)
             elif direction == 2:
-                player.moveY(1)
+                player.move_y(1)
             else:
-                player.moveY(-1)
+                player.move_y(-1)
         
         end_time = time.time()
         duration = end_time - start_time

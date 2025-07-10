@@ -32,8 +32,8 @@ class TestAssetLoadingIntegration:
             player = Player(100, 100, headless=True)
             
             # Verify player has dimensions
-            assert player.getWidth() > 0
-            assert player.getHeight() > 0
+            assert player.get_width() > 0
+            assert player.get_height() > 0
     
     def test_player_sprite_loading_failure_recovery(self):
         """Test player sprite loading with file not found."""
@@ -45,8 +45,8 @@ class TestAssetLoadingIntegration:
             player = Player(100, 100, headless=True)
             
             # Should have fallback dimensions
-            assert player.getWidth() == 10  # Default width
-            assert player.getHeight() == 10  # Default height
+            assert player.get_width() == 10  # Default width
+            assert player.get_height() == 10  # Default height
     
     def test_player_sprite_state_integration(self):
         """Test player sprite state changes."""
@@ -72,19 +72,19 @@ class TestAssetLoadingIntegration:
             game = Game(headless=True)
             
             # Test pause state change
-            initial_sprite_state = (player.getWidth(), player.getHeight())
+            initial_sprite_state = (player.get_width(), player.get_height())
             
             # Simulate pause
-            game.changePaused(player)
+            game.change_paused(player)
             
             # In paused state, sprite might change
-            if game.isPaused():
+            if game.is_paused():
                 # Player could reload sprite for paused state
                 try:
                     # Simulate sprite change in pause
                     player.width = 12
                     player.height = 12
-                    paused_sprite_state = (player.getWidth(), player.getHeight())
+                    paused_sprite_state = (player.get_width(), player.get_height())
                     assert paused_sprite_state != initial_sprite_state
                 except:
                     # Fallback if sprite changing not implemented
@@ -99,9 +99,9 @@ class TestConfigAssetIntegration:
         config = GameConfig()
         
         # Test player asset paths
-        player_image = config.getPlayerImage()
-        player_paused_image = config.getPlayerPausedImage()
-        icon_path = config.getIcon()
+        player_image = config.get_player_image()
+        player_paused_image = config.get_player_paused_image()
+        icon_path = config.get_icon()
         
         # Paths should be valid strings
         assert isinstance(player_image, str)
@@ -119,9 +119,9 @@ class TestConfigAssetIntegration:
         
         # Get asset paths
         asset_paths = [
-            config.getPlayerImage(),
-            config.getPlayerPausedImage(),
-            config.getIcon()
+            config.get_player_image(),
+            config.get_player_paused_image(),
+            config.get_icon()
         ]
         
         for path in asset_paths:
@@ -146,8 +146,8 @@ class TestConfigAssetIntegration:
             player = Player(100, 100, headless=True)
             
             # Player should use config dimensions indirectly
-            assert player.getWidth() > 0
-            assert player.getHeight() > 0
+            assert player.get_width() > 0
+            assert player.get_height() > 0
     
     def test_config_window_icon_integration(self):
         """Test window icon configuration integration."""
@@ -159,7 +159,7 @@ class TestConfigAssetIntegration:
             mocks['image']['load'].return_value = mock_icon
             
             # Simulate setting window icon
-            icon_path = config.getIcon()
+            icon_path = config.get_icon()
             
             # Should have icon path
             assert icon_path is not None
@@ -180,9 +180,9 @@ class TestAssetErrorHandling:
             player = Player(100, 100, headless=True)
             
             # Basic functionality should work
-            initial_pos = player.getPosition()
-            player.moveX(1)
-            assert player.getPosition() != initial_pos
+            initial_pos = player.get_position()
+            player.move_x(1)
+            assert player.get_position() != initial_pos
     
     def test_corrupted_asset_handling(self):
         """Test handling of corrupted assets."""
@@ -194,8 +194,8 @@ class TestAssetErrorHandling:
             player = Player(100, 100, headless=True)
             
             # Should have fallback dimensions
-            assert player.getWidth() == 10
-            assert player.getHeight() == 10
+            assert player.get_width() == 10
+            assert player.get_height() == 10
     
     def test_permission_denied_asset_handling(self):
         """Test handling of permission denied for assets."""
@@ -206,7 +206,7 @@ class TestAssetErrorHandling:
             try:
                 player = Player(100, 100, headless=True)
                 # Should work with defaults
-                assert player.getPosition() == (100, 100)
+                assert player.get_position() == (100, 100)
             except PermissionError:
                 # If error propagates, it should be handled gracefully
                 assert False, "Permission error not handled gracefully"
@@ -253,8 +253,8 @@ class TestAssetMemoryManagement:
             
             # All should work
             for player in players:
-                assert player.getWidth() > 0
-                assert player.getHeight() > 0
+                assert player.get_width() > 0
+                assert player.get_height() > 0
     
     def test_asset_caching_behavior(self):
         """Test asset caching behavior."""
@@ -293,8 +293,8 @@ class TestAssetMemoryManagement:
             player = Player(100, 100, headless=True)
             
             # Should use the asset dimensions
-            assert player.getWidth() > 0
-            assert player.getHeight() > 0
+            assert player.get_width() > 0
+            assert player.get_height() > 0
 
 
 class TestAssetDisplayIntegration:
@@ -314,7 +314,7 @@ class TestAssetDisplayIntegration:
             
             # Test display update
             try:
-                game.updateScreen(player, lines)
+                game.update_screen(player, lines)
                 # Should complete without error
             except Exception as e:
                 assert False, f"Display update failed: {e}"
@@ -336,8 +336,8 @@ class TestAssetDisplayIntegration:
                 player = Player(100, 100, headless=True)
                 
                 # Player dimensions are now controlled by config, not sprite size
-                assert player.getWidth() == config.PLAYER_WIDTH
-                assert player.getHeight() == config.PLAYER_HEIGHT
+                assert player.get_width() == config.PLAYER_WIDTH
+                assert player.get_height() == config.PLAYER_HEIGHT
     
     def test_sprite_position_integration(self):
         """Test sprite position integration with game coordinates."""
@@ -350,14 +350,14 @@ class TestAssetDisplayIntegration:
             player = Player(150, 200, headless=True)
             
             # Position should match initialization
-            assert player.getPosition() == (150, 200)
+            assert player.get_position() == (150, 200)
             
             # Movement should update position
-            player.moveX(5)
-            assert player.getX() == 155
+            player.move_x(5)
+            assert player.get_x() == 155
             
-            player.moveY(-3)
-            assert player.getY() == 197
+            player.move_y(-3)
+            assert player.get_y() == 197
 
 
 class TestAssetConfigurationErrors:
@@ -369,7 +369,7 @@ class TestAssetConfigurationErrors:
         config = GameConfig()
         
         # Paths should be strings even if files don't exist
-        player_image = config.getPlayerImage()
+        player_image = config.get_player_image()
         assert isinstance(player_image, str)
         assert len(player_image) > 0
     
@@ -379,9 +379,9 @@ class TestAssetConfigurationErrors:
         
         # Asset paths should be safe
         asset_paths = [
-            config.getPlayerImage(),
-            config.getPlayerPausedImage(),
-            config.getIcon()
+            config.get_player_image(),
+            config.get_player_paused_image(),
+            config.get_icon()
         ]
         
         for path in asset_paths:
@@ -397,10 +397,10 @@ class TestAssetConfigurationErrors:
         game = Game(headless=True)
         
         # Should work in headless mode
-        assert game.isPlaying()
+        assert game.is_playing()
         
         # Config should provide valid paths regardless
-        assert len(config.getPlayerImage()) > 0
+        assert len(config.get_player_image()) > 0
 
 
 class TestAssetPerformance:
@@ -433,8 +433,8 @@ class TestAssetPerformance:
             # All players should be valid
             assert len(players) == 50
             for player in players:
-                assert player.getWidth() > 0
-                assert player.getHeight() > 0
+                assert player.get_width() > 0
+                assert player.get_height() > 0
     
     @pytest.mark.performance
     def test_repeated_asset_access_performance(self):
@@ -452,9 +452,9 @@ class TestAssetPerformance:
             
             # Access sprite properties many times
             for _ in range(1000):
-                width = player.getWidth()
-                height = player.getHeight()
-                pos = player.getPosition()
+                width = player.get_width()
+                height = player.get_height()
+                pos = player.get_position()
                 
                 # Verify values
                 assert width > 0
@@ -513,10 +513,10 @@ class TestAssetIntegrationScenarios:
             player = Player(100, 100, headless=True)
             
             # All components should be ready
-            assert game.isPlaying()
-            assert player.getPosition() == (100, 100)
-            assert player.getWidth() > 0
-            assert player.getHeight() > 0
+            assert game.is_playing()
+            assert player.get_position() == (100, 100)
+            assert player.get_width() > 0
+            assert player.get_height() > 0
     
     def test_game_with_missing_assets(self):
         """Test game operation with missing assets."""
@@ -529,12 +529,12 @@ class TestAssetIntegrationScenarios:
             player = Player(100, 100, headless=True)
             
             # Basic functionality should work
-            assert game.isPlaying()
-            assert player.getPosition() == (100, 100)
+            assert game.is_playing()
+            assert player.get_position() == (100, 100)
             
             # Movement should work
-            player.moveX(5)
-            assert player.getX() == 105
+            player.move_x(5)
+            assert player.get_x() == 105
     
     def test_asset_hot_reload_simulation(self):
         """Test asset hot reload simulation."""
@@ -556,13 +556,13 @@ class TestAssetIntegrationScenarios:
             player = Player(100, 100, headless=True)
             
             # Player dimensions are controlled by config, not asset size
-            assert player.getWidth() == config.PLAYER_WIDTH
-            assert player.getHeight() == config.PLAYER_HEIGHT
+            assert player.get_width() == config.PLAYER_WIDTH
+            assert player.get_height() == config.PLAYER_HEIGHT
             
             # Simulate asset reload
             mocks['image']['load'].return_value = updated_surface
             new_player = Player(200, 100, headless=True)
             
             # New player should still use config dimensions
-            assert new_player.getWidth() == config.PLAYER_WIDTH
-            assert new_player.getHeight() == config.PLAYER_HEIGHT
+            assert new_player.get_width() == config.PLAYER_WIDTH
+            assert new_player.get_height() == config.PLAYER_HEIGHT
