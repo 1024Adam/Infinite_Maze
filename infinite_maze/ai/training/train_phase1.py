@@ -175,20 +175,27 @@ def train_phase_1(steps: int = 500000,
     with open(os.path.join(run_dir, 'config.json'), 'w') as f:
         json.dump(config, f, indent=2)
     
+    # Set maze simplicity for Phase 1 (always use simplified mazes for training)
+    # Phase 1 uses simplified mazes, while Phase 2 will use perfect mazes
+    maze_simplicity = 0.3  # Fixed simplicity factor for Phase 1
+    
     # Initialize the training environment (Phase 1 specific)
     train_env = InfiniteMazeEnv(
         training_phase=1,
         use_maze_from_start=True,  # Start with maze structures for training
         pace_enabled=False,        # No pace line in Phase 1
-        render_mode=render_mode
+        render_mode=render_mode,
+        maze_simplicity=maze_simplicity  # Use simplified mazes for Phase 1
     )
     
-    # Initialize a separate evaluation environment
+    # Initialize a separate evaluation environment - also use simplified maze for Phase 1 evaluation
+    # This matches what the agent will actually encounter in Phase 1
     eval_env = InfiniteMazeEnv(
         training_phase=1,
         use_maze_from_start=True,
         pace_enabled=False,
-        render_mode=None  # No rendering for evaluation
+        render_mode=None,  # No rendering for evaluation
+        maze_simplicity=maze_simplicity  # Use same maze complexity for evaluation in Phase 1
     )
     
     # Get the observation shape from the environment
@@ -220,6 +227,10 @@ def train_phase_1(steps: int = 500000,
         'collision_rate': 0.05,        # <5% of actions result in wall collisions
         'avg_reward': 200              # Average score of at least 200 points
     }
+    
+    # In Phase 1, we use a fixed simplified maze structure
+    # The curriculum progression to perfect mazes will happen in Phase 2
+    # No curriculum stages needed for Phase 1 as we keep maze complexity constant
     
     # Training loop
     episode = 0
@@ -285,6 +296,9 @@ def train_phase_1(steps: int = 500000,
             print(f"Episode {episode} | Steps: {steps_done}/{steps} | "
                  f"Reward: {episode_stats['reward']:.2f} | Score: {episode_stats.get('score', 0):.2f} | "
                  f"Length: {episode_stats.get('length', 0)} | Eps: {agent.epsilon:.3f}")
+        
+        # Phase 1 uses a fixed maze simplicity throughout the training
+        # Curriculum progression to perfect mazes will happen in Phase 2
         
         # Evaluation - check if we've crossed an evaluation threshold
         next_eval_step = (steps_done // eval_interval) * eval_interval
@@ -416,6 +430,7 @@ if __name__ == "__main__":
     parser.add_argument('--checkpoint-dir', type=str, default='ai/checkpoints/phase1', help='Directory to save checkpoints')
     parser.add_argument('--device', type=str, default='cuda' if torch.cuda.is_available() else 'cpu', help='Device to use')
     parser.add_argument('--render', action='store_true', help='Enable rendering')
+    # No curriculum option needed for Phase 1 as it always uses simplified mazes
     
     args = parser.parse_args()
     
@@ -437,5 +452,6 @@ if __name__ == "__main__":
         save_interval=args.save_interval,
         checkpoint_dir=args.checkpoint_dir,
         device=args.device,
-        render_mode=render_mode
+        render_mode=render_mode,
+        use_curriculum=False  # Phase 1 doesn't use curriculum - fixed maze simplicity
     )

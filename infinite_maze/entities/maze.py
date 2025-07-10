@@ -76,7 +76,10 @@ class Line:
         return x_max
 
     @staticmethod
-    def generate_maze(game, width, height):
+    def generate_maze(game, width, height, simplicity_factor=None):
+        if simplicity_factor is None:
+            simplicity_factor = config.MAZE_SIMPLICITY
+            
         lines = []
         # Horizontal Line Gen
         for x in range(width * 2):
@@ -101,7 +104,8 @@ class Line:
                 side_a = side_b
                 side_b += 19
 
-        # Create 'maze' structure
+        # Create 'maze' structure, Kruskal's algorithm
+        # Randomly remove lines while ensuring all cells are connected
         # (will be complete when all 'cells' are connected to each other)
         sets = []
         while len(sets) != 1:
@@ -124,6 +128,19 @@ class Line:
                     sets.append(temp_side_a)
                 if temp_side_b not in sets:
                     sets.append(temp_side_b)
+                    
+        # At this point, we have a "perfect" maze with exactly one path between any two points
+        # If simplicity_factor > 0, remove additional walls to create multiple paths
+        if simplicity_factor > 0:
+            # Calculate how many additional walls to remove
+            remaining_walls = len(lines)
+            walls_to_remove = int(remaining_walls * simplicity_factor)
+            
+            # Remove random walls (but not too many to keep the maze structure)
+            for _ in range(walls_to_remove):
+                if len(lines) > width + height:  # Keep a minimum number of walls
+                    line_num = randint(0, len(lines) - 1)
+                    del lines[line_num]
 
         return lines
 
@@ -136,26 +153,36 @@ class Maze:
     while using the existing Line-based implementation underneath.
     """
 
-    def __init__(self, game=None, lines=None):
+    def __init__(self, game=None, lines=None, simplicity_factor=None):
         """
         Initialize the Maze with either a game instance or a list of lines.
         
         Args:
             game: The Game instance to generate a maze for
             lines: Existing line objects that make up the maze
+            simplicity_factor: Override for the maze simplicity factor (0.0 = perfect maze, higher values create easier mazes)
         """
         self.game = game
         self.lines = lines if lines is not None else []
         self.visited = set()  # Track visited cells for the AI
+        self.simplicity_factor = simplicity_factor if simplicity_factor is not None else config.MAZE_SIMPLICITY
         
         if game is not None and not lines:
             # Generate a new maze if a game is provided
-            self.lines = Line.generate_maze(game, config.MAZE_ROWS, config.MAZE_COLS)
+            self.lines = Line.generate_maze(game, config.MAZE_ROWS, config.MAZE_COLS, self.simplicity_factor)
     
-    def regenerate(self, game):
-        """Regenerate the maze for a new game"""
+    def regenerate(self, game, simplicity_factor=None):
+        """
+        Regenerate the maze for a new game
+        
+        Args:
+            game: The Game instance to generate a maze for
+            simplicity_factor: Optional override for the maze simplicity factor
+        """
         self.game = game
-        self.lines = Line.generate_maze(game, config.MAZE_ROWS, config.MAZE_COLS)
+        if simplicity_factor is not None:
+            self.simplicity_factor = simplicity_factor
+        self.lines = Line.generate_maze(game, config.MAZE_ROWS, config.MAZE_COLS, self.simplicity_factor)
         self.visited = set()
     
     def get_lines(self):

@@ -35,7 +35,8 @@ class InfiniteMazeEnv(gym.Env):
                  pace_speed: float = 1.0,
                  render_mode: Optional[str] = None,
                  grid_size: int = 11,
-                 max_steps: int = 10000):
+                 max_steps: int = 10000,
+                 maze_simplicity: Optional[float] = None):
         """
         Initialize the Infinite Maze training environment.
         
@@ -47,6 +48,8 @@ class InfiniteMazeEnv(gym.Env):
             render_mode: Mode for visualization ('human', 'rgb_array', or None)
             grid_size: Size of the observation grid (must be odd)
             max_steps: Maximum steps per episode
+            maze_simplicity: Controls maze complexity (0.0 = perfect maze with single paths, 
+                            higher values (0.1-0.5) create simpler mazes with multiple paths)
         """
         super().__init__()
         
@@ -58,6 +61,7 @@ class InfiniteMazeEnv(gym.Env):
         self.render_mode = render_mode
         self.grid_size = grid_size
         self.max_steps = max_steps
+        self.maze_simplicity = maze_simplicity
         
         # Initialize game components (will be properly set in reset())
         self.config = config  # Use the global config instance
@@ -127,11 +131,11 @@ class InfiniteMazeEnv(gym.Env):
         # Create the player
         self.player = Player(start_x, start_y, headless=headless)
         
-        # Generate the maze lines
-        self.lines = Line.generate_maze(self.game, config.MAZE_ROWS, config.MAZE_COLS)
+        # Generate the maze lines with the specified simplicity factor
+        self.lines = Line.generate_maze(self.game, config.MAZE_ROWS, config.MAZE_COLS, self.maze_simplicity)
         
         # Create our Maze wrapper to handle AI interactions
-        self.maze = Maze(self.game, self.lines)
+        self.maze = Maze(self.game, self.lines, self.maze_simplicity)
         
         # Reset episode tracking
         self.steps = 0

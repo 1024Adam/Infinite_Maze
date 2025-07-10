@@ -30,6 +30,7 @@ class GameConfig:
     MAZE_ROWS: int = 15
     MAZE_COLS: int = 20
     MAZE_CELL_SIZE: int = 22
+    MAZE_SIMPLICITY: float = 0.0  # 0.0 = perfect maze (one path), higher values (0.1-0.5) create simpler mazes with multiple paths
 
     # UI and display settings
     ICON_SIZE: int = 32
