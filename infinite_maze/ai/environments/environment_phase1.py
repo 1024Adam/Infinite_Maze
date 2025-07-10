@@ -128,7 +128,7 @@ class InfiniteMazeEnv(gym.Env):
         self.player = Player(start_x, start_y, headless=headless)
         
         # Generate the maze lines
-        self.lines = Line.generateMaze(self.game, config.MAZE_ROWS, config.MAZE_COLS)
+        self.lines = Line.generate_maze(self.game, config.MAZE_ROWS, config.MAZE_COLS)
         
         # Create our Maze wrapper to handle AI interactions
         self.maze = Maze(self.game, self.lines)
@@ -141,7 +141,7 @@ class InfiniteMazeEnv(gym.Env):
         self.pace_line_x = -1000  # Default position for pace line (disabled in Phase 1)
         
         # Mark initial position as visited
-        self.maze.mark_visited(self.player.getX(), self.player.getY())
+        self.maze.mark_visited(self.player.get_x(), self.player.get_y())
         
         # Get initial observation
         observation = self._get_observation()
@@ -180,19 +180,19 @@ class InfiniteMazeEnv(gym.Env):
         
         # Map the action to the player movement
         blocked = self.player.is_movement_blocked(action, self.lines)
-        speed = self.player.getSpeed()
+        speed = self.player.get_speed()
         
         if not blocked:
             if action == 1:  # RIGHT
-                self.player.moveX(speed)
-                self.game.incrementScore()    
+                self.player.move_x(speed)
+                self.game.increment_score()    
             elif action == 2:  # LEFT
-                self.player.moveX(-speed)
-                self.game.decrementScore()
+                self.player.move_x(-speed)
+                self.game.decrement_score()
             elif action == 3:  # UP
-                self.player.moveY(-speed)
+                self.player.move_y(-speed)
             elif action == 4:  # DOWN
-                self.player.moveY(speed)                    
+                self.player.move_y(speed)                    
             # action 0 is DO_NOTHING, so do nothing
         
         # Update game state (handle pace line if enabled)
@@ -202,15 +202,15 @@ class InfiniteMazeEnv(gym.Env):
                 self.pace_line_x += self.pace_speed
                 
                 # Check if player is caught by pace line
-                if self.player.getX() < self.pace_line_x:
+                if self.player.get_x() < self.pace_line_x:
                     self.game_over = True
         
         # Position boundary checks
-        if self.player.getX() < config.PLAYER_START_X:
+        if self.player.get_x() < config.PLAYER_START_X:
             self.game_over = True
             
         # Mark current position as visited
-        self.maze.mark_visited(self.player.getX(), self.player.getY())
+        self.maze.mark_visited(self.player.get_x(), self.player.get_y())
         
         # Get the new state after action
         new_state = self._get_state_snapshot()
@@ -232,7 +232,7 @@ class InfiniteMazeEnv(gym.Env):
         
         # Additional info for monitoring
         info = {
-            'score': self.game.getScore(),
+            'score': self.game.get_score(),
             'steps': self.steps,
             'collision': blocked,
             'episode_reward': self.total_reward
@@ -253,7 +253,7 @@ class InfiniteMazeEnv(gym.Env):
             Dict with 'grid' and 'numerical' features
         """
         # Get player position and pace line position
-        player_pos = (self.player.getX(), self.player.getY())
+        player_pos = (self.player.get_x(), self.player.get_y())
         pace_line_pos = self.pace_line_x
         
         # Extract the local view grid
@@ -345,9 +345,9 @@ class InfiniteMazeEnv(gym.Env):
             Dict with state information
         """
         return {
-            'player_x': self.player.getX(),
-            'player_y': self.player.getY(),
-            'score': self.game.getScore(),
+            'player_x': self.player.get_x(),
+            'player_y': self.player.get_y(),
+            'score': self.game.get_score(),
             'pace_line_x': self.pace_line_x,
             'game_over': self.game_over
         }
@@ -394,7 +394,7 @@ class InfiniteMazeEnv(gym.Env):
             True if path is clear, False if obstacles detected
         """
         x, y = state['player_x'], state['player_y']
-        speed = self.player.getSpeed()
+        speed = self.player.get_speed()
         for i in range(1, steps + 1):
             if self.maze.is_wall(x + i * speed, y):
                 return False
@@ -483,23 +483,23 @@ class InfiniteMazeEnv(gym.Env):
             self.game.screen.fill(self.game.BG_COLOR)
             
             # Draw the player
-            if self.player.getCursor() is not None:
-                self.game.screen.blit(self.player.getCursor(), self.player.getPosition())
+            if self.player.get_cursor() is not None:
+                self.game.screen.blit(self.player.get_cursor(), self.player.get_position())
             
             # Draw the maze lines
             for line in self.lines:
                 pygame.draw.line(
-                    self.game.getScreen(), 
+                    self.game.get_screen(), 
                     self.game.FG_COLOR, 
-                    line.getStart(), 
-                    line.getEnd(), 
+                    line.get_start(), 
+                    line.get_end(), 
                     1
                 )
             
             # Draw pace line if enabled
             if self.pace_enabled and self.pace_line_x > -1000:
                 pygame.draw.line(
-                    self.game.getScreen(),
+                    self.game.get_screen(),
                     pygame.Color(255, 0, 0),  # Red color
                     (self.pace_line_x, self.game.Y_MIN),
                     (self.pace_line_x, self.game.Y_MAX),
@@ -509,7 +509,7 @@ class InfiniteMazeEnv(gym.Env):
             # Display score and step info
             if self.game.font:
                 score_text = self.game.font.render(
-                    f"Score: {self.game.getScore()}", 1, self.game.FG_COLOR
+                    f"Score: {self.game.get_score()}", 1, self.game.FG_COLOR
                 )
                 self.game.screen.blit(score_text, (config.TEXT_MARGIN, config.TEXT_MARGIN))
                 
@@ -520,7 +520,7 @@ class InfiniteMazeEnv(gym.Env):
                 
                 # Add debug info about player position
                 pos_text = self.game.font.render(
-                    f"Pos: ({self.player.getX():.1f}, {self.player.getY():.1f})", 1, self.game.FG_COLOR
+                    f"Pos: ({self.player.get_x():.1f}, {self.player.get_y():.1f})", 1, self.game.FG_COLOR
                 )
                 self.game.screen.blit(pos_text, (config.TEXT_MARGIN, config.TEXT_MARGIN + 50))
                 
