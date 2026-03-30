@@ -1,5 +1,6 @@
 ---
-description: "Run all code quality checks: black formatting, flake8 linting, and mypy strict type checking across the infinite_maze source."
+description: "Run black, flake8, and mypy against infinite_maze/ and report all violations."
+agent: pygame-dev
 ---
 Run the following three code quality checks in order against the `infinite_maze/` package. Report results for each step before moving to the next, and stop if any step produces errors.
 
