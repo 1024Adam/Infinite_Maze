@@ -80,6 +80,35 @@ class GameConfig:
         "DOWN": 4,
     }
 
+    # ML / RL training configuration
+    ML_CONFIG: Dict[str, Any] = {
+        # Observation normalisation
+        "MAX_PACE": 10,
+        "EPISODE_SCORE_CAP": 600,
+        "MAX_WALL_SCAN_DIST": 200,
+        "GAP_SCAN_RADIUS": 110,
+        "CONSECUTIVE_BLOCKED_CAP": 50,
+
+        # Pace simulation (tick-based, not real-time)
+        "TICKS_PER_PACE_UPDATE": 300,
+        "PACE_SHIFT_INTERVAL": 10,
+
+        # Reward weights
+        "REWARD_MOVE_RIGHT": 1.0,
+        "REWARD_MOVE_RIGHT_BLOCKED": 0.0,
+        "REWARD_MOVE_LEFT": -0.5,
+        "REWARD_DO_NOTHING": -0.1,
+        "REWARD_MOVE_VERTICAL": 0.0,
+        "REWARD_TERMINAL": -10.0,
+
+        # Training
+        "DEFAULT_TIMESTEPS": 200_000,
+        "CHECKPOINT_FREQ": 10_000,
+        "EVAL_FREQ": 20_000,
+        "EVAL_EPISODES": 10,
+        "TENSORBOARD_LOG": "runs/",
+    }
+
     @classmethod
     def get_color(cls, color_name: str) -> Tuple[int, int, int]:
         """Get a color by name, defaulting to white if not found."""
