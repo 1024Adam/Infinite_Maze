@@ -58,6 +58,11 @@ Thumbs.db
 
 # Game specific files
 img/*.xcf
+
+# ML training artifacts
+checkpoints/
+runs/
+pytest_out.txt
 *.save
 game_logs/
 

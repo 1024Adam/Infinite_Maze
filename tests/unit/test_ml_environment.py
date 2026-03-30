@@ -351,29 +351,25 @@ class TestNearestRightGapOffset:
         assert nearest_right_gap_offset(player, [far_wall], game) == pytest.approx(0.5)
 
     def test_gap_below_returns_greater_than_half(self):
-        """Wall blocks current y; first gap is below → result > 0.5."""
+        """Wall blocks current y AND all y above → first gap is below → result > 0.5."""
         player, game = self._make_player_and_game(x=100, y=200)
-        # wall at x=111 covers y=190..235 → player bounding box [200,210] is blocked
-        # first unblocked y below: 220 (220+10=230 < 235 still blocked), 225 still blocked
-        # 240: 240+10=250 > 235 → unblocked
-        wall = _vertical_wall(111, 190, 235)
+        # Wall at x=111 covers y=40..225.
+        # Every y_above candidate (200-5, 200-10, ...) is within [40,225] → blocked.
+        # First y_below unblocked: 230 (230+10=240, both > 225 → not in wall).
+        # raw = (230-200)/110*0.5+0.5 ≈ 0.636 > 0.5
+        wall = _vertical_wall(111, 40, 225)
         result = nearest_right_gap_offset(player, [wall], game)
         assert result > 0.5, f"Expected gap below (>0.5), got {result}"
 
     def test_gap_above_returns_less_than_half(self):
-        """Wall blocks current y; first gap is above → result < 0.5."""
+        """Wall blocks current y AND all y below → first gap is above → result < 0.5."""
         player, game = self._make_player_and_game(x=100, y=200)
-        # wall at x=111 covers y=190..235; gap above is at y=175 (175+10=185 < 190)
-        wall = _vertical_wall(111, 190, 235)
-        # The scan checks upward and downward alternately starting from py;
-        # closest unblocked is ~180 (above) given the wall starts at 190
-        # Step outward: 195 (blocked), 190 edge... 185 (above, 185+10=195 > 190 — blocked at 190+)
-        # Actually need to verify scan finds gap above first
-        # Let's set player at y=220 so only an above gap exists within radius=110
-        player2 = Player(100, 220, headless=True)
-        # wall covers y=190..255, gap above at ~175 (175+10=185 < 190)
-        wall2 = _vertical_wall(111, 190, 255)
-        result = nearest_right_gap_offset(player2, [wall2], game)
+        # Wall at x=111 covers y=185..500.
+        # Every y_below candidate (205, 210, ...) is within [185,500] → blocked.
+        # First y_above unblocked: 170 (170+10=180, both < 185 → not in wall).
+        # raw = (170-200)/110*0.5+0.5 ≈ 0.364 < 0.5
+        wall = _vertical_wall(111, 185, 500)
+        result = nearest_right_gap_offset(player, [wall], game)
         assert result < 0.5, f"Expected gap above (<0.5), got {result}"
 
     def test_returns_half_when_no_gap_in_radius(self):
