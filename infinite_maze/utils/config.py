@@ -96,7 +96,7 @@ class GameConfig:
 
         # Reward weights
         "REWARD_MOVE_RIGHT": 1.0,
-        "REWARD_MOVE_RIGHT_BLOCKED": 0.0,
+        "REWARD_MOVE_RIGHT_BLOCKED": -0.2,
         "REWARD_MOVE_LEFT": -0.5,
         "REWARD_DO_NOTHING": -0.1,
         "REWARD_MOVE_VERTICAL": 0.0,
