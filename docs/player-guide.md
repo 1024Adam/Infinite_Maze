@@ -41,9 +41,8 @@ This design allows new players to practice movement and understand the controls 
 ### The Pace Mechanic
 The game's signature feature is the advancing "pace line":
 
-1. **Grace Period**: First 30 seconds - no pace pressure, learn the controls
-2. **Pace Activation**: After 30 seconds, a boundary begins advancing from the left
-3. **Acceleration**: Every 30 seconds, the pace increases speed
+1. **Pace Activation**: From the start, a boundary begins advancing from the left
+2. **Acceleration**: Every 30 seconds, the pace increases speed
 4. **Game Over**: When the pace line catches up to your position
 
 ### Victory Conditions
@@ -84,12 +83,11 @@ There is no traditional "win" condition - the game is about achieving your perso
 - Plan your route by looking ahead for openings
 - Use the pause function to study complex sections
 
-#### 3. **Master the Grace Period**
-- **Utilize the Safe Zone**: Take advantage of the open starting area to practice controls
-- **Gradual Entry**: Move right at your own pace to enter the maze when you're ready
-- **Study the Entrance**: Use the initial area to observe maze wall patterns and openings
-- **Build Confidence**: Gain familiarity with movement before facing navigation challenges
-- **Strategic Timing**: Enter the maze with enough time to establish good positioning before pace begins
+#### 3. **Move Quickly from the Start**
+- **No Safe Zone**: Pace begins immediately, so enter the maze without delay
+- **Study the Entrance**: Quickly observe maze wall patterns and openings as you move
+- **Build Confidence**: Gain familiarity with movement while navigating under pace pressure
+- **Strategic Timing**: Establish good positioning early to stay ahead of the pace line
 
 ### Intermediate Strategies
 
@@ -132,36 +130,21 @@ There is no traditional "win" condition - the game is about achieving your perso
 
 ## 🎪 Game Phases & Progression
 
-### Phase 1: Grace Period (0-30 seconds)
-**Focus**: Learning and positioning
-- **Safe Zone Practice**: Use the initial open area to master the controls
-- **Maze Entry**: Begin moving right to enter the actual maze structure
-- **Control Familiarization**: Get comfortable with WASD or arrow keys
-- **Explore Initial Layout**: Study the maze entrance and nearby patterns
-- **Build Initial Score**: Start accumulating points through rightward movement
-- **Strategic Positioning**: Position yourself well before the pace challenge begins
-
-**Key Tips for Phase 1:**
-- Don't rush into the maze - use the safe starting area effectively
-- Practice pause functionality while you have time
-- Move right steadily to build up initial score
-- Look ahead to plan your path through the maze entrance
-
-### Phase 2: Early Pace (30-60 seconds)
+### Phase 1: Early Pace (0-30 seconds)
 **Focus**: Establishing rhythm
 - Maintain steady rightward progress
 - Avoid panic as the pace begins
 - Develop your navigation rhythm
 - Build score while staying safe
 
-### Phase 3: Moderate Challenge (60-120 seconds)
+### Phase 2: Moderate Challenge (30-90 seconds)
 **Focus**: Efficiency and adaptation
 - Navigate more quickly as pace increases
 - Make smarter movement decisions
 - Adapt to increasing pressure
 - Maintain high score growth
 
-### Phase 4: High Intensity (120+ seconds)
+### Phase 3: High Intensity (90+ seconds)
 **Focus**: Survival and optimization
 - Quick decision-making under extreme pressure
 - Minimal mistakes tolerance

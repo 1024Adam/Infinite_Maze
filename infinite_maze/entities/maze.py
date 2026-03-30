@@ -83,7 +83,7 @@ class Line:
             sideA = (19 * x) + 1
             sideB = sideA + 1
 
-            xPos = (config.MAZE_CELL_SIZE * x) + game.X_MAX
+            xPos = (config.MAZE_CELL_SIZE * x) + config.PLAYER_START_X + config.MAZE_CELL_SIZE
             for y in range(1, height - 1):
                 yPos = (config.MAZE_CELL_SIZE * y) + game.Y_MIN
                 lines.append(Line((xPos, yPos), (xPos + config.MAZE_CELL_SIZE, yPos), sideA, sideB))
@@ -96,7 +96,7 @@ class Line:
 
             yPos = (config.MAZE_CELL_SIZE * y) + game.Y_MIN
             for x in range(1, width * 2):
-                xPos = (config.MAZE_CELL_SIZE * x) + game.X_MAX
+                xPos = (config.MAZE_CELL_SIZE * x) + config.PLAYER_START_X + config.MAZE_CELL_SIZE
                 lines.append(Line((xPos, yPos), (xPos, yPos + config.MAZE_CELL_SIZE), sideA, sideB))
                 sideA = sideB
                 sideB += 19

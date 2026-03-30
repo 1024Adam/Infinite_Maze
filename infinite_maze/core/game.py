@@ -66,7 +66,6 @@ class Game:
             # Update Pace
             if (
                 not self.paused
-                and self.clock.getMillis() > 10000
                 and self.clock.getSeconds() % config.PACE_UPDATE_INTERVAL == 0
                 and self.clock.getPrevSeconds() != self.clock.getSeconds()
             ):
@@ -91,7 +90,6 @@ class Game:
         # Update Pace
         if (
             not self.paused
-            and self.clock.getMillis() > 10000
             and self.clock.getSeconds() % config.PACE_UPDATE_INTERVAL == 0
             and self.clock.getPrevSeconds() != self.clock.getSeconds()
         ):

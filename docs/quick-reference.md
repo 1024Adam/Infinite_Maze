@@ -221,7 +221,7 @@ git rebase upstream/main
 ## 💡 Pro Tips
 
 ### Gameplay
-- Practice in the 30-second grace period
+- Move right immediately - pace begins from the start
 - Use vertical movement strategically
 - Pause to plan complex routes
 - Focus on survival over score initially
