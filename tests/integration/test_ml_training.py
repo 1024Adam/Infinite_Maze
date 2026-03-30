@@ -46,16 +46,16 @@ class TestEnvCompliance:
     def test_dummy_vec_env_wraps_cleanly(self):
         env = DummyVecEnv([_make_env(phase=1)])
         obs = env.reset()
-        assert obs.shape == (1, 14)
+        assert obs.shape == (1, 53)
         obs, rewards, dones, infos = env.step([0])
-        assert obs.shape == (1, 14)
+        assert obs.shape == (1, 53)
         env.close()
 
     def test_4_envs_dummy_vec(self):
         """Phase 3 uses n_envs=4; confirm DummyVecEnv handles it."""
         env = DummyVecEnv([_make_env(phase=3) for _ in range(4)])
         obs = env.reset()
-        assert obs.shape == (4, 14)
+        assert obs.shape == (4, 53)
         env.close()
 
 

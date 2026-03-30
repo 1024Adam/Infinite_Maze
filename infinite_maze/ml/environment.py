@@ -4,7 +4,7 @@ Headless-safe: never calls pygame.display.set_mode(), pygame.display.flip(),
 or any rendering method. Drives the game step-by-step through direct state
 manipulation — the live engine loop (core/engine.py) is never imported or used.
 
-Observation space: Box(14,) float32, all values in [0.0, 1.0].
+Observation space: Box(53,) float32, all values in [0.0, 1.0].
 Action space:      Discrete(5) mapping to config.MOVEMENT_CONSTANTS.
 """
 
@@ -22,9 +22,8 @@ from .features import (
     is_blocked_left,
     is_blocked_up,
     is_blocked_down,
-    nearest_right_gap_offset,
 )
-from .rewards import compute_reward, phase3_shaping
+from .rewards import compute_reward
 
 _ML = config.ML_CONFIG
 _MC = config.MOVEMENT_CONSTANTS
@@ -57,7 +56,7 @@ class InfiniteMazeEnv(gym.Env):
 
         self.action_space = spaces.Discrete(5)
         self.observation_space = spaces.Box(
-            low=0.0, high=1.0, shape=(14,), dtype=np.float32
+            low=0.0, high=1.0, shape=(53,), dtype=np.float32
         )
 
         # Game objects — initialised on first reset()
@@ -67,7 +66,6 @@ class InfiniteMazeEnv(gym.Env):
 
         # Episode state
         self._tick_counter        = 0
-        self._prev_gap_offset     = 0.5
         self._consecutive_blocked = 0
 
     # ------------------------------------------------------------------
@@ -97,7 +95,6 @@ class InfiniteMazeEnv(gym.Env):
         )
 
         self._tick_counter        = 0
-        self._prev_gap_offset     = 0.5
         self._consecutive_blocked = 0
 
         if options is not None and "start_pace" in options:
@@ -117,7 +114,7 @@ class InfiniteMazeEnv(gym.Env):
 
         Returns
         -------
-        obs : np.ndarray  shape (14,) float32
+        obs : np.ndarray  shape (53,) float32
         reward : float
         terminated : bool  True when player is pushed past X_MIN by pace
         truncated : bool   True when score >= EPISODE_SCORE_CAP
@@ -203,18 +200,6 @@ class InfiniteMazeEnv(gym.Env):
 
         # -- 11. Reward --
         reward = float(compute_reward(action, blocked_flags, terminated, game))
-
-        if self.phase == 3:
-            new_gap_off = nearest_right_gap_offset(player, lines, game)
-            reward += phase3_shaping(
-                action,
-                self._prev_gap_offset,
-                new_gap_off,
-                self._consecutive_blocked,
-                new_blocked,
-                blocked_right,
-            )
-            self._prev_gap_offset = new_gap_off
 
         self._consecutive_blocked = new_blocked
 

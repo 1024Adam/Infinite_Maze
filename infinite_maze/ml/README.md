@@ -35,7 +35,7 @@ All scripts run headlessly by default (no display required). `watch.py` is the o
 
 ## Observation Space
 
-Each step produces a flat `float32` array of shape `(14,)`:
+Each step produces a flat `float32` array of shape `(53,)`:
 
 | Index | Feature | Range |
 |---|---|---|
@@ -51,8 +51,10 @@ Each step produces a flat `float32` array of shape `(14,)`:
 | 9 | Distance to nearest wall down (normalised) | [0, 1] |
 | 10 | Current pace (normalised) | [0, 1] |
 | 11 | Distance from death boundary (normalised) | [0, 1] |
-| 12 | Nearest rightward-gap vertical offset | [0, 1] |
-| 13 | Consecutive ticks blocked right (normalised) | [0, 1] |
+| 12 | Consecutive ticks blocked right (normalised) | [0, 1] |
+| 13–52 | Local wall grid — 4 cols × 5 rows × 2 features | 0 or 1 |
+
+The wall grid (`obs[13..52]`) encodes the maze structure in a 4-column × 5-row window centred on the player and scanning rightward. For each cell two binary features are stored in order: **`has_right_wall`** (vertical wall on the cell's right edge) and **`has_bottom_wall`** (horizontal wall on the cell's bottom edge). Columns 0–3 span one maze cell (22 px) each, giving ~88 px of lookahead. Rows −2 to +2 are centred on the player's row.
 
 ---
 

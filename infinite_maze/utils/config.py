@@ -86,8 +86,9 @@ class GameConfig:
         "MAX_PACE": 10,
         "EPISODE_SCORE_CAP": 600,
         "MAX_WALL_SCAN_DIST": 200,
-        "GAP_SCAN_RADIUS": 110,
         "CONSECUTIVE_BLOCKED_CAP": 50,
+        "GRID_COLS": 4,
+        "GRID_ROWS": 5,
 
         # Pace simulation (tick-based, not real-time)
         "TICKS_PER_PACE_UPDATE": 300,

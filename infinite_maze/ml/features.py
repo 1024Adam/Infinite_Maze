@@ -2,7 +2,7 @@
 
 Provides headless-safe observation encoding, AABB collision checks
 (replicated from core/engine.py — do not import from engine.py), wall distance
-scanning, and the nearest-right-gap feature used in Phase 3 reward shaping.
+scanning, and a local wall-occupancy grid for maze lookahead.
 
 All public functions are pure (stateless). Episode-level state such as
 ``consecutive_blocked`` is owned by the environment and passed in as a
@@ -278,75 +278,80 @@ def _wall_dist_up(player, lines) -> float:
 
 
 # ---------------------------------------------------------------------------
-# Nearest right-gap feature
+# Local wall-occupancy grid
 # ---------------------------------------------------------------------------
 
-def _is_blocked_right_at_y(player, lines, y_candidate: float) -> bool:
-    """RIGHT collision check with *y_candidate* substituted for player.getY().
+def get_wall_grid(player, lines) -> np.ndarray:
+    """Return a flat binary float32 array encoding wall presence in a local grid.
 
-    Player x, width, height, and speed are unchanged; only the y value is
-    replaced. Used exclusively by ``nearest_right_gap_offset``.
+    The grid covers ``GRID_COLS`` columns × ``GRID_ROWS`` rows centred on the
+    player, scanning rightward from the player's right edge. For each cell:
+
+      feature 0 (has_right_wall)  — 1.0 if any vertical wall exists within
+                                    this cell's x extent that overlaps the
+                                    cell's y range; 0.0 otherwise.
+      feature 1 (has_bottom_wall) — 1.0 if any horizontal wall exists within
+                                    this cell's y extent that overlaps the
+                                    cell's x range; 0.0 otherwise.
+
+    Cells are ordered col 0…COLS-1; within each col, row offsets −HALF…+HALF.
+
+    Shape: (GRID_COLS * GRID_ROWS * 2,) — 40 features with defaults COLS=4, ROWS=5.
+
+    Parameters
+    ----------
+    player : Player
+    lines  : list[Line]
     """
-    px    = player.getX()
-    pw    = player.getWidth()
-    ph    = player.getHeight()
-    speed = player.getSpeed()
+    CELL      = config.MAZE_CELL_SIZE
+    COLS      = _ML["GRID_COLS"]
+    ROWS      = _ML["GRID_ROWS"]
+    half_rows = ROWS // 2
 
-    for line in lines:
-        if line.getIsHorizontal():
-            if (
-                y_candidate <= line.getYStart()
-                and y_candidate + ph >= line.getYStart()
-                and int(px + pw + speed) == line.getXStart()
-            ):
-                return True
-        else:
-            if (
-                px + pw <= line.getXStart()
-                and px + pw + speed >= line.getXStart()
-                and (
-                    (y_candidate      >= line.getYStart() and y_candidate      <= line.getYEnd())
-                    or (y_candidate + ph >= line.getYStart() and y_candidate + ph <= line.getYEnd())
-                )
-            ):
-                return True
-    return False
+    px = player.getX()
+    py = player.getY()
+    pw = player.getWidth()
+    ph = player.getHeight()
+    cy = py + ph // 2   # player centre y
 
+    features = np.zeros(COLS * ROWS * 2, dtype=np.float32)
+    idx = 0
 
-def nearest_right_gap_offset(player, lines, game) -> float:
-    """Return a normalised [0.0, 1.0] offset to the nearest vertically-reachable
-    right-facing gap relative to the player's current Y.
+    for col in range(COLS):
+        left_edge  = px + pw + col * CELL
+        right_edge = px + pw + (col + 1) * CELL
 
-    Scan vertically within ``GAP_SCAN_RADIUS`` pixels at 5-px increments,
-    alternating above and below, closest candidate first.
+        for row_offset in range(-half_rows, half_rows + 1):
+            top    = cy + row_offset * CELL - CELL // 2
+            bottom = cy + row_offset * CELL + CELL // 2
 
-    Returns
-    -------
-    float
-        0.5  → no gap found within scan radius, or gap is at the same Y.
-        <0.5 → nearest gap is above the player.
-        >0.5 → nearest gap is below the player.
-    """
-    radius = _ML["GAP_SCAN_RADIUS"]
-    y_min  = game.Y_MIN
-    y_max  = game.Y_MAX - player.getHeight()
-    py     = player.getY()
+            # has_right_wall: vertical wall with x in (left_edge, right_edge]
+            #                 whose y-span overlaps [top, bottom]
+            has_right = 0.0
+            for line in lines:
+                if not line.getIsHorizontal():
+                    lx = line.getXStart()
+                    if left_edge < lx <= right_edge:
+                        if line.getYStart() <= bottom and line.getYEnd() >= top:
+                            has_right = 1.0
+                            break
 
-    for offset in range(0, radius + 1, 5):
-        if offset == 0:
-            if y_min <= py <= y_max and not _is_blocked_right_at_y(player, lines, py):
-                return 0.5
-        else:
-            y_above = py - offset
-            y_below = py + offset
-            if y_min <= y_above <= y_max and not _is_blocked_right_at_y(player, lines, y_above):
-                raw = (y_above - py) / radius * 0.5 + 0.5
-                return float(np.clip(raw, 0.0, 1.0))
-            if y_min <= y_below <= y_max and not _is_blocked_right_at_y(player, lines, y_below):
-                raw = (y_below - py) / radius * 0.5 + 0.5
-                return float(np.clip(raw, 0.0, 1.0))
+            # has_bottom_wall: horizontal wall with y in (top, bottom]
+            #                  whose x-span overlaps [left_edge, right_edge]
+            has_bottom = 0.0
+            for line in lines:
+                if line.getIsHorizontal():
+                    ly = line.getYStart()
+                    if top < ly <= bottom:
+                        if line.getXStart() <= right_edge and line.getXEnd() >= left_edge:
+                            has_bottom = 1.0
+                            break
 
-    return 0.5
+            features[idx]     = has_right
+            features[idx + 1] = has_bottom
+            idx += 2
+
+    return features
 
 
 # ---------------------------------------------------------------------------
@@ -354,7 +359,7 @@ def nearest_right_gap_offset(player, lines, game) -> float:
 # ---------------------------------------------------------------------------
 
 def get_obs(player, lines, game, consecutive_blocked: int = 0) -> np.ndarray:
-    """Encode the current game state as a flat float32 array of shape (14,).
+    """Encode the current game state as a flat float32 array of shape (53,).
 
     All values are normalised to [0.0, 1.0].
 
@@ -366,12 +371,29 @@ def get_obs(player, lines, game, consecutive_blocked: int = 0) -> np.ndarray:
     consecutive_blocked : int
         Number of consecutive ticks the RIGHT action has been blocked.
         Tracked by the environment and passed in here; this module is stateless.
+
+    Layout
+    ------
+    [0]     player x (normalised)
+    [1]     player y (normalised)
+    [2]     blocked right
+    [3]     blocked left
+    [4]     blocked up
+    [5]     blocked down
+    [6]     wall distance right (normalised)
+    [7]     wall distance left (normalised)
+    [8]     wall distance up (normalised)
+    [9]     wall distance down (normalised)
+    [10]    pace (normalised)
+    [11]    distance from death boundary (normalised)
+    [12]    consecutive ticks blocked right (normalised)
+    [13..52] local wall grid — GRID_COLS × GRID_ROWS × 2 binary features
     """
     ml       = _ML
     max_scan = ml["MAX_WALL_SCAN_DIST"]
     x_range  = int(game.X_MAX) - game.X_MIN  # int() — X_MAX is WIDTH/2 (float)
 
-    obs = np.array(
+    scalars = np.array(
         [
             # [0]  player x
             np.clip(player.getX() / config.SCREEN_WIDTH, 0.0, 1.0),
@@ -397,11 +419,9 @@ def get_obs(player, lines, game, consecutive_blocked: int = 0) -> np.ndarray:
             np.clip(game.getPace() / ml["MAX_PACE"], 0.0, 1.0),
             # [11] distance from death boundary
             np.clip((player.getX() - game.X_MIN) / x_range, 0.0, 1.0),
-            # [12] nearest right-gap vertical offset
-            nearest_right_gap_offset(player, lines, game),
-            # [13] consecutive ticks blocked right (normalised)
+            # [12] consecutive ticks blocked right (normalised)
             np.clip(consecutive_blocked / ml["CONSECUTIVE_BLOCKED_CAP"], 0.0, 1.0),
         ],
         dtype=np.float32,
     )
-    return obs
+    return np.concatenate([scalars, get_wall_grid(player, lines)])

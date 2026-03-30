@@ -5,7 +5,7 @@ Headless-safe: all game objects are instantiated with headless=True.
 Uses the session-scoped `pygame_init` fixture from conftest.py (autouse).
 
 Covers the five acceptance conditions from the training plan (Step 2) plus
-hand-crafted line configuration tests for features.nearest_right_gap_offset.
+hand-crafted wall-grid configuration tests for features.get_wall_grid.
 """
 
 import numpy as np
@@ -23,7 +23,7 @@ from infinite_maze.ml.features import (
     is_blocked_up,
     is_blocked_down,
     get_obs,
-    nearest_right_gap_offset,
+    get_wall_grid,
 )
 from infinite_maze.ml.rewards import compute_reward, phase3_shaping
 
@@ -64,7 +64,7 @@ class TestReset:
     def test_obs_shape(self):
         env = InfiniteMazeEnv()
         obs, info = env.reset(seed=42)
-        assert obs.shape == (14,)
+        assert obs.shape == (53,)
 
     def test_obs_dtype(self):
         env = InfiniteMazeEnv()
@@ -98,7 +98,6 @@ class TestReset:
         env = _make_env()
         env.reset()
         assert env._consecutive_blocked == 0
-        assert env._prev_gap_offset == 0.5
 
     def test_reset_with_start_pace_option(self):
         env = InfiniteMazeEnv()
@@ -109,7 +108,7 @@ class TestReset:
         env = InfiniteMazeEnv()
         for seed in range(5):
             obs, _ = env.reset(seed=seed)
-            assert obs.shape == (14,)
+            assert obs.shape == (53,)
             assert env.observation_space.contains(obs)
 
 
@@ -127,7 +126,7 @@ class TestStep:
     def test_step_obs_shape(self, action):
         env = _make_env()
         obs, _, _, _, _ = env.step(action)
-        assert obs.shape == (14,)
+        assert obs.shape == (53,)
 
     @pytest.mark.parametrize("action", [DO_NOTHING, RIGHT, LEFT, UP, DOWN])
     def test_step_obs_dtype(self, action):
@@ -330,62 +329,82 @@ class TestObsSpaceCompliance:
 
 
 # ---------------------------------------------------------------------------
-# nearest_right_gap_offset — hand-crafted line configurations
+# get_wall_grid — local occupancy grid
 # ---------------------------------------------------------------------------
 
-class TestNearestRightGapOffset:
-    def _make_player_and_game(self, x=100, y=200):
-        game   = Game(headless=True)
-        player = Player(x, y, headless=True)
-        return player, game
+class TestWallGrid:
+    def _make_player(self, x=100, y=200):
+        return Player(x, y, headless=True)
 
-    def test_returns_half_when_no_lines(self):
-        player, game = self._make_player_and_game()
-        assert nearest_right_gap_offset(player, [], game) == pytest.approx(0.5)
+    def test_shape_with_no_lines(self):
+        player = self._make_player()
+        grid = get_wall_grid(player, [])
+        expected_len = _ML["GRID_COLS"] * _ML["GRID_ROWS"] * 2
+        assert grid.shape == (expected_len,)
 
-    def test_returns_half_when_current_y_unblocked(self):
-        """Player is already unblocked at its own Y → gap is at offset=0 → returns 0.5."""
-        player, game = self._make_player_and_game(x=100, y=200)
-        # No wall to the right at current y
-        far_wall = _vertical_wall(300, 0, 10)  # does not overlap player y
-        assert nearest_right_gap_offset(player, [far_wall], game) == pytest.approx(0.5)
+    def test_all_zeros_with_no_lines(self):
+        player = self._make_player()
+        grid = get_wall_grid(player, [])
+        assert np.all(grid == 0.0)
 
-    def test_gap_below_returns_greater_than_half(self):
-        """Wall blocks current y AND all y above → first gap is below → result > 0.5."""
-        player, game = self._make_player_and_game(x=100, y=200)
-        # Wall at x=111 covers y=40..225.
-        # Every y_above candidate (200-5, 200-10, ...) is within [40,225] → blocked.
-        # First y_below unblocked: 230 (230+10=240, both > 225 → not in wall).
-        # raw = (230-200)/110*0.5+0.5 ≈ 0.636 > 0.5
-        wall = _vertical_wall(111, 40, 225)
-        result = nearest_right_gap_offset(player, [wall], game)
-        assert result > 0.5, f"Expected gap below (>0.5), got {result}"
+    def test_dtype_is_float32(self):
+        player = self._make_player()
+        grid = get_wall_grid(player, [])
+        assert grid.dtype == np.float32
 
-    def test_gap_above_returns_less_than_half(self):
-        """Wall blocks current y AND all y below → first gap is above → result < 0.5."""
-        player, game = self._make_player_and_game(x=100, y=200)
-        # Wall at x=111 covers y=185..500.
-        # Every y_below candidate (205, 210, ...) is within [185,500] → blocked.
-        # First y_above unblocked: 170 (170+10=180, both < 185 → not in wall).
-        # raw = (170-200)/110*0.5+0.5 ≈ 0.364 < 0.5
-        wall = _vertical_wall(111, 185, 500)
-        result = nearest_right_gap_offset(player, [wall], game)
-        assert result < 0.5, f"Expected gap above (<0.5), got {result}"
+    def test_all_values_binary(self):
+        """Every grid value must be 0.0 or 1.0."""
+        player = self._make_player()
+        wall = _vertical_wall(120, 190, 220)
+        grid = get_wall_grid(player, [wall])
+        assert np.all((grid == 0.0) | (grid == 1.0))
 
-    def test_returns_half_when_no_gap_in_radius(self):
-        """Wall spans entire vertical scan range → no gap found → 0.5."""
-        player, game = self._make_player_and_game(x=100, y=200)
-        # Cover y_min to y_max completely
-        big_wall = _vertical_wall(111, game.Y_MIN, game.Y_MAX + 50)
-        result = nearest_right_gap_offset(player, [big_wall], game)
-        assert result == pytest.approx(0.5)
+    def test_vertical_wall_in_col0_sets_has_right(self):
+        """Vertical wall in col 0 x range overlapping centre row → has_right_wall=1."""
+        # Player(100,200): right edge=110. Col 0: x in (110, 132].
+        # cy=205, row_offset=0: top=194, bottom=216.
+        # Wall at x=120 y=[190,220] overlaps col 0, centre row.
+        # Index for col=0, row_idx=2 (offset=0): (0*5+2)*2 = 4.
+        player = self._make_player(x=100, y=200)
+        wall = _vertical_wall(120, 190, 220)
+        grid = get_wall_grid(player, [wall])
+        ROWS = _ML["GRID_ROWS"]
+        has_right_idx = (0 * ROWS + 2) * 2
+        assert grid[has_right_idx] == 1.0, f"Expected has_right_wall=1 at idx {has_right_idx}"
 
-    def test_result_clipped_to_unit_range(self):
-        """All returned values must lie in [0.0, 1.0]."""
-        player, game = self._make_player_and_game(x=100, y=200)
-        wall = _vertical_wall(111, 190, 235)
-        result = nearest_right_gap_offset(player, [wall], game)
-        assert 0.0 <= result <= 1.0
+    def test_vertical_wall_col0_does_not_contaminate_col1(self):
+        """A wall in col 0 must not set any col 1 features."""
+        player = self._make_player(x=100, y=200)
+        wall = _vertical_wall(120, 190, 220)  # col 0 only
+        grid = get_wall_grid(player, [wall])
+        ROWS = _ML["GRID_ROWS"]
+        for row_idx in range(ROWS):
+            idx = (1 * ROWS + row_idx) * 2
+            assert grid[idx] == 0.0, f"Col 1 has_right should be 0 at idx {idx}"
+
+    def test_horizontal_wall_sets_has_bottom(self):
+        """Horizontal wall in centre row y range overlapping col 0 → has_bottom_wall=1."""
+        # cy=205, row_offset=0: top=194, bottom=216. Wall at y=210 in (194,216].
+        # Col 0: x in (110,132]. Wall x=[110,132] overlaps.
+        # Index for col=0, row_idx=2: has_bottom at (0*5+2)*2+1 = 5.
+        player = self._make_player(x=100, y=200)
+        wall = _horizontal_wall(110, 132, 210)
+        grid = get_wall_grid(player, [wall])
+        ROWS = _ML["GRID_ROWS"]
+        has_bottom_idx = (0 * ROWS + 2) * 2 + 1
+        assert grid[has_bottom_idx] == 1.0, f"Expected has_bottom_wall=1 at idx {has_bottom_idx}"
+
+    def test_wall_in_col2_does_not_affect_col0(self):
+        """A wall in col 2 must not set col 0 features."""
+        # Col 2: x in (154, 176]. Wall at x=165.
+        player = self._make_player(x=100, y=200)
+        wall = _vertical_wall(165, 190, 220)
+        grid = get_wall_grid(player, [wall])
+        ROWS = _ML["GRID_ROWS"]
+        col0_right_centre = (0 * ROWS + 2) * 2
+        col2_right_centre = (2 * ROWS + 2) * 2
+        assert grid[col0_right_centre] == 0.0, "Col 0 should not be set by col 2 wall"
+        assert grid[col2_right_centre] == 1.0, "Col 2 should be set"
 
 
 # ---------------------------------------------------------------------------
