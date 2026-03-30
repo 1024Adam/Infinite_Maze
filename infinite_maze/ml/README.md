@@ -98,13 +98,13 @@ python -m infinite_maze.ml.train --timesteps 100000 --phase 1
 **Resume from a checkpoint:**
 ```bash
 python -m infinite_maze.ml.train --timesteps 200000 --phase 2 \
-  --resume checkpoints/ppo_maze_final_100000_steps.zip
+  --resume checkpoints/phase1_20260330_143022/ppo_maze_final_100000_steps.zip
 ```
 
 **Phase 3 — parallel envs, tighter hyperparameters:**
 ```bash
 python -m infinite_maze.ml.train --timesteps 750000 --phase 3 \
-  --resume checkpoints/ppo_maze_final_200000_steps.zip \
+  --resume checkpoints/phase2_20260330_160000/ppo_maze_final_200000_steps.zip \
   --n-envs 4 \
   --learning-rate 5e-5 --gamma 0.995 --n-steps 2048 \
   --batch-size 256 --n-epochs 10 --ent-coef 0.02 --clip-range 0.1
@@ -243,12 +243,26 @@ python -m infinite_maze.ml.watch \
 
 ## Checkpoints
 
-- Saved to `checkpoints/` (created automatically).
-- Periodic checkpoints: `checkpoints/ppo_maze_<N>_steps.zip`
-- Final model: `checkpoints/ppo_maze_final_<N>_steps.zip`
-- Best eval model: `checkpoints/best/best_model.zip`
+Each training run creates its own subdirectory under `checkpoints/`, named by phase and timestamp:
 
-The `checkpoints/` directory is gitignored. Back up important models manually before switching branches.
+```
+checkpoints/
+  phase1_20260330_143022/
+    ppo_maze_10000_steps.zip
+    ppo_maze_20000_steps.zip
+    ...
+    ppo_maze_final_100000_steps.zip
+    best/
+      best_model.zip
+    eval_logs/
+```
+
+The run directory is printed at the start of training so you know exactly where to find the output:
+```
+Run directory: checkpoints/phase1_20260330_143022
+```
+
+When resuming training, pass the full path to the checkpoint inside the relevant run directory.
 
 ---
 

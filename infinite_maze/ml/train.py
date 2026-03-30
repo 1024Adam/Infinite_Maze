@@ -21,6 +21,7 @@ All constants sourced from config.ML_CONFIG — nothing hardcoded here.
 import argparse
 import os
 import sys
+from datetime import datetime
 
 # Suppress pygame hello banner before any other import
 os.environ.setdefault("SDL_VIDEODRIVER", "dummy")
@@ -36,6 +37,12 @@ from .environment import InfiniteMazeEnv
 _ML = config.ML_CONFIG
 
 CHECKPOINT_DIR = "checkpoints"
+
+
+def _run_dir(phase: int) -> str:
+    """Return a unique per-run subdirectory path, e.g. checkpoints/phase3_20260330_143022."""
+    stamp = datetime.now().strftime("%Y%m%d_%H%M%S")
+    return os.path.join(CHECKPOINT_DIR, f"phase{phase}_{stamp}")
 
 
 def _make_env(phase: int):
@@ -61,13 +68,13 @@ def _build_model(env, args) -> PPO:
     )
 
 
-def _build_callbacks(eval_env, args):
+def _build_callbacks(eval_env, run_dir: str, args):
     callbacks = []
 
-    os.makedirs(CHECKPOINT_DIR, exist_ok=True)
+    os.makedirs(run_dir, exist_ok=True)
     checkpoint_cb = CheckpointCallback(
         save_freq=max(args.checkpoint_freq // args.n_envs, 1),
-        save_path=CHECKPOINT_DIR,
+        save_path=run_dir,
         name_prefix="ppo_maze",
         verbose=1,
     )
@@ -76,8 +83,8 @@ def _build_callbacks(eval_env, args):
     if args.eval_freq > 0:
         eval_cb = EvalCallback(
             eval_env,
-            best_model_save_path=os.path.join(CHECKPOINT_DIR, "best"),
-            log_path=os.path.join(CHECKPOINT_DIR, "eval_logs"),
+            best_model_save_path=os.path.join(run_dir, "best"),
+            log_path=os.path.join(run_dir, "eval_logs"),
             eval_freq=max(args.eval_freq // args.n_envs, 1),
             n_eval_episodes=_ML["EVAL_EPISODES"],
             deterministic=True,
@@ -89,6 +96,8 @@ def _build_callbacks(eval_env, args):
 
 
 def train(args) -> PPO:
+    run_dir = _run_dir(args.phase)
+
     # Build vectorised training environment
     train_env = DummyVecEnv([_make_env(args.phase) for _ in range(args.n_envs)])
 
@@ -104,9 +113,10 @@ def train(args) -> PPO:
     else:
         model = _build_model(train_env, args)
 
-    callbacks = _build_callbacks(eval_env, args)
+    callbacks = _build_callbacks(eval_env, run_dir, args)
 
     print(f"Training for {args.timesteps} timesteps (phase={args.phase}, n_envs={args.n_envs})")
+    print(f"Run directory: {run_dir}")
     model.learn(
         total_timesteps=args.timesteps,
         callback=callbacks,
@@ -114,8 +124,8 @@ def train(args) -> PPO:
     )
 
     # Save final model
-    os.makedirs(CHECKPOINT_DIR, exist_ok=True)
-    final_path = os.path.join(CHECKPOINT_DIR, f"ppo_maze_final_{args.timesteps}_steps")
+    os.makedirs(run_dir, exist_ok=True)
+    final_path = os.path.join(run_dir, f"ppo_maze_final_{args.timesteps}_steps")
     model.save(final_path)
     print(f"Final model saved to {final_path}.zip")
 
