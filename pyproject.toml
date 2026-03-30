@@ -34,6 +34,15 @@ black = "^23.0.0"
 flake8 = "^6.0.0"
 mypy = "^1.0.0"
 
+[tool.poetry.group.ml]
+optional = true
+
+[tool.poetry.group.ml.dependencies]
+gymnasium = ">=0.29"
+stable-baselines3 = ">=2.0"
+torch = ">=2.0"
+tensorboard = "*"
+
 [tool.poetry.scripts]
 infinite-maze = "infinite_maze.core.engine:maze"
 
