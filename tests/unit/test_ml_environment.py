@@ -187,14 +187,15 @@ class TestStep:
     def test_step_up_down_reward_neutral_when_unblocked(self):
         env = _make_env()
         from infinite_maze.ml.features import is_blocked_right
+        expected = {UP: _ML["REWARD_MOVE_VERTICAL_UP"], DOWN: _ML["REWARD_MOVE_VERTICAL_DOWN"]}  # both 0.0
         for action in (UP, DOWN):
             env.reset(seed=0)
-            # Seek a state where right is NOT blocked so vertical reward is 0.0
+            # Seek a state where right is NOT blocked so vertical reward is directional
             for _ in range(50):
                 if not is_blocked_right(env._player, env._lines):
                     _, reward, terminated, _, _ = env.step(action)
                     if not terminated:
-                        assert reward == pytest.approx(_ML["REWARD_MOVE_VERTICAL"])
+                        assert reward == pytest.approx(expected[action])
                     break
                 env.step(DO_NOTHING)
 
@@ -505,7 +506,7 @@ class TestPhase3Shaping:
         assert np.isfinite(reward)
 
     def test_phase1_no_phase3_shaping(self):
-        """Phase 1 env reward for vertical move must be exactly REWARD_MOVE_VERTICAL."""
+        """Phase 1 env reward for UP when unblocked must be exactly REWARD_MOVE_VERTICAL_UP."""
         env = InfiniteMazeEnv(phase=1)
         env.reset(seed=0)
         # Find a step where UP is not blocked and player won't terminate
@@ -514,6 +515,6 @@ class TestPhase3Shaping:
             if not is_blocked_up(env._player, env._lines):
                 _, reward, terminated, _, _ = env.step(UP)
                 if not terminated:
-                    assert reward == pytest.approx(_ML["REWARD_MOVE_VERTICAL"])
+                    assert reward == pytest.approx(_ML["REWARD_MOVE_VERTICAL_UP"])
                     return
             env.step(DO_NOTHING)

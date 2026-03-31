@@ -99,8 +99,10 @@ class GameConfig:
         "REWARD_MOVE_RIGHT_BLOCKED": -0.3,
         "REWARD_MOVE_LEFT": -0.5,
         "REWARD_DO_NOTHING": -0.1,
-        "REWARD_MOVE_VERTICAL": 0.0,
-        "REWARD_VERTICAL_WHEN_BLOCKED": 0.3,
+        "REWARD_MOVE_VERTICAL_UP": 0.0,
+        "REWARD_MOVE_VERTICAL_DOWN": 0.0,
+        "REWARD_VERTICAL_WHEN_BLOCKED_UP": 0.3,
+        "REWARD_VERTICAL_WHEN_BLOCKED_DOWN": 0.3,
         "REWARD_TERMINAL": -10.0,
 
         # Training

@@ -56,7 +56,10 @@ def compute_reward(
     LEFT  + not blocked      → REWARD_MOVE_LEFT       (-0.5)
     LEFT  + blocked          → REWARD_MOVE_RIGHT_BLOCKED (0.0)  # symmetric
     DO_NOTHING               → REWARD_DO_NOTHING      (-0.1)
-    UP / DOWN                → REWARD_MOVE_VERTICAL   (0.0)
+    UP (free)                → REWARD_MOVE_VERTICAL_UP          (+0.1)
+    DOWN (free)              → REWARD_MOVE_VERTICAL_DOWN         (0.0)
+    UP (blocked right)       → REWARD_VERTICAL_WHEN_BLOCKED_UP   (+0.4)
+    DOWN (blocked right)     → REWARD_VERTICAL_WHEN_BLOCKED_DOWN (+0.3)
     """
     if terminated:
         return float(_ML["REWARD_TERMINAL"])
@@ -74,10 +77,12 @@ def compute_reward(
     if action == DO_NOTHING:
         return float(_ML["REWARD_DO_NOTHING"])
 
-    # UP or DOWN — bonus when right is blocked (agent should navigate around wall)
+    # UP or DOWN — differentiated bonus to break DOWN-only bias
     if blocked_flags.get("right", False):
-        return float(_ML["REWARD_VERTICAL_WHEN_BLOCKED"])
-    return float(_ML["REWARD_MOVE_VERTICAL"])
+        key = "REWARD_VERTICAL_WHEN_BLOCKED_UP" if action == UP else "REWARD_VERTICAL_WHEN_BLOCKED_DOWN"
+    else:
+        key = "REWARD_MOVE_VERTICAL_UP" if action == UP else "REWARD_MOVE_VERTICAL_DOWN"
+    return float(_ML[key])
 
 
 def phase3_shaping(
