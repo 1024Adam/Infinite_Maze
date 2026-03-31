@@ -74,7 +74,9 @@ def compute_reward(
     if action == DO_NOTHING:
         return float(_ML["REWARD_DO_NOTHING"])
 
-    # UP or DOWN
+    # UP or DOWN — bonus when right is blocked (agent should navigate around wall)
+    if blocked_flags.get("right", False):
+        return float(_ML["REWARD_VERTICAL_WHEN_BLOCKED"])
     return float(_ML["REWARD_MOVE_VERTICAL"])
 
 

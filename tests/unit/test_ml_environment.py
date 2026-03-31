@@ -184,14 +184,19 @@ class TestStep:
         if not terminated:
             assert reward == pytest.approx(_ML["REWARD_DO_NOTHING"])
 
-    def test_step_up_down_reward_neutral(self):
+    def test_step_up_down_reward_neutral_when_unblocked(self):
         env = _make_env()
+        from infinite_maze.ml.features import is_blocked_right
         for action in (UP, DOWN):
             env.reset(seed=0)
-            _, reward, terminated, _, _ = env.step(action)
-            if not terminated:
-                # Vertical rewards are 0.0 (or phase3 shaping adds small bonus)
-                assert reward == pytest.approx(_ML["REWARD_MOVE_VERTICAL"])
+            # Seek a state where right is NOT blocked so vertical reward is 0.0
+            for _ in range(50):
+                if not is_blocked_right(env._player, env._lines):
+                    _, reward, terminated, _, _ = env.step(action)
+                    if not terminated:
+                        assert reward == pytest.approx(_ML["REWARD_MOVE_VERTICAL"])
+                    break
+                env.step(DO_NOTHING)
 
 
 # ---------------------------------------------------------------------------
