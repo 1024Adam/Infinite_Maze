@@ -29,39 +29,48 @@ These three options address that limitation in increasing order of complexity.
 
 ---
 
-## Option 2 — BFS Path Features (Recommended)
+## Option 2 — BFS Curriculum Reward (Recommended)
 
-**What it does:** At each step, run a fast breadth-first search from the player's current cell to find the next 3–5 moves that lead toward the nearest rightward opening. Encode that path as a small one-hot feature vector appended to the observation. The agent is given an explicit short-horizon plan; RL learns when to follow it and when to deviate (e.g. under pace pressure, or when a faster route opens up).
+**What it does:** At each step, run a fast BFS from the player's current position to find the optimal next action toward the nearest rightward opening. Give a small reward bonus if the agent's chosen action matches the BFS-optimal action. This teaches genuine navigation skill — the agent is *rewarded for making the right move* rather than being shown what the right move is. The BFS signal is removed entirely at Phase 4+, at which point the agent relies solely on what it has learned.
+
+**Why not BFS-as-observation (the original Option 2):** Encoding the BFS path directly into the observation causes **shortcut learning** — the agent converges on "action = decode(obs[53:78])" in a few thousand steps and never learns to navigate. Remove the features at inference time and the policy collapses entirely. The RL machinery becomes vestigial. The agent is a path-follower, not a navigator.
 
 **How it works:**
 
-1. Add `bfs_next_moves(player, lines, game, depth=5) → np.ndarray` to `features.py`
-   - Build a cell-adjacency graph from current `Line` positions
-   - Run BFS from `(player.getX(), player.getY())` toward the rightmost reachable X
-   - Return the first `depth` actions as a one-hot encoded flat array: shape `(depth × 5,)` = `(25,)`
-   - If no path found within `depth` steps, return all-zeros
-2. Append to obs in `get_obs()` → new shape `(53 + 25) = (78,)`
-3. Recompute every step (walls shift with pace, so the path can become stale)
+1. Add `bfs_optimal_action(player, lines, game) → int` to `features.py`
+   - Build a cell-adjacency graph from current `Line` positions (full visible 15×20 window)
+   - **Phase 1 — find candidate gaps:** collect all cells from which RIGHT is unblocked, ordered by proximity
+   - **Phase 2 — evaluate forward reachability:** for each candidate gap (nearest first), run a secondary BFS forward from that gap to measure how many additional rightward cells are reachable beyond it. Discard candidates whose forward reachability is below a minimum threshold (e.g. 2 cells) — these are pockets.
+   - Select the nearest gap that passes the reachability threshold; return the first action on the path to it
+   - Fall back to the nearest gap regardless of reachability if no gap passes the threshold (better than doing nothing)
+   - Return `DO_NOTHING` only if no rightward gap exists in the entire visible window
+2. In `environment.py` `step()`, after computing `blocked_flags`, call `bfs_optimal_action()`
+3. In `rewards.py`, add `REWARD_BFS_MATCH: 0.05` to `ML_CONFIG`
+4. Add the bonus to `compute_reward()` when `phase >= 3` and `action == bfs_optimal_action`
+5. In Phase 4+, set `REWARD_BFS_MATCH: 0.0` — the curriculum is withdrawn and the agent navigates from learned skill alone
+
+**No observation shape change.** Obs remains `(53,)`. All existing Phase 2 checkpoints are compatible.
 
 **What the model still has to learn:**
-- When to follow the BFS path vs deviate (e.g. pace forces a different escape route)
-- How aggressively to navigate (the BFS path is the *shortest* path, not the *safest* under pace pressure)
-- Adaptation when the path becomes stale mid-execution due to wall recycling
-- Long-term survival: pacing, score maximisation, avoiding terminal states
+- The underlying *pattern* that makes certain moves BFS-optimal — it receives the reward but must generalise the rule across all maze layouts
+- Pace management: the BFS bonus is navigation-only; survival under acceleration is still purely RL
+- When to deviate from the BFS-optimal move (e.g. pace forces a different escape route)
+- Long-term survival: pacing, score maximisation, terminal avoidance
 
 **Pros:**
-- Solves temporal depth directly — the agent is told "here's the next corridor"
-- BFS on a 15×20 cell grid takes < 1 ms; negligible training overhead
-- Obs shape increases modestly: `(53,) → (78,)`
-- Existing checkpoints reusable with a small obs-shape adapter (load weights, extend input layer with zeros)
-- The RL problem becomes pace management + path-following vs pure navigation, which is a much easier credit assignment problem for PPO
+- Agent learns genuine navigation skill — removing the reward at Phase 4 doesn't break the policy
+- No obs shape change — compatible with existing checkpoints
+- BFS takes < 1 ms on a 15×20 cell grid; negligible training overhead
+- +0.05 bonus is large enough to be a meaningful gradient signal (5% of a successful RIGHT move) but small enough not to dominate pace-survival rewards
+- Naturally fades: as the agent internalises navigation, the BFS bonus fires more often (correct moves increase) but contributes less *marginal* gradient signal — the curriculum self-withdraws
 
 **Cons:**
-- BFS path becomes stale on the tick a pace shift moves walls — need to handle the 1-step lag carefully
-- Requires building a cell adjacency extractor from `Line` segments (~80 lines in `features.py`)
-- Still model-free: path features are a richer input, not a planner — the agent must still generalise
+- Credit assignment still operates one step at a time — the agent gets +0.05 for each correct step but still doesn't have explicit multi-step lookahead
+- BFS path becomes stale on the tick a pace shift moves walls — the optimal action may change mid-corridor; the bonus needs to tolerate 1-step lag
+- Two-phase search is slightly more expensive than single-target BFS (~2–3 ms worst case on a full 15×20 grid) — still negligible at 60 fps training
+- Forward reachability threshold is a tunable parameter; if set too high it discards valid gaps, if too low it doesn't filter pockets effectively. Start at 2 cells and adjust if needed.
 
-**Reward changes:** None required. The existing `phase3_shaping` gap bonus can be simplified or removed once path features are active, since the BFS already encodes directional guidance.
+**Reward changes:** Add `REWARD_BFS_MATCH: 0.05` to `ML_CONFIG` in `config.py`. Apply in `compute_reward()` conditioned on `phase >= 3`.
 
 ---
 
@@ -86,25 +95,24 @@ These three options address that limitation in increasing order of complexity.
 
 ---
 
-## Recommendation: Option 2 — BFS Path Features
+## Recommendation: Option 2 — BFS Curriculum Reward
 
-Option 2 addresses the root cause (temporal depth) with minimal cost and no architectural change to the RL algorithm. The BFS path directly answers the question the agent is currently unable to answer from its observation: *"which moves would get me through the next wall?"*
+Option 2 teaches genuine navigation skill while keeping the RL problem intact. The key principle: **reward the right move without showing what it is**. The agent must learn the spatial pattern that makes a move BFS-optimal across thousands of diverse maze layouts — that generalisation is real navigational intelligence.
 
-The critical distinction from "automated solving": the BFS provides the next 3–5 moves toward an opening, but the agent still has to:
-- Decide whether to follow the path or take a different route under pace pressure
-- Time its moves to avoid being pushed left while navigating vertically
-- Generalise to the fact that walls shift and the plan goes stale mid-execution
+The critical distinction from shortcut learning: if you zero out `REWARD_BFS_MATCH` at the end of Phase 3 and run evaluation, the deterministic score should *not* collapse. If it does, the agent learned to respond to the bonus as a cue rather than internalising the underlying skill. That is the Phase 3 success gate before advancing to Phase 4.
 
-Option 1 (wider grid) is a cheaper first attempt but unlikely to be sufficient alone — the implicit lookahead it enables requires far more training data to emerge. It could be combined with Option 2 at low cost.
+Option 1 (wider grid) is worth combining — more spatial context helps the network recognise navigable corridor patterns faster. It can be enabled at the same time as Option 2 at no algorithm cost, though it requires retraining from scratch.
 
 Option 3 is ruled out by implementation complexity and inference-time performance requirements.
 
 **Implementation order if Phase 3 stalls again:**
-1. Implement `bfs_next_moves()` in `features.py` with `depth=5`
-2. Extend `get_obs()` to append the 25 BFS features → new shape `(78,)`
-3. Retrain from Phase 2 best (obs shape change requires fresh load with zero-padded input layer or full retrain)
-4. Optionally remove `phase3_shaping` gap bonus once BFS features are confirmed working — it becomes redundant
+1. Add `bfs_optimal_action()` to `features.py`
+2. Add `REWARD_BFS_MATCH: 0.05` to `ML_CONFIG` in `config.py`
+3. Apply bonus in `rewards.py` `compute_reward()` when `phase >= 3` and action matches BFS optimal
+4. Retrain from Phase 2 best with `--phase 3 --ent-coef 0.05 --clip-range 0.1`
+5. **Phase 3 exit gate:** zero out `REWARD_BFS_MATCH`, re-evaluate deterministically — mean score must hold at ≥ 250 to confirm genuine skill, not cue-following
+6. Phase 4 proceeds with `REWARD_BFS_MATCH: 0.0` permanently
 
 ---
 
-*Last updated: 2026-04-01*
+*Last updated: 2026-04-01 — Option 2 revised from BFS-as-observation to BFS-as-curriculum-reward to prevent shortcut learning. BFS design updated to two-phase search (candidate gaps → forward reachability filter) to avoid routing the agent into dead-end pockets.*
