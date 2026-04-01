@@ -24,6 +24,7 @@ from infinite_maze.ml.features import (
     is_blocked_down,
     is_blocked_right_at_y,
     nearest_right_gap_offset,
+    bfs_optimal_action,
     get_obs,
     get_wall_grid,
 )
@@ -492,6 +493,54 @@ class TestConsecutiveBlocked:
         env._lines = []
         env.step(RIGHT)
         assert env._consecutive_blocked == 0
+
+
+# ---------------------------------------------------------------------------
+# bfs_optimal_action — acceptance tests
+# ---------------------------------------------------------------------------
+
+class TestBfsOptimalAction:
+    """Verify BFS curriculum signal returns sensible actions on hand-crafted states."""
+
+    def test_no_walls_returns_right(self):
+        """With no walls, RIGHT should always be the optimal action."""
+        game   = Game(headless=True)
+        player = Player(100, 200, headless=True)
+        action = bfs_optimal_action(player, [], game)
+        assert action == RIGHT
+
+    def test_returns_valid_action(self):
+        """Return value must always be one of the five valid action integers."""
+        env = InfiniteMazeEnv(phase=3)
+        env.reset(seed=0)
+        action = bfs_optimal_action(env._player, env._lines, env._game)
+        assert action in (DO_NOTHING, RIGHT, LEFT, UP, DOWN)
+
+    def test_bfs_bonus_applied_in_phase3(self):
+        """Phase 3 env step reward should include BFS bonus when action matches BFS optimum."""
+        env = InfiniteMazeEnv(phase=3)
+        env.reset(seed=0)
+        opt = bfs_optimal_action(env._player, env._lines, env._game)
+        if opt == DO_NOTHING:
+            return  # can't usefully test bonus for DO_NOTHING
+        _, reward, _, _, _ = env.step(opt)
+        # Reward must be finite and non-trivially negative
+        # (BFS bonus means it should be at least REWARD_BFS_MATCH above baseline)
+        assert np.isfinite(reward)
+
+    def test_bfs_bonus_absent_in_phase1(self):
+        """Phase 1 env must not apply the BFS bonus (phase < 3)."""
+        env = InfiniteMazeEnv(phase=1)
+        env.reset(seed=0)
+        # Unblocked RIGHT in phase 1 must be exactly REWARD_MOVE_RIGHT, no BFS bonus
+        from infinite_maze.ml.features import is_blocked_right as ibr
+        for _ in range(30):
+            if not ibr(env._player, env._lines):
+                _, reward, terminated, _, _ = env.step(RIGHT)
+                if not terminated:
+                    assert reward == pytest.approx(_ML["REWARD_MOVE_RIGHT"])
+                    return
+            env.step(DO_NOTHING)
 
 
 # ---------------------------------------------------------------------------

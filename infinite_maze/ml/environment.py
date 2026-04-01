@@ -23,6 +23,7 @@ from .features import (
     is_blocked_up,
     is_blocked_down,
     nearest_right_gap_offset,
+    bfs_optimal_action,
 )
 from .rewards import compute_reward, phase3_shaping
 
@@ -139,6 +140,9 @@ class InfiniteMazeEnv(gym.Env):
             "down":  blocked_down,
         }
 
+        # -- 1b. BFS optimal action (Phase 3+ curriculum) --
+        bfs_action = bfs_optimal_action(player, lines, game) if self.phase >= 3 else -1
+
         # -- 2. Apply action --
         if action == RIGHT and not blocked_right:
             player.moveX(1)
@@ -205,7 +209,10 @@ class InfiniteMazeEnv(gym.Env):
         prev_gap_offset = self._prev_gap_offset
         prev_blocked    = self._consecutive_blocked
 
-        reward = float(compute_reward(action, blocked_flags, terminated, game))
+        reward = float(compute_reward(
+            action, blocked_flags, terminated, game,
+            bfs_action=bfs_action, phase=self.phase,
+        ))
 
         self._consecutive_blocked = new_blocked
 

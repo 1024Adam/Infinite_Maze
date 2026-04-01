@@ -25,6 +25,8 @@ def compute_reward(
     blocked_flags: dict,
     terminated: bool,
     game,
+    bfs_action: int = -1,
+    phase: int = 1,
 ) -> float:
     """Return the shaped reward for one environment step.
 
@@ -42,6 +44,11 @@ def compute_reward(
     game : Game
         Live game instance; used for pace in Phase 4 urgency scaling.
         Not used by base rewards — kept in signature for consistency.
+    bfs_action : int
+        BFS-optimal action for this step, computed by ``features.bfs_optimal_action()``.
+        Pass -1 (default) to skip the BFS curriculum bonus.
+    phase : int
+        Current training phase. BFS bonus only applies for phase >= 3.
 
     Returns
     -------
@@ -52,37 +59,47 @@ def compute_reward(
     -----
     terminal                 → REWARD_TERMINAL        (-10.0)
     RIGHT + not blocked      → REWARD_MOVE_RIGHT      (+1.0)
-    RIGHT + blocked          → REWARD_MOVE_RIGHT_BLOCKED (0.0)
-    LEFT  + not blocked      → REWARD_MOVE_LEFT       (-0.5)
-    LEFT  + blocked          → REWARD_MOVE_RIGHT_BLOCKED (0.0)  # symmetric
+    RIGHT + blocked          → REWARD_MOVE_RIGHT_BLOCKED (-0.3)
+    LEFT  + not blocked      → REWARD_MOVE_LEFT       (-1.5)
+    LEFT  + blocked          → REWARD_MOVE_RIGHT_BLOCKED (-0.3)  # symmetric
     DO_NOTHING               → REWARD_DO_NOTHING      (-0.1)
-    UP (free)                → REWARD_MOVE_VERTICAL_UP          (+0.1)
+    UP (free)                → REWARD_MOVE_VERTICAL_UP          (0.0)
     DOWN (free)              → REWARD_MOVE_VERTICAL_DOWN         (0.0)
     UP (blocked right)       → REWARD_VERTICAL_WHEN_BLOCKED_UP   (+0.1)  + phase3_shaping gap bonus
     DOWN (blocked right)     → REWARD_VERTICAL_WHEN_BLOCKED_DOWN (+0.1)  + phase3_shaping gap bonus
+    + BFS match (phase >= 3) → +REWARD_BFS_MATCH (+0.05) when action == bfs_action
     """
     if terminated:
         return float(_ML["REWARD_TERMINAL"])
 
     if action == RIGHT:
         if blocked_flags.get("right", False):
-            return float(_ML["REWARD_MOVE_RIGHT_BLOCKED"])
-        return float(_ML["REWARD_MOVE_RIGHT"])
+            reward = float(_ML["REWARD_MOVE_RIGHT_BLOCKED"])
+        else:
+            reward = float(_ML["REWARD_MOVE_RIGHT"])
 
-    if action == LEFT:
+    elif action == LEFT:
         if blocked_flags.get("left", False):
-            return float(_ML["REWARD_MOVE_RIGHT_BLOCKED"])
-        return float(_ML["REWARD_MOVE_LEFT"])
+            reward = float(_ML["REWARD_MOVE_RIGHT_BLOCKED"])
+        else:
+            reward = float(_ML["REWARD_MOVE_LEFT"])
 
-    if action == DO_NOTHING:
-        return float(_ML["REWARD_DO_NOTHING"])
+    elif action == DO_NOTHING:
+        reward = float(_ML["REWARD_DO_NOTHING"])
 
-    # UP or DOWN — differentiated bonus to break DOWN-only bias
-    if blocked_flags.get("right", False):
-        key = "REWARD_VERTICAL_WHEN_BLOCKED_UP" if action == UP else "REWARD_VERTICAL_WHEN_BLOCKED_DOWN"
     else:
-        key = "REWARD_MOVE_VERTICAL_UP" if action == UP else "REWARD_MOVE_VERTICAL_DOWN"
-    return float(_ML[key])
+        # UP or DOWN — differentiated bonus to break DOWN-only bias
+        if blocked_flags.get("right", False):
+            key = "REWARD_VERTICAL_WHEN_BLOCKED_UP" if action == UP else "REWARD_VERTICAL_WHEN_BLOCKED_DOWN"
+        else:
+            key = "REWARD_MOVE_VERTICAL_UP" if action == UP else "REWARD_MOVE_VERTICAL_DOWN"
+        reward = float(_ML[key])
+
+    # BFS curriculum bonus (Phase 3+): small bonus when action matches BFS-optimal move
+    if phase >= 3 and bfs_action >= 0 and action == bfs_action:
+        reward += float(_ML["REWARD_BFS_MATCH"])
+
+    return reward
 
 
 def phase3_shaping(

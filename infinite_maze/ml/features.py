@@ -310,6 +310,174 @@ def _wall_dist_up(player, lines) -> float:
 
 
 # ---------------------------------------------------------------------------
+# BFS optimal action (Phase 3 curriculum reward)
+# ---------------------------------------------------------------------------
+
+def _build_adjacency(player, lines, game):
+    """Return a dict mapping (cx, cy) cell coords → set of reachable neighbour cells.
+
+    Uses pixel-level collision checks (is_blocked_right_at_y and equivalents)
+    sampled at MAZE_CELL_SIZE intervals to approximate cell-level adjacency.
+    """
+    CELL  = config.MAZE_CELL_SIZE
+    y_min = game.Y_MIN
+    y_max = game.Y_MAX - player.getHeight()
+
+    # Collect candidate cell centres within the visible window
+    # X: player position outward to X_MAX + one extra column for margin
+    # Y: full screen height in CELL steps
+    px_cell = (player.getX() // CELL) * CELL
+    x_start = px_cell - CELL
+    x_end   = int(game.X_MAX) + CELL * 2
+
+    cells = set()
+    for cx in range(x_start, x_end + 1, CELL):
+        for cy in range((y_min // CELL) * CELL, (y_max // CELL + 2) * CELL, CELL):
+            if y_min <= cy <= y_max:
+                cells.add((cx, cy))
+
+    adj = {c: set() for c in cells}
+
+    # Check lateral / vertical adjacency via pixel-level collision checks
+    # We reuse existing is_blocked_right_at_y as our wall query
+    for (cx, cy) in cells:
+        # Temporarily move player to this cell for collision checks
+        orig_x = player.getX()
+        orig_y = player.getY()
+        player.setX(cx)
+        player.setY(cy)
+
+        right_nb = (cx + CELL, cy)
+        left_nb  = (cx - CELL, cy)
+        up_nb    = (cx, cy - CELL)
+        down_nb  = (cx, cy + CELL)
+
+        if right_nb in cells and not is_blocked_right(player, lines):
+            adj[(cx, cy)].add(right_nb)
+            adj[right_nb].add((cx, cy))
+        if left_nb in cells and not is_blocked_left(player, lines):
+            adj[(cx, cy)].add(left_nb)
+        if up_nb in cells and not is_blocked_up(player, lines):
+            adj[(cx, cy)].add(up_nb)
+        if down_nb in cells and not is_blocked_down(player, lines):
+            adj[(cx, cy)].add(down_nb)
+
+        player.setX(orig_x)
+        player.setY(orig_y)
+
+    return adj
+
+
+def bfs_optimal_action(player, lines, game) -> int:
+    """Return the BFS-optimal next action toward the best rightward gap.
+
+    Uses a two-phase search:
+    1. Finds all cells from which RIGHT is unblocked (candidate gaps), ordered
+       by path distance from the player.
+    2. For each candidate (nearest first), measures forward reachability —
+       how many additional rightward cells are accessible beyond the gap.
+       Skips candidates whose forward reachability is below MIN_FORWARD_CELLS
+       (pocket filter), unless no candidate passes the threshold.
+
+    Returns the first action on the shortest path to the selected gap cell,
+    or DO_NOTHING if no rightward gap is reachable.
+
+    Parameters
+    ----------
+    player : Player
+    lines  : list[Line]
+    game   : Game
+    """
+    CELL             = config.MAZE_CELL_SIZE
+    MIN_FORWARD      = 2   # minimum cells reachable rightward beyond gap to pass pocket filter
+    MAX_CANDIDATES   = 8   # stop after evaluating this many candidates to bound cost
+
+    player_x = player.getX()
+    player_y = player.getY()
+    start    = ((player_x // CELL) * CELL, (player_y // CELL) * CELL)
+
+    adj = _build_adjacency(player, lines, game)
+
+    if start not in adj:
+        return DO_NOTHING
+
+    # Phase 1: BFS from start — record shortest path to every reachable cell
+    from collections import deque
+    parent  = {start: None}
+    action_from_start = {start: None}
+    queue   = deque([start])
+    gap_candidates = []  # (dist, cell) for cells where RIGHT is unblocked
+
+    while queue:
+        node = queue.popleft()
+        dist = 0
+        # Count path length for ordering
+        cur = node
+        while parent[cur] is not None:
+            cur = parent[cur]
+            dist += 1
+
+        # Check if RIGHT is unblocked from this cell
+        nx, ny = node
+        orig_x, orig_y = player.getX(), player.getY()
+        player.setX(nx); player.setY(ny)
+        right_open = not is_blocked_right(player, lines)
+        player.setX(orig_x); player.setY(orig_y)
+
+        if right_open and node != start:
+            gap_candidates.append((dist, node))
+
+        for nb in adj.get(node, set()):
+            if nb not in parent:
+                parent[nb] = node
+                # Record first action taken from start toward this neighbour
+                if parent[node] is None:  # nb is directly adjacent to start
+                    nx_nb, ny_nb = nb
+                    sx, sy = start
+                    if   nx_nb > sx: first_act = RIGHT
+                    elif nx_nb < sx: first_act = LEFT
+                    elif ny_nb < sy: first_act = UP
+                    else:            first_act = DOWN
+                    action_from_start[nb] = first_act
+                else:
+                    action_from_start[nb] = action_from_start.get(node, DO_NOTHING)
+                queue.append(nb)
+
+    if not gap_candidates:
+        return DO_NOTHING
+
+    # Sort by distance (nearest first)
+    gap_candidates.sort(key=lambda x: x[0])
+
+    # Phase 2: forward reachability filter — pick nearest gap that isn't a pocket
+    def _forward_reachable(gap_cell) -> int:
+        """Count cells reachable rightward of gap_cell (shallow BFS, right-biased)."""
+        seen   = {gap_cell}
+        q      = deque([gap_cell])
+        count  = 0
+        while q and count < 10:  # cap to keep cost bounded
+            cx, cy = q.popleft()
+            for nb in adj.get((cx, cy), set()):
+                if nb not in seen and nb[0] >= gap_cell[0]:  # only rightward/same-x
+                    seen.add(nb)
+                    q.append(nb)
+                    count += 1
+        return count
+
+    selected = None
+    fallback = gap_candidates[0][1]  # nearest gap regardless of reachability
+
+    for i, (_, cell) in enumerate(gap_candidates[:MAX_CANDIDATES]):
+        if _forward_reachable(cell) >= MIN_FORWARD:
+            selected = cell
+            break
+
+    target = selected if selected is not None else fallback
+
+    return action_from_start.get(target, DO_NOTHING)
+
+
+# ---------------------------------------------------------------------------
 # Nearest right-facing gap (Phase 3 shaping feature)
 # ---------------------------------------------------------------------------
 

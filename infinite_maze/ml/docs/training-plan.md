@@ -234,16 +234,35 @@ step(action):
 | Field | Value |
 |-------|-------|
 | **Goal** | Learn to use vertical movement to find rightward gaps; solve multi-cell navigational detours |
-| **Algorithm** | **PPO** (continue from Phase 2 checkpoint) with `n_envs=4` parallel environments using `DummyVecEnv` (in-process, no IPC overhead). Provides exploration diversity across different random mazes, which is critical for learning generalised vertical navigation. Switch to `SubprocVecEnv` only if `Line.generateMaze()` proves to be a CPU bottleneck during reset (see maze generation performance note in §4 Key Technical Notes). |
-| **Timesteps** | 750,000 |
-| **Key hyperparameters** | `learning_rate=5e-5`, `gamma=0.995`, `n_steps=2048`, `batch_size=256`, `n_epochs=10`, `ent_coef=0.02` (raised to promote vertical exploration), `clip_range=0.1`, **`n_envs=4`** |
-| **Reward shaping** | Base `compute_reward()` only (no additional shaping). The richer observation space — specifically the 40-feature wall grid (obs[13..52]) — gives the network direct visibility of walls ahead and eliminates the need for explicit gap-seeking bonuses. `phase3_shaping()` remains in `rewards.py` but is no longer called from `environment.py`. |
-| **Escalation path** | If mean score < 80 after 250k steps, increase `GRID_COLS` from 4 to 6 (obs shape becomes `(53 + 2*5*2,) = (73,)`). ⚠️ **CHECKPOINT INCOMPATIBILITY:** Changing observation shape invalidates all prior Phase 3 checkpoints. Restart Phase 3 from a Phase 2 checkpoint if activated. |
-| **Success criterion** | Mean episode score ≥ 150 (Intermediate tier) over last 10 eval episodes; episode length (survival ticks) ≥ 500; vertical action frequency > 20% when `blocked_right=True` |
-| **Checkpoint frequency** | Every 25,000 timesteps |
-| **Files to create/modify** | `infinite_maze/ml/features.py` (implement `get_wall_grid()`), `infinite_maze/ml/environment.py` (update obs shape to `(53,)`, remove `_prev_gap_offset`), `infinite_maze/ml/evaluate.py` |
+| **Algorithm** | **PPO** (continue from Phase 2 checkpoint) with `n_envs=4` parallel environments using `DummyVecEnv` (in-process, no IPC overhead). Provides exploration diversity across different random mazes, which is critical for learning generalised vertical navigation. Switch to `SubprocVecEnv` only if `Line.generateMaze()` proves to be a CPU bottleneck during reset. |
+| **Timesteps** | 500,000 |
+| **Key hyperparameters** | `learning_rate=5e-5`, `gamma=0.995`, `n_steps=2048`, `batch_size=256`, `n_epochs=10`, `ent_coef=0.05` (**raised from originally-planned 0.02** — essential to prevent DOWN-only action collapse), `clip_range=0.1`, **`n_envs=4`** |
+| **Reward shaping** | Full Phase 3 stack in effect: **(1)** `compute_reward()` with Phase 3 weights; **(2)** `phase3_shaping()` called from `environment.py`, tracking `_prev_gap_offset` and `_consecutive_blocked`; **(3)** BFS curriculum bonus via `bfs_optimal_action()`. |
+| **Reward weights** | `RIGHT unblocked → +1.0`; `RIGHT blocked → −0.3`; `LEFT unblocked → −1.5` (**raised from −0.5** to close LEFT→RIGHT exploit); `LEFT blocked → −0.3` (symmetric); `DO_NOTHING → −0.1`; `UP/DOWN unblocked → 0.0`; `UP/DOWN when blocked-right → +0.1`; `TERMINAL → −10.0`; BFS match → `+0.05` when action equals `bfs_optimal_action()` |
+| **`phase3_shaping()`** | Gap-approach bonus `+0.3` when `new_gap_offset < prev_gap_offset` (moving toward gap); escape bonus `+0.05` when stuck-counter drops. `GAP_SCAN_RADIUS=220` px (10-cell vertical scan alternating above/below player). |
+| **BFS curriculum** | `features.bfs_optimal_action(player, lines, game)` runs a two-phase BFS each step: (1) find all right-unblocked candidate cells in the local wall grid; (2) filter pockets by forward reachability (`MIN_FORWARD=2` cells). When agent's action matches BFS optimal, `+REWARD_BFS_MATCH(0.05)` is added. BFS action is **never shown to the agent** — it is only used to shape the reward signal. |
+| **BFS exit gate** | Before advancing to Phase 4: temporarily set `REWARD_BFS_MATCH=0.0` and re-evaluate deterministically over 20 episodes (seed 42). If mean score holds ≥ 250 → genuine navigation skill; advance to Phase 4. If score collapses → policy was cue-following; continue Phase 3 training. Restore `REWARD_BFS_MATCH=0.05` regardless (Phase 4 permanently zeroes it). |
+| **Success criterion** | Mean episode score ≥ 150 (Intermediate tier) over last 10 eval episodes; LEFT action frequency < 5%; vertical action frequency > 20% when `blocked_right=True` |
+| **Checkpoint frequency** | Every 10,000 timesteps |
+| **Files modified** | `infinite_maze/ml/features.py` (added `is_blocked_right_at_y`, `nearest_right_gap_offset`, `_build_adjacency`, `bfs_optimal_action`); `infinite_maze/ml/rewards.py` (updated weights, extended `compute_reward` signature with `bfs_action`, `phase`); `infinite_maze/ml/environment.py` (wired `phase3_shaping` and `bfs_optimal_action`); `infinite_maze/utils/config.py` (added `REWARD_MOVE_RIGHT_BLOCKED`, `REWARD_VERTICAL_WHEN_BLOCKED_UP/DOWN`, `REWARD_BFS_MATCH`, updated `GAP_SCAN_RADIUS` and `REWARD_MOVE_LEFT`) |
 
-**Mitigation (built in):** The two new observation features — gap offset (obs[12]) and consecutive-blocked counter (obs[13]) — make Phase 3 credit assignment tractable. The agent now has explicit signal for *where* the nearest gap is and *how long* it has been stuck. The directional shaping bonus only fires when the agent moves *toward* the gap, preventing reward from arbitrary vertical flailing. The 250k-step escalation checkpoint provides an early exit condition so you can diagnose and respond to a plateau without waiting for the full 750k budget.
+#### Phase 3 Training History
+
+Five consecutive runs identified and resolved a series of cascading reward engineering bugs before arriving at the current configuration.
+
+| Run | Key config | Deterministic score | Dominant issue |
+|-----|-----------|---------------------|----------------|
+| 1 | `ent_coef=0.05`, base rewards | ~250, 87% DOWN, 0% UP | `phase3_shaping()` never wired — Phase 3 was functionally identical to Phase 2 |
+| 2 | Gap bonus wired, `ent_coef=0.1` | 186 stochastic 564 | 3× stochastic/deterministic gap — high entropy caused chaotic test-time policy |
+| 3 | `GAP_SCAN_RADIUS=220`, `REWARD_VERTICAL_WHEN_BLOCKED=0.3` | 52% UP but stoch/det gap persists | `REWARD_VERTICAL_WHEN_BLOCKED=0.3` rewarded oscillation near walls indefinitely |
+| 4 | `REWARD_VERTICAL_WHEN_BLOCKED=0.0` | 41% LEFT, 0% UP | Zeroing blocked-vertical exposed the `LEFT→RIGHT = +0.5` net-profit loop |
+| 5 | Restored 0.1 blocked-vert, `REWARD_MOVE_LEFT=−0.5`, fresh from Phase 2 | 144.2, 38.8% LEFT, 0% UP | `LEFT→RIGHT` loop still profitable at −0.5 |
+
+**Root cause (runs 4–5):** `REWARD_MOVE_LEFT(−0.5) + REWARD_MOVE_RIGHT(+1.0) = +0.5` net profit per 2-step cycle. The agent discovered this loop and exploited it instead of navigating.
+
+**Fix applied (run 6 — current):** `REWARD_MOVE_LEFT: −0.5 → −1.5` (loop now yields `−0.5` net, unprofitable) + `bfs_optimal_action()` providing a positive navigation signal via `REWARD_BFS_MATCH: +0.05`.
+
+**Mitigation summary:** The gap-offset observation (obs[12]) and consecutive-blocked counter (obs[11]) give the network explicit signals for where the nearest gap is and how long it has been stuck. `phase3_shaping()` fires only when the agent moves *toward* the gap, preventing arbitrary vertical flailing from being rewarded. The BFS bonus reinforces correct navigational choices without exposing the path to the agent. The LEFT penalty at −1.5 permanently closes the retreat-and-advance exploit.
 
 ---
 
@@ -294,7 +313,7 @@ Tackle files in this exact order. Each file has one acceptance condition.
 | 1 | `infinite_maze/utils/config.py` | `GameConfig.ML_CONFIG` dict exists with all keys listed in §1.2; `from infinite_maze.utils.config import config; config.ML_CONFIG["MAX_PACE"]` returns `10` |
 | 2 | `infinite_maze/ml/__init__.py` | Module imports without error: `from infinite_maze.ml import environment` |
 | 3 | `infinite_maze/ml/features.py` | `get_obs(player, lines, game)` returns a `np.float32` array of shape `(53,)`; all values in `[0.0, 1.0]`; `is_blocked(player, lines, direction)` matches engine.py collision results for a known wall configuration; `get_wall_grid(player, lines)` returns a `(40,)` binary float32 array where 0.0 indicates no wall in the cell and 1.0 indicates a wall present |
-| 4 | `infinite_maze/ml/rewards.py` | `compute_reward(action, blocked_flags, terminated, game, config)` returns the correct float for all 7 cases: right unblocked → `+1.0`, right blocked → `0.0`, left unblocked → `−0.5`, left blocked → `0.0`, do-nothing → `−0.1`, vertical (up/down) → `0.0`, terminal → `−10.0`. Phase 3 shaping is a separate pure function: `phase3_shaping(action, prev_gap_offset, new_gap_offset, prev_blocked_count, new_blocked_count) → float`; `environment.py` tracks `_prev_gap_offset` and `_consecutive_blocked` between steps and passes them as arguments — `rewards.py` holds no state. |
+| 4 | `infinite_maze/ml/rewards.py` | `compute_reward(action, blocked_flags, terminated, game, bfs_action=-1, phase=1)` returns the correct float. Reward table: right unblocked → `+1.0`, right blocked → `−0.3`, left unblocked → `−1.5`, left blocked → `−0.3`, do-nothing → `−0.1`, up/down unblocked → `0.0`, up/down when blocked-right → `+0.1`, terminal → `−10.0`, BFS match (phase ≥ 3) → `+0.05`. Phase 3 shaping is a separate pure function: `phase3_shaping(action, prev_gap_offset, new_gap_offset, prev_blocked_count, new_blocked_count, blocked_right) → float`; `environment.py` tracks `_prev_gap_offset` and `_consecutive_blocked` between steps and passes them as arguments — `rewards.py` holds no state. |
 | 5 | `infinite_maze/ml/environment.py` | `InfiniteMazeEnv` passes `gymnasium.utils.env_checker.check_env(env)` without errors; all 5 acceptance tests in §2 pass |
 | 6 | `tests/unit/test_ml_environment.py` | All unit tests pass headlessly under `pytest tests/unit/test_ml_environment.py` |
 | 7 | `infinite_maze/ml/train.py` | `python -m infinite_maze.ml.train --timesteps 1000` completes without error, writes a checkpoint to `checkpoints/`, accepts `--resume checkpoints/model_1000_steps.zip` to continue |
@@ -416,11 +435,11 @@ Use SB3's `CheckpointCallback` with `save_freq=ML_CONFIG["CHECKPOINT_FREQ"]` and
 | 0 — Baseline | Env compliance + random perf | Random policy | 10k | Baseline recorded | N/A |
 | 1 — Survival | Stay alive | PPO (fresh) | 100k | > 25 | 10k |
 | 2 — Rightward bias | Move right reliably | PPO (resume P1) | 200k | > 50 | 10k |
-| 3 — Maze navigation | Use vertical gaps | PPO (resume P2, n_envs=4) | 750k | > 150 | 25k |
+| 3 — Maze navigation | Use vertical gaps | PPO (resume P2, n_envs=4) | 500k | > 150 | 10k |
 | 4 — Pace adaptation | Survive rising pace | PPO (resume P3) | 1M | > 300 | 50k |
 | 5 — Expert play | Master-tier scoring | PPO or RecurrentPPO (resume P4) | 2M | > 500 | 100k |
 
-**Total budget (excluding Phase 0):** ~3.8M timesteps across all phases.  
+**Total budget (excluding Phase 0):** ~3.55M timesteps across all phases (Phase 3 reduced from 750k to 500k).  
 **Resume-friendly:** Every phase starts from the previous phase's final checkpoint. Training can be stopped at any checkpoint and resumed with `--resume`.
 
 ---
