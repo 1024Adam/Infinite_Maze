@@ -58,8 +58,8 @@ def compute_reward(
     DO_NOTHING               → REWARD_DO_NOTHING      (-0.1)
     UP (free)                → REWARD_MOVE_VERTICAL_UP          (+0.1)
     DOWN (free)              → REWARD_MOVE_VERTICAL_DOWN         (0.0)
-    UP (blocked right)       → REWARD_VERTICAL_WHEN_BLOCKED_UP   (+0.4)
-    DOWN (blocked right)     → REWARD_VERTICAL_WHEN_BLOCKED_DOWN (+0.3)
+    UP (blocked right)       → REWARD_VERTICAL_WHEN_BLOCKED_UP   (+0.1)  + phase3_shaping gap bonus
+    DOWN (blocked right)     → REWARD_VERTICAL_WHEN_BLOCKED_DOWN (+0.1)  + phase3_shaping gap bonus
     """
     if terminated:
         return float(_ML["REWARD_TERMINAL"])

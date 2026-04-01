@@ -87,7 +87,7 @@ class GameConfig:
         "EPISODE_SCORE_CAP": 600,
         "MAX_WALL_SCAN_DIST": 200,
         "CONSECUTIVE_BLOCKED_CAP": 50,
-        "GAP_SCAN_RADIUS": 110,
+        "GAP_SCAN_RADIUS": 220,
         "GRID_COLS": 4,
         "GRID_ROWS": 5,
 
@@ -102,8 +102,8 @@ class GameConfig:
         "REWARD_DO_NOTHING": -0.1,
         "REWARD_MOVE_VERTICAL_UP": 0.0,
         "REWARD_MOVE_VERTICAL_DOWN": 0.0,
-        "REWARD_VERTICAL_WHEN_BLOCKED_UP": 0.3,
-        "REWARD_VERTICAL_WHEN_BLOCKED_DOWN": 0.3,
+        "REWARD_VERTICAL_WHEN_BLOCKED_UP": 0.1,
+        "REWARD_VERTICAL_WHEN_BLOCKED_DOWN": 0.1,
         "REWARD_TERMINAL": -10.0,
 
         # Training
