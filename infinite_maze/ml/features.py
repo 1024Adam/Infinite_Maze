@@ -404,18 +404,14 @@ def bfs_optimal_action(player, lines, game) -> int:
     # Phase 1: BFS from start — record shortest path to every reachable cell
     from collections import deque
     parent  = {start: None}
+    dist_from_start   = {start: 0}
     action_from_start = {start: None}
     queue   = deque([start])
     gap_candidates = []  # (dist, cell) for cells where RIGHT is unblocked
 
     while queue:
         node = queue.popleft()
-        dist = 0
-        # Count path length for ordering
-        cur = node
-        while parent[cur] is not None:
-            cur = parent[cur]
-            dist += 1
+        dist = dist_from_start[node]
 
         # Check if RIGHT is unblocked from this cell
         nx, ny = node
@@ -430,6 +426,7 @@ def bfs_optimal_action(player, lines, game) -> int:
         for nb in adj.get(node, set()):
             if nb not in parent:
                 parent[nb] = node
+                dist_from_start[nb] = dist + 1
                 # Record first action taken from start toward this neighbour
                 if parent[node] is None:  # nb is directly adjacent to start
                     nx_nb, ny_nb = nb
