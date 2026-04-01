@@ -22,8 +22,9 @@ from .features import (
     is_blocked_left,
     is_blocked_up,
     is_blocked_down,
+    nearest_right_gap_offset,
 )
-from .rewards import compute_reward
+from .rewards import compute_reward, phase3_shaping
 
 _ML = config.ML_CONFIG
 _MC = config.MOVEMENT_CONSTANTS
@@ -67,6 +68,7 @@ class InfiniteMazeEnv(gym.Env):
         # Episode state
         self._tick_counter        = 0
         self._consecutive_blocked = 0
+        self._prev_gap_offset     = 0.5
 
     # ------------------------------------------------------------------
     # gymnasium API
@@ -96,6 +98,7 @@ class InfiniteMazeEnv(gym.Env):
 
         self._tick_counter        = 0
         self._consecutive_blocked = 0
+        self._prev_gap_offset     = 0.5
 
         if options is not None and "start_pace" in options:
             self._game.setPace(int(options["start_pace"]))
@@ -199,12 +202,24 @@ class InfiniteMazeEnv(gym.Env):
             new_blocked = self._consecutive_blocked
 
         # -- 11. Reward --
+        prev_gap_offset = self._prev_gap_offset
+        prev_blocked    = self._consecutive_blocked
+
         reward = float(compute_reward(action, blocked_flags, terminated, game))
 
         self._consecutive_blocked = new_blocked
 
         # -- 12. Build observation and return --
-        obs  = self._get_obs()
+        obs     = self._get_obs()
+        new_gap = nearest_right_gap_offset(player, lines, game)
+
+        if self.phase >= 3:
+            reward += phase3_shaping(
+                action, prev_gap_offset, new_gap, prev_blocked, new_blocked, blocked_right
+            )
+
+        self._prev_gap_offset = new_gap
+
         info = {
             "score": game.getScore(),
             "pace":  game.getPace(),

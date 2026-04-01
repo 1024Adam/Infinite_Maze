@@ -22,6 +22,8 @@ from infinite_maze.ml.features import (
     is_blocked_left,
     is_blocked_up,
     is_blocked_down,
+    is_blocked_right_at_y,
+    nearest_right_gap_offset,
     get_obs,
     get_wall_grid,
 )
@@ -490,6 +492,62 @@ class TestConsecutiveBlocked:
         env._lines = []
         env.step(RIGHT)
         assert env._consecutive_blocked == 0
+
+
+# ---------------------------------------------------------------------------
+# nearest_right_gap_offset — acceptance tests (hand-crafted walls)
+# ---------------------------------------------------------------------------
+
+class TestNearestRightGapOffset:
+    """Verify gap offset feature per training-plan §nearest_right_gap_offset algorithm."""
+
+    def _make_state(self, player_x=100, player_y=200):
+        game   = Game(headless=True)
+        player = Player(player_x, player_y, headless=True)
+        return game, player
+
+    def test_unblocked_at_current_y_returns_half(self):
+        """When current Y is already unblocked right, result must be 0.5."""
+        game, player = self._make_state()
+        # No walls — always unblocked
+        assert nearest_right_gap_offset(player, [], game) == pytest.approx(0.5)
+
+    def test_gap_above_returns_less_than_half(self):
+        """Gap 20 px above player → result < 0.5."""
+        game, player = self._make_state(player_x=100, player_y=200)
+        ph    = player.getHeight()
+        pw    = player.getWidth()
+        speed = player.getSpeed()
+        # Vertical wall at x = player.right + speed, spanning y=[190, 250]
+        # covering current row (200–210) and 10 px below, but NOT 180 (gap above)
+        wall_x = 100 + pw + speed
+        wall = _vertical_wall(wall_x, 192, 250)
+        result = nearest_right_gap_offset(player, [wall], game)
+        assert result < 0.5
+
+    def test_gap_below_returns_greater_than_half(self):
+        """Gap below player → result > 0.5."""
+        game, player = self._make_state(player_x=100, player_y=200)
+        ph    = player.getHeight()
+        pw    = player.getWidth()
+        speed = player.getSpeed()
+        # Wall spans y=[150, 205], blocking current row but not 215+ (below)
+        wall_x = 100 + pw + speed
+        wall = _vertical_wall(wall_x, 150, 205)
+        result = nearest_right_gap_offset(player, [wall], game)
+        assert result > 0.5
+
+    def test_no_gap_in_radius_returns_half(self):
+        """When no open Y within GAP_SCAN_RADIUS, result must be 0.5."""
+        game, player = self._make_state(player_x=100, player_y=200)
+        pw    = player.getWidth()
+        speed = player.getSpeed()
+        radius = _ML["GAP_SCAN_RADIUS"]
+        # Wall spanning far beyond the scan radius
+        wall_x = 100 + pw + speed
+        wall = _vertical_wall(wall_x, 0, 480)
+        result = nearest_right_gap_offset(player, [wall], game)
+        assert result == pytest.approx(0.5)
 
 
 # ---------------------------------------------------------------------------

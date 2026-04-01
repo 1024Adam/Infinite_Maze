@@ -87,6 +87,7 @@ class GameConfig:
         "EPISODE_SCORE_CAP": 600,
         "MAX_WALL_SCAN_DIST": 200,
         "CONSECUTIVE_BLOCKED_CAP": 50,
+        "GAP_SCAN_RADIUS": 110,
         "GRID_COLS": 4,
         "GRID_ROWS": 5,
 

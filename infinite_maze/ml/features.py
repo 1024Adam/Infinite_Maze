@@ -56,6 +56,38 @@ def is_blocked_right(player, lines) -> bool:
     return False
 
 
+def is_blocked_right_at_y(player, lines, y_candidate: float) -> bool:
+    """RIGHT collision check with y_candidate substituted for player.getY().
+
+    Keeps player.getX(), player.getWidth(), and all line positions fixed.
+    Used by nearest_right_gap_offset to probe candidate Y positions.
+    """
+    px    = player.getX()
+    pw    = player.getWidth()
+    ph    = player.getHeight()
+    speed = player.getSpeed()
+
+    for line in lines:
+        if line.getIsHorizontal():
+            if (
+                y_candidate <= line.getYStart()
+                and y_candidate + ph >= line.getYStart()
+                and px + pw + speed == line.getXStart()
+            ):
+                return True
+        else:
+            if (
+                px + pw <= line.getXStart()
+                and px + pw + speed >= line.getXStart()
+                and (
+                    (y_candidate >= line.getYStart() and y_candidate      <= line.getYEnd())
+                    or (y_candidate + ph >= line.getYStart() and y_candidate + ph <= line.getYEnd())
+                )
+            ):
+                return True
+    return False
+
+
 def is_blocked_left(player, lines) -> bool:
     """Return True if the player cannot move left by one speed unit."""
     px    = player.getX()
@@ -275,6 +307,45 @@ def _wall_dist_up(player, lines) -> float:
             if px <= xs <= px + pw:
                 min_dist = min(min_dist, dist)
     return min_dist
+
+
+# ---------------------------------------------------------------------------
+# Nearest right-facing gap (Phase 3 shaping feature)
+# ---------------------------------------------------------------------------
+
+def nearest_right_gap_offset(player, lines, game) -> float:
+    """Return the normalised vertical offset to the nearest Y where RIGHT is unblocked.
+
+    Scans outward from the player's current Y in 5-pixel increments up to
+    ``ML_CONFIG["GAP_SCAN_RADIUS"]`` pixels, alternating above and below.
+
+    Returns
+    -------
+    float in [0.0, 1.0]
+        0.5 — gap is at the current Y (or no gap found within radius).
+        < 0.5 — nearest gap is above the player.
+        > 0.5 — nearest gap is below the player.
+    """
+    py     = player.getY()
+    ph     = player.getHeight()
+    radius = _ML["GAP_SCAN_RADIUS"]
+    y_min  = game.Y_MIN
+    y_max  = game.Y_MAX - ph
+
+    # Current Y already unblocked — gap is here
+    if not is_blocked_right_at_y(player, lines, py):
+        return 0.5
+
+    # Scan outward, alternating up/down, in 5-pixel steps
+    for dist in range(5, radius + 1, 5):
+        for y_candidate in (py - dist, py + dist):
+            if y_candidate < y_min or y_candidate > y_max:
+                continue
+            if not is_blocked_right_at_y(player, lines, y_candidate):
+                offset = (y_candidate - py) / radius * 0.5 + 0.5
+                return float(np.clip(offset, 0.0, 1.0))
+
+    return 0.5  # no gap found within scan radius
 
 
 # ---------------------------------------------------------------------------
