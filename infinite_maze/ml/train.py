@@ -30,6 +30,7 @@ os.environ.setdefault("SDL_AUDIODRIVER", "dummy")
 from stable_baselines3 import PPO
 from stable_baselines3.common.vec_env import DummyVecEnv
 from stable_baselines3.common.callbacks import CheckpointCallback, EvalCallback
+from stable_baselines3.common.monitor import Monitor
 
 from ..utils.config import config
 from .environment import InfiniteMazeEnv
@@ -101,8 +102,9 @@ def train(args) -> PPO:
     # Build vectorised training environment
     train_env = DummyVecEnv([_make_env(args.phase) for _ in range(args.n_envs)])
 
-    # Separate single-env for evaluation (not vectorised)
-    eval_env = InfiniteMazeEnv(phase=args.phase)
+    # Separate single-env for evaluation (not vectorised). Wrap with Monitor so
+    # EvalCallback reports canonical episode reward/length metrics.
+    eval_env = Monitor(InfiniteMazeEnv(phase=args.phase))
 
     if args.resume:
         print(f"Resuming from checkpoint: {args.resume}")
