@@ -11,7 +11,7 @@ Covers the four ML scripts in `infinite_maze/ml/`:
 | Script | Module | Purpose |
 |--------|--------|---------|
 | `train.py` | `infinite_maze.ml.train` | Train or resume a PPO agent |
-| `diagnose.py` | `infinite_maze.ml.diagnose` | Analyse action distribution & blocked-right behaviour |
+| `diagnose.py` | `infinite_maze.ml.diagnose` | Analyse action distribution, blocked-right behaviour, and sequence habits |
 | `evaluate.py` | `infinite_maze.ml.evaluate` | Headless episode scoring |
 | `watch.py` | `infinite_maze.ml.watch` | Live pygame window playback |
 
@@ -73,7 +73,7 @@ python -m infinite_maze.ml.train --phase 1 --timesteps 300000 \
 
 ## 2. Diagnosing
 
-Reveals whether a model has a genuine navigation policy or is stuck in a degenerate loop (e.g. spam RIGHT).
+Reveals whether a model has a genuine navigation policy or is stuck in a degenerate loop (e.g. spam RIGHT, DOWN-only collapse, repetitive two-action loops).
 
 ```bash
 # Quick diagnosis (500 steps)
@@ -84,6 +84,11 @@ python -m infinite_maze.ml.diagnose \
 python -m infinite_maze.ml.diagnose \
     --model checkpoints/phase1_YYYYMMDD_HHMMSS/best/best_model.zip \
     --steps 5000 --seed 42
+
+# Deep behaviour profile (sequence patterns + traces)
+python -m infinite_maze.ml.diagnose \
+    --model checkpoints/phase1_YYYYMMDD_HHMMSS/best/best_model.zip \
+    --steps 5000 --seed 42 --top-k 10 --trace-episodes 2 --trace-steps 120
 ```
 
 ### Interpreting output
@@ -95,7 +100,18 @@ python -m infinite_maze.ml.diagnose \
 | Blocked-right → vertical % | >50% | <10% |
 | Avg score | >50 | <10 |
 
+For sequence diagnostics (enabled by `--top-k` / trace flags):
+
+| Signal | Healthy | Degenerate |
+|--------|---------|-----------|
+| Top bigram concentration | Diverse patterns | One pattern dominates (e.g. >70%) |
+| Max run length (single action) | Moderate / mixed | Very long streaks (e.g. DOWN 200+) |
+| Transition diversity | Multiple action pairs | Mostly ACTION->same ACTION |
+| Trace episodes | Alternates contextually | Repeating loops (RIGHT->RIGHT..., DOWN->DOWN...) |
+
 A healthy Phase 1 model should take UP/DOWN actions when blocked right at least half the time.
+
+For stable conclusions, prefer `--steps 5000` or higher.
 
 ---
 
@@ -151,7 +167,7 @@ python -m infinite_maze.ml.watch \
 ```
 1. Train:    python -m infinite_maze.ml.train --phase 1 --timesteps 100000
 2. Evaluate: python -m infinite_maze.ml.evaluate --model checkpoints/phase1_.../best/best_model.zip --episodes 10
-3. Diagnose: python -m infinite_maze.ml.diagnose --model checkpoints/phase1_.../best/best_model.zip --steps 2000
+3. Diagnose: python -m infinite_maze.ml.diagnose --model checkpoints/phase1_.../best/best_model.zip --steps 5000 --top-k 10 --trace-episodes 2 --trace-steps 120
 4. Watch:    python -m infinite_maze.ml.watch    --model checkpoints/phase1_.../best/best_model.zip --episodes 3
 5. Decide:   If avg score meets phase target → move to next phase.
              If score is low but policy looks healthy → resume with more timesteps.

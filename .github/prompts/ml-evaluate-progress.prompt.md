@@ -52,6 +52,20 @@ Analyse the metrics and benchmark results to identify problems. Check each item:
 | High policy loss but low episode reward | Optimising wrong objective | Check reward sign conventions |
 | Score improves then collapses | Catastrophic forgetting | Consider replay buffer tuning (DQN) or smaller clip range (PPO) |
 
+Run `diagnose.py` with sequence analysis enabled and include the output in your assessment:
+
+```bash
+python -m infinite_maze.ml.diagnose \
+	--model <model_path> --phase <phase> --steps 5000 --seed 42 \
+	--top-k 10 --trace-episodes 2 --trace-steps 120
+```
+
+In addition to action distribution, explicitly evaluate:
+- Top 2-action and 3-action motifs (are they diverse or dominated by one loop?)
+- Max consecutive run length by action (look for long DOWN-only or RIGHT-only streaks)
+- Transition concentration (e.g. mostly `DOWN -> DOWN`)
+- Early-step traces for repeated habits and local looping patterns
+
 Report which symptoms are present and their likely causes.
 
 ## Step 5 — Recommendations
