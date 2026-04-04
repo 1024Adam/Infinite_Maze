@@ -12,10 +12,10 @@ from ..utils.config import config
 
 _MC = config.MOVEMENT_CONSTANTS
 DO_NOTHING = _MC["DO_NOTHING"]
-RIGHT      = _MC["RIGHT"]
-LEFT       = _MC["LEFT"]
-UP         = _MC["UP"]
-DOWN       = _MC["DOWN"]
+RIGHT = _MC["RIGHT"]
+LEFT = _MC["LEFT"]
+UP = _MC["UP"]
+DOWN = _MC["DOWN"]
 
 _ML = config.ML_CONFIG
 
@@ -90,9 +90,17 @@ def compute_reward(
     else:
         # UP or DOWN — differentiated bonus to break DOWN-only bias
         if blocked_flags.get("right", False):
-            key = "REWARD_VERTICAL_WHEN_BLOCKED_UP" if action == UP else "REWARD_VERTICAL_WHEN_BLOCKED_DOWN"
+            key = (
+                "REWARD_VERTICAL_WHEN_BLOCKED_UP"
+                if action == UP
+                else "REWARD_VERTICAL_WHEN_BLOCKED_DOWN"
+            )
         else:
-            key = "REWARD_MOVE_VERTICAL_UP" if action == UP else "REWARD_MOVE_VERTICAL_DOWN"
+            key = (
+                "REWARD_MOVE_VERTICAL_UP"
+                if action == UP
+                else "REWARD_MOVE_VERTICAL_DOWN"
+            )
         reward = float(_ML[key])
 
     # BFS curriculum bonus (Phase 3+): small bonus when action matches BFS-optimal move

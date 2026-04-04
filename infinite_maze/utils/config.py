@@ -90,11 +90,9 @@ class GameConfig:
         "GAP_SCAN_RADIUS": 220,
         "GRID_COLS": 4,
         "GRID_ROWS": 5,
-
         # Pace simulation (tick-based, not real-time)
         "TICKS_PER_PACE_UPDATE": 300,
         "PACE_SHIFT_INTERVAL": 10,
-
         # Reward weights
         "REWARD_MOVE_RIGHT": 1.0,
         "REWARD_MOVE_RIGHT_BLOCKED": -0.3,
@@ -106,7 +104,6 @@ class GameConfig:
         "REWARD_VERTICAL_WHEN_BLOCKED_DOWN": 0.1,
         "REWARD_TERMINAL": -10.0,
         "REWARD_BFS_MATCH": 0.05,
-
         # Training
         "DEFAULT_TIMESTEPS": 200_000,
         "CHECKPOINT_FREQ": 10_000,

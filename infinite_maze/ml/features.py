@@ -15,10 +15,10 @@ from ..utils.config import config
 
 _MC = config.MOVEMENT_CONSTANTS
 DO_NOTHING = _MC["DO_NOTHING"]
-RIGHT      = _MC["RIGHT"]
-LEFT       = _MC["LEFT"]
-UP         = _MC["UP"]
-DOWN       = _MC["DOWN"]
+RIGHT = _MC["RIGHT"]
+LEFT = _MC["LEFT"]
+UP = _MC["UP"]
+DOWN = _MC["DOWN"]
 
 _ML = config.ML_CONFIG
 
@@ -27,12 +27,13 @@ _ML = config.ML_CONFIG
 # AABB collision checks — replicated from core/engine.py, no import
 # ---------------------------------------------------------------------------
 
+
 def is_blocked_right(player, lines) -> bool:
     """Return True if the player cannot move right by one speed unit."""
-    px    = player.getX()
-    py    = player.getY()
-    pw    = player.getWidth()
-    ph    = player.getHeight()
+    px = player.getX()
+    py = player.getY()
+    pw = player.getWidth()
+    ph = player.getHeight()
     speed = player.getSpeed()
 
     for line in lines:
@@ -48,7 +49,7 @@ def is_blocked_right(player, lines) -> bool:
                 px + pw <= line.getXStart()
                 and px + pw + speed >= line.getXStart()
                 and (
-                    (py >= line.getYStart() and py      <= line.getYEnd())
+                    (py >= line.getYStart() and py <= line.getYEnd())
                     or (py + ph >= line.getYStart() and py + ph <= line.getYEnd())
                 )
             ):
@@ -62,9 +63,9 @@ def is_blocked_right_at_y(player, lines, y_candidate: float) -> bool:
     Keeps player.getX(), player.getWidth(), and all line positions fixed.
     Used by nearest_right_gap_offset to probe candidate Y positions.
     """
-    px    = player.getX()
-    pw    = player.getWidth()
-    ph    = player.getHeight()
+    px = player.getX()
+    pw = player.getWidth()
+    ph = player.getHeight()
     speed = player.getSpeed()
 
     for line in lines:
@@ -80,8 +81,11 @@ def is_blocked_right_at_y(player, lines, y_candidate: float) -> bool:
                 px + pw <= line.getXStart()
                 and px + pw + speed >= line.getXStart()
                 and (
-                    (y_candidate >= line.getYStart() and y_candidate      <= line.getYEnd())
-                    or (y_candidate + ph >= line.getYStart() and y_candidate + ph <= line.getYEnd())
+                    (y_candidate >= line.getYStart() and y_candidate <= line.getYEnd())
+                    or (
+                        y_candidate + ph >= line.getYStart()
+                        and y_candidate + ph <= line.getYEnd()
+                    )
                 )
             ):
                 return True
@@ -90,9 +94,9 @@ def is_blocked_right_at_y(player, lines, y_candidate: float) -> bool:
 
 def is_blocked_left(player, lines) -> bool:
     """Return True if the player cannot move left by one speed unit."""
-    px    = player.getX()
-    py    = player.getY()
-    ph    = player.getHeight()
+    px = player.getX()
+    py = player.getY()
+    ph = player.getHeight()
     speed = player.getSpeed()
 
     for line in lines:
@@ -108,7 +112,7 @@ def is_blocked_left(player, lines) -> bool:
                 px >= line.getXEnd()
                 and px - speed <= line.getXEnd()
                 and (
-                    (py >= line.getYStart() and py      <= line.getYEnd())
+                    (py >= line.getYStart() and py <= line.getYEnd())
                     or (py + ph >= line.getYStart() and py + ph <= line.getYEnd())
                 )
             ):
@@ -118,9 +122,9 @@ def is_blocked_left(player, lines) -> bool:
 
 def is_blocked_up(player, lines) -> bool:
     """Return True if the player cannot move up by one speed unit."""
-    px    = player.getX()
-    py    = player.getY()
-    pw    = player.getWidth()
+    px = player.getX()
+    py = player.getY()
+    pw = player.getWidth()
     speed = player.getSpeed()
 
     for line in lines:
@@ -129,7 +133,7 @@ def is_blocked_up(player, lines) -> bool:
                 py >= line.getYStart()
                 and py - speed <= line.getYStart()
                 and (
-                    (px >= line.getXStart() and px      <= line.getXEnd())
+                    (px >= line.getXStart() and px <= line.getXEnd())
                     or (px + pw >= line.getXStart() and px + pw <= line.getXEnd())
                 )
             ):
@@ -146,10 +150,10 @@ def is_blocked_up(player, lines) -> bool:
 
 def is_blocked_down(player, lines) -> bool:
     """Return True if the player cannot move down by one speed unit."""
-    px    = player.getX()
-    py    = player.getY()
-    pw    = player.getWidth()
-    ph    = player.getHeight()
+    px = player.getX()
+    py = player.getY()
+    pw = player.getWidth()
+    ph = player.getHeight()
     speed = player.getSpeed()
 
     for line in lines:
@@ -158,7 +162,7 @@ def is_blocked_down(player, lines) -> bool:
                 py + ph <= line.getYStart()
                 and py + ph + speed >= line.getYStart()
                 and (
-                    (px >= line.getXStart() and px      <= line.getXEnd())
+                    (px >= line.getXStart() and px <= line.getXEnd())
                     or (px + pw >= line.getXStart() and px + pw <= line.getXEnd())
                 )
             ):
@@ -197,12 +201,13 @@ def is_blocked(player, lines, direction: int) -> bool:
 # Wall distance scanning
 # ---------------------------------------------------------------------------
 
+
 def _wall_dist_right(player, lines) -> float:
     """Raw pixel distance to the nearest right-blocking wall, capped at MAX_WALL_SCAN_DIST."""
-    px   = player.getX()
-    py   = player.getY()
-    pw   = player.getWidth()
-    ph   = player.getHeight()
+    px = player.getX()
+    py = player.getY()
+    pw = player.getWidth()
+    ph = player.getHeight()
     edge = px + pw
     min_dist = float(_ML["MAX_WALL_SCAN_DIST"])
 
@@ -216,10 +221,7 @@ def _wall_dist_right(player, lines) -> float:
         else:
             ys = line.getYStart()
             ye = line.getYEnd()
-            if (
-                (py >= ys and py <= ye)
-                or (py + ph >= ys and py + ph <= ye)
-            ):
+            if (py >= ys and py <= ye) or (py + ph >= ys and py + ph <= ye):
                 min_dist = min(min_dist, dist)
     return min_dist
 
@@ -241,20 +243,17 @@ def _wall_dist_left(player, lines) -> float:
         else:
             ys = line.getYStart()
             ye = line.getYEnd()
-            if (
-                (py >= ys and py <= ye)
-                or (py + ph >= ys and py + ph <= ye)
-            ):
+            if (py >= ys and py <= ye) or (py + ph >= ys and py + ph <= ye):
                 min_dist = min(min_dist, dist)
     return min_dist
 
 
 def _wall_dist_down(player, lines) -> float:
     """Raw pixel distance to the nearest downward-blocking wall, capped at MAX_WALL_SCAN_DIST."""
-    px   = player.getX()
-    py   = player.getY()
-    pw   = player.getWidth()
-    ph   = player.getHeight()
+    px = player.getX()
+    py = player.getY()
+    pw = player.getWidth()
+    ph = player.getHeight()
     edge = py + ph
     min_dist = float(_ML["MAX_WALL_SCAN_DIST"])
 
@@ -265,10 +264,7 @@ def _wall_dist_down(player, lines) -> float:
                 continue
             xs = line.getXStart()
             xe = line.getXEnd()
-            if (
-                (px >= xs and px <= xe)
-                or (px + pw >= xs and px + pw <= xe)
-            ):
+            if (px >= xs and px <= xe) or (px + pw >= xs and px + pw <= xe):
                 min_dist = min(min_dist, dist)
         else:
             dist = line.getYStart() - edge
@@ -294,10 +290,7 @@ def _wall_dist_up(player, lines) -> float:
                 continue
             xs = line.getXStart()
             xe = line.getXEnd()
-            if (
-                (px >= xs and px <= xe)
-                or (px + pw >= xs and px + pw <= xe)
-            ):
+            if (px >= xs and px <= xe) or (px + pw >= xs and px + pw <= xe):
                 min_dist = min(min_dist, dist)
         else:
             dist = py - line.getYEnd()
@@ -313,13 +306,14 @@ def _wall_dist_up(player, lines) -> float:
 # BFS optimal action (Phase 3 curriculum reward)
 # ---------------------------------------------------------------------------
 
+
 def _build_adjacency(player, lines, game):
     """Return a dict mapping (cx, cy) cell coords → set of reachable neighbour cells.
 
     Uses pixel-level collision checks (is_blocked_right_at_y and equivalents)
     sampled at MAZE_CELL_SIZE intervals to approximate cell-level adjacency.
     """
-    CELL  = config.MAZE_CELL_SIZE
+    CELL = config.MAZE_CELL_SIZE
     y_min = game.Y_MIN
     y_max = game.Y_MAX - player.getHeight()
 
@@ -328,7 +322,7 @@ def _build_adjacency(player, lines, game):
     # Y: full screen height in CELL steps
     px_cell = (player.getX() // CELL) * CELL
     x_start = px_cell - CELL
-    x_end   = int(game.X_MAX) + CELL * 2
+    x_end = int(game.X_MAX) + CELL * 2
 
     cells = set()
     for cx in range(x_start, x_end + 1, CELL):
@@ -340,7 +334,7 @@ def _build_adjacency(player, lines, game):
 
     # Check lateral / vertical adjacency via pixel-level collision checks
     # We reuse existing is_blocked_right_at_y as our wall query
-    for (cx, cy) in cells:
+    for cx, cy in cells:
         # Temporarily move player to this cell for collision checks
         orig_x = player.getX()
         orig_y = player.getY()
@@ -348,9 +342,9 @@ def _build_adjacency(player, lines, game):
         player.setY(cy)
 
         right_nb = (cx + CELL, cy)
-        left_nb  = (cx - CELL, cy)
-        up_nb    = (cx, cy - CELL)
-        down_nb  = (cx, cy + CELL)
+        left_nb = (cx - CELL, cy)
+        up_nb = (cx, cy - CELL)
+        down_nb = (cx, cy + CELL)
 
         if right_nb in cells and not is_blocked_right(player, lines):
             adj[(cx, cy)].add(right_nb)
@@ -388,13 +382,15 @@ def bfs_optimal_action(player, lines, game) -> int:
     lines  : list[Line]
     game   : Game
     """
-    CELL             = config.MAZE_CELL_SIZE
-    MIN_FORWARD      = 2   # minimum cells reachable rightward beyond gap to pass pocket filter
-    MAX_CANDIDATES   = 8   # stop after evaluating this many candidates to bound cost
+    CELL = config.MAZE_CELL_SIZE
+    MIN_FORWARD = (
+        2  # minimum cells reachable rightward beyond gap to pass pocket filter
+    )
+    MAX_CANDIDATES = 8  # stop after evaluating this many candidates to bound cost
 
     player_x = player.getX()
     player_y = player.getY()
-    start    = ((player_x // CELL) * CELL, (player_y // CELL) * CELL)
+    start = ((player_x // CELL) * CELL, (player_y // CELL) * CELL)
 
     adj = _build_adjacency(player, lines, game)
 
@@ -403,10 +399,11 @@ def bfs_optimal_action(player, lines, game) -> int:
 
     # Phase 1: BFS from start — record shortest path to every reachable cell
     from collections import deque
-    parent  = {start: None}
-    dist_from_start   = {start: 0}
+
+    parent = {start: None}
+    dist_from_start = {start: 0}
     action_from_start = {start: None}
-    queue   = deque([start])
+    queue = deque([start])
     gap_candidates = []  # (dist, cell) for cells where RIGHT is unblocked
 
     while queue:
@@ -416,9 +413,11 @@ def bfs_optimal_action(player, lines, game) -> int:
         # Check if RIGHT is unblocked from this cell
         nx, ny = node
         orig_x, orig_y = player.getX(), player.getY()
-        player.setX(nx); player.setY(ny)
+        player.setX(nx)
+        player.setY(ny)
         right_open = not is_blocked_right(player, lines)
-        player.setX(orig_x); player.setY(orig_y)
+        player.setX(orig_x)
+        player.setY(orig_y)
 
         if right_open and node != start:
             gap_candidates.append((dist, node))
@@ -431,10 +430,14 @@ def bfs_optimal_action(player, lines, game) -> int:
                 if parent[node] is None:  # nb is directly adjacent to start
                     nx_nb, ny_nb = nb
                     sx, sy = start
-                    if   nx_nb > sx: first_act = RIGHT
-                    elif nx_nb < sx: first_act = LEFT
-                    elif ny_nb < sy: first_act = UP
-                    else:            first_act = DOWN
+                    if nx_nb > sx:
+                        first_act = RIGHT
+                    elif nx_nb < sx:
+                        first_act = LEFT
+                    elif ny_nb < sy:
+                        first_act = UP
+                    else:
+                        first_act = DOWN
                     action_from_start[nb] = first_act
                 else:
                     action_from_start[nb] = action_from_start.get(node, DO_NOTHING)
@@ -449,9 +452,9 @@ def bfs_optimal_action(player, lines, game) -> int:
     # Phase 2: forward reachability filter — pick nearest gap that isn't a pocket
     def _forward_reachable(gap_cell) -> int:
         """Count cells reachable rightward of gap_cell (shallow BFS, right-biased)."""
-        seen   = {gap_cell}
-        q      = deque([gap_cell])
-        count  = 0
+        seen = {gap_cell}
+        q = deque([gap_cell])
+        count = 0
         while q and count < 10:  # cap to keep cost bounded
             cx, cy = q.popleft()
             for nb in adj.get((cx, cy), set()):
@@ -478,6 +481,7 @@ def bfs_optimal_action(player, lines, game) -> int:
 # Nearest right-facing gap (Phase 3 shaping feature)
 # ---------------------------------------------------------------------------
 
+
 def nearest_right_gap_offset(player, lines, game) -> float:
     """Return the normalised vertical offset to the nearest Y where RIGHT is unblocked.
 
@@ -491,11 +495,11 @@ def nearest_right_gap_offset(player, lines, game) -> float:
         < 0.5 — nearest gap is above the player.
         > 0.5 — nearest gap is below the player.
     """
-    py     = player.getY()
-    ph     = player.getHeight()
+    py = player.getY()
+    ph = player.getHeight()
     radius = _ML["GAP_SCAN_RADIUS"]
-    y_min  = game.Y_MIN
-    y_max  = game.Y_MAX - ph
+    y_min = game.Y_MIN
+    y_max = game.Y_MAX - ph
 
     # Current Y already unblocked — gap is here
     if not is_blocked_right_at_y(player, lines, py):
@@ -516,6 +520,7 @@ def nearest_right_gap_offset(player, lines, game) -> float:
 # ---------------------------------------------------------------------------
 # Local wall-occupancy grid
 # ---------------------------------------------------------------------------
+
 
 def get_wall_grid(player, lines) -> np.ndarray:
     """Return a flat binary float32 array encoding wall presence in a local grid.
@@ -539,26 +544,26 @@ def get_wall_grid(player, lines) -> np.ndarray:
     player : Player
     lines  : list[Line]
     """
-    CELL      = config.MAZE_CELL_SIZE
-    COLS      = _ML["GRID_COLS"]
-    ROWS      = _ML["GRID_ROWS"]
+    CELL = config.MAZE_CELL_SIZE
+    COLS = _ML["GRID_COLS"]
+    ROWS = _ML["GRID_ROWS"]
     half_rows = ROWS // 2
 
     px = player.getX()
     py = player.getY()
     pw = player.getWidth()
     ph = player.getHeight()
-    cy = py + ph // 2   # player centre y
+    cy = py + ph // 2  # player centre y
 
     features = np.zeros(COLS * ROWS * 2, dtype=np.float32)
     idx = 0
 
     for col in range(COLS):
-        left_edge  = px + pw + col * CELL
+        left_edge = px + pw + col * CELL
         right_edge = px + pw + (col + 1) * CELL
 
         for row_offset in range(-half_rows, half_rows + 1):
-            top    = cy + row_offset * CELL - CELL // 2
+            top = cy + row_offset * CELL - CELL // 2
             bottom = cy + row_offset * CELL + CELL // 2
 
             # has_right_wall: vertical wall with x in (left_edge, right_edge]
@@ -579,11 +584,14 @@ def get_wall_grid(player, lines) -> np.ndarray:
                 if line.getIsHorizontal():
                     ly = line.getYStart()
                     if top < ly <= bottom:
-                        if line.getXStart() <= right_edge and line.getXEnd() >= left_edge:
+                        if (
+                            line.getXStart() <= right_edge
+                            and line.getXEnd() >= left_edge
+                        ):
                             has_bottom = 1.0
                             break
 
-            features[idx]     = has_right
+            features[idx] = has_right
             features[idx + 1] = has_bottom
             idx += 2
 
@@ -593,6 +601,7 @@ def get_wall_grid(player, lines) -> np.ndarray:
 # ---------------------------------------------------------------------------
 # Main observation encoder
 # ---------------------------------------------------------------------------
+
 
 def get_obs(player, lines, game, consecutive_blocked: int = 0) -> np.ndarray:
     """Encode the current game state as a flat float32 array of shape (53,).
@@ -625,9 +634,9 @@ def get_obs(player, lines, game, consecutive_blocked: int = 0) -> np.ndarray:
     [12]    consecutive ticks blocked right (normalised)
     [13..52] local wall grid — GRID_COLS × GRID_ROWS × 2 binary features
     """
-    ml       = _ML
+    ml = _ML
     max_scan = ml["MAX_WALL_SCAN_DIST"]
-    x_range  = int(game.X_MAX) - game.X_MIN  # int() — X_MAX is WIDTH/2 (float)
+    x_range = int(game.X_MAX) - game.X_MIN  # int() — X_MAX is WIDTH/2 (float)
 
     scalars = np.array(
         [

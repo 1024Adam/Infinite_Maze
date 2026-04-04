@@ -20,7 +20,6 @@ All constants sourced from config.ML_CONFIG — nothing hardcoded here.
 
 import argparse
 import os
-import sys
 from datetime import datetime
 
 # Suppress pygame hello banner before any other import
@@ -49,6 +48,7 @@ def _run_dir(phase: int) -> str:
 def _make_env(phase: int):
     def _factory():
         return InfiniteMazeEnv(phase=phase)
+
     return _factory
 
 
@@ -118,7 +118,9 @@ def train(args) -> PPO:
 
     callbacks = _build_callbacks(eval_env, run_dir, args)
 
-    print(f"Training for {args.timesteps} timesteps (phase={args.phase}, n_envs={args.n_envs})")
+    print(
+        f"Training for {args.timesteps} timesteps (phase={args.phase}, n_envs={args.n_envs})"
+    )
     print(f"Run directory: {run_dir}")
     model.learn(
         total_timesteps=args.timesteps,
@@ -144,33 +146,65 @@ def _parse_args(argv=None):
     )
 
     # Core
-    p.add_argument("--timesteps",       type=int,   default=_ML["DEFAULT_TIMESTEPS"],
-                   help="Total environment steps to train for.")
-    p.add_argument("--resume",          type=str,   default=None,
-                   help="Path to a .zip checkpoint to resume training from.")
-    p.add_argument("--phase",           type=int,   default=1, choices=[0, 1, 2, 3, 4, 5],
-                   help="Training phase (controls reward shaping in the environment).")
-    p.add_argument("--n-envs",          type=int,   default=1,
-                   help="Number of parallel environments (use 4 for Phase 3).")
-    p.add_argument("--device",          type=str,   default="cpu",
-                   help="Torch device for PPO (cpu, cuda, or auto). Default cpu is faster for MlpPolicy.")
+    p.add_argument(
+        "--timesteps",
+        type=int,
+        default=_ML["DEFAULT_TIMESTEPS"],
+        help="Total environment steps to train for.",
+    )
+    p.add_argument(
+        "--resume",
+        type=str,
+        default=None,
+        help="Path to a .zip checkpoint to resume training from.",
+    )
+    p.add_argument(
+        "--phase",
+        type=int,
+        default=1,
+        choices=[0, 1, 2, 3, 4, 5],
+        help="Training phase (controls reward shaping in the environment).",
+    )
+    p.add_argument(
+        "--n-envs",
+        type=int,
+        default=1,
+        help="Number of parallel environments (use 4 for Phase 3).",
+    )
+    p.add_argument(
+        "--device",
+        type=str,
+        default="cpu",
+        help="Torch device for PPO (cpu, cuda, or auto). Default cpu is faster for MlpPolicy.",
+    )
 
     # PPO hyperparameters (plan defaults; override per-phase as needed)
-    p.add_argument("--learning-rate",   type=float, default=3e-4)
-    p.add_argument("--gamma",           type=float, default=0.99)
-    p.add_argument("--n-steps",         type=int,   default=512)
-    p.add_argument("--batch-size",      type=int,   default=64)
-    p.add_argument("--n-epochs",        type=int,   default=10)
-    p.add_argument("--ent-coef",        type=float, default=0.01)
-    p.add_argument("--clip-range",      type=float, default=0.2)
+    p.add_argument("--learning-rate", type=float, default=3e-4)
+    p.add_argument("--gamma", type=float, default=0.99)
+    p.add_argument("--n-steps", type=int, default=512)
+    p.add_argument("--batch-size", type=int, default=64)
+    p.add_argument("--n-epochs", type=int, default=10)
+    p.add_argument("--ent-coef", type=float, default=0.01)
+    p.add_argument("--clip-range", type=float, default=0.2)
 
     # Callbacks
-    p.add_argument("--checkpoint-freq", type=int,   default=_ML["CHECKPOINT_FREQ"],
-                   help="Save a checkpoint every N environment steps.")
-    p.add_argument("--eval-freq",       type=int,   default=_ML["EVAL_FREQ"],
-                   help="Run evaluation every N environment steps. Set 0 to disable.")
-    p.add_argument("--tensorboard",     action="store_true",
-                   help=f"Enable TensorBoard logging to {_ML['TENSORBOARD_LOG']}.")
+    p.add_argument(
+        "--checkpoint-freq",
+        type=int,
+        default=_ML["CHECKPOINT_FREQ"],
+        help="Save a checkpoint every N environment steps.",
+    )
+    p.add_argument(
+        "--eval-freq",
+        type=int,
+        default=_ML["EVAL_FREQ"],
+        help="Run evaluation every N environment steps. Set 0 to disable.",
+    )
+    p.add_argument(
+        "--tensorboard",
+        action="store_true",
+        help=f"Enable TensorBoard logging to {_ML['TENSORBOARD_LOG']}.",
+    )
 
     return p.parse_args(argv)
 

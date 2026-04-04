@@ -34,18 +34,26 @@ from ..utils.config import config
 
 _MC = config.MOVEMENT_CONSTANTS
 DO_NOTHING = _MC["DO_NOTHING"]
-RIGHT      = _MC["RIGHT"]
-LEFT       = _MC["LEFT"]
-UP         = _MC["UP"]
-DOWN       = _MC["DOWN"]
+RIGHT = _MC["RIGHT"]
+LEFT = _MC["LEFT"]
+UP = _MC["UP"]
+DOWN = _MC["DOWN"]
 
-ACTION_NAMES = {DO_NOTHING: "DO_NOTHING", RIGHT: "RIGHT", LEFT: "LEFT", UP: "UP", DOWN: "DOWN"}
+ACTION_NAMES = {
+    DO_NOTHING: "DO_NOTHING",
+    RIGHT: "RIGHT",
+    LEFT: "LEFT",
+    UP: "UP",
+    DOWN: "DOWN",
+}
 
 
-def _top_ngrams(actions: list[int], n: int, top_k: int) -> list[tuple[tuple[int, ...], int]]:
+def _top_ngrams(
+    actions: list[int], n: int, top_k: int
+) -> list[tuple[tuple[int, ...], int]]:
     if n <= 0 or len(actions) < n:
         return []
-    counts = Counter(tuple(actions[i:i + n]) for i in range(len(actions) - n + 1))
+    counts = Counter(tuple(actions[i : i + n]) for i in range(len(actions) - n + 1))
     return counts.most_common(top_k)
 
 
@@ -67,7 +75,9 @@ def _max_run_lengths(actions: list[int]) -> dict[int, int]:
     return max_runs
 
 
-def _alternating_loops(actions: list[int], min_len: int = 6) -> list[tuple[int, int, int]]:
+def _alternating_loops(
+    actions: list[int], min_len: int = 6
+) -> list[tuple[int, int, int]]:
     loops = []
     i = 0
     n = len(actions)
@@ -113,16 +123,16 @@ def diagnose(
     obs, _ = env.reset(**reset_kwargs)
 
     # Counters
-    action_counts   = {a: 0 for a in range(5)}
-    episodes        = 0
-    scores          = []
-    episode_score   = 0
+    action_counts = {a: 0 for a in range(5)}
+    episodes = 0
+    scores = []
+    episode_score = 0
 
     # Blocked-right breakdown
-    blocked_right_total     = 0
-    blocked_right_vertical  = 0   # UP or DOWN while blocked right
-    blocked_right_right     = 0   # RIGHT again while blocked right
-    blocked_right_nothing   = 0   # DO_NOTHING while blocked right
+    blocked_right_total = 0
+    blocked_right_vertical = 0  # UP or DOWN while blocked right
+    blocked_right_right = 0  # RIGHT again while blocked right
+    blocked_right_nothing = 0  # DO_NOTHING while blocked right
 
     # Sequence diagnostics
     action_sequence = []
@@ -144,7 +154,11 @@ def diagnose(
             transition_counts[(prev_action, action)] += 1
         prev_action = action
 
-        if trace_enabled and len(traces) < trace_episodes and len(current_trace) < trace_steps:
+        if (
+            trace_enabled
+            and len(traces) < trace_episodes
+            and len(current_trace) < trace_steps
+        ):
             current_trace.append(action)
 
         blocked = is_blocked_right(env._player, env._lines)
@@ -177,7 +191,7 @@ def diagnose(
     env.close()
 
     total_actions = sum(action_counts.values())
-    mean_score    = sum(scores) / len(scores) if scores else 0.0
+    mean_score = sum(scores) / len(scores) if scores else 0.0
 
     top_bigrams = _top_ngrams(action_sequence, 2, top_k)
     top_trigrams = _top_ngrams(action_sequence, 3, top_k)
@@ -190,30 +204,30 @@ def diagnose(
         longest_loops[(a, b)] = max(longest_loops.get((a, b), 0), loop_len)
 
     return {
-        "steps":                  n_steps,
-        "episodes":               episodes,
-        "mean_score":             mean_score,
-        "min_score":              min(scores) if scores else 0,
-        "max_score":              max(scores) if scores else 0,
-        "action_counts":          action_counts,
-        "total_actions":          total_actions,
-        "blocked_right_total":    blocked_right_total,
+        "steps": n_steps,
+        "episodes": episodes,
+        "mean_score": mean_score,
+        "min_score": min(scores) if scores else 0,
+        "max_score": max(scores) if scores else 0,
+        "action_counts": action_counts,
+        "total_actions": total_actions,
+        "blocked_right_total": blocked_right_total,
         "blocked_right_vertical": blocked_right_vertical,
-        "blocked_right_right":    blocked_right_right,
-        "blocked_right_nothing":  blocked_right_nothing,
-        "top_bigrams":            top_bigrams,
-        "top_trigrams":           top_trigrams,
-        "max_runs":               max_runs,
-        "top_transitions":        top_transitions,
-        "loop_counts":            dict(loop_counts),
-        "loop_longest":           longest_loops,
-        "traces":                 traces,
+        "blocked_right_right": blocked_right_right,
+        "blocked_right_nothing": blocked_right_nothing,
+        "top_bigrams": top_bigrams,
+        "top_trigrams": top_trigrams,
+        "max_runs": max_runs,
+        "top_transitions": top_transitions,
+        "loop_counts": dict(loop_counts),
+        "loop_longest": longest_loops,
+        "traces": traces,
     }
 
 
 def _print_report(result: dict, model_path: str) -> None:
-    r             = result
-    total         = r["total_actions"]
+    r = result
+    total = r["total_actions"]
     blocked_total = r["blocked_right_total"]
 
     print(f"Model   : {model_path}")
@@ -228,8 +242,8 @@ def _print_report(result: dict, model_path: str) -> None:
     print("── Action distribution (all steps) ────────────────")
     for action, name in ACTION_NAMES.items():
         count = r["action_counts"][action]
-        pct   = count / total * 100 if total else 0
-        bar   = "█" * int(pct / 2)
+        pct = count / total * 100 if total else 0
+        bar = "█" * int(pct / 2)
         print(f"  {name:<12} {count:>6}  ({pct:5.1f}%)  {bar}")
     print()
 
@@ -237,6 +251,7 @@ def _print_report(result: dict, model_path: str) -> None:
     if blocked_total == 0:
         print("  (no blocked-right steps recorded)")
     else:
+
         def _row(label, count):
             pct = count / blocked_total * 100
             bar = "█" * int(pct / 2)
@@ -244,12 +259,14 @@ def _print_report(result: dict, model_path: str) -> None:
 
         _row("Vertical (UP or DOWN)", r["blocked_right_vertical"])
         _row("RIGHT again (degenerate)", r["blocked_right_right"])
-        _row("DO_NOTHING",              r["blocked_right_nothing"])
-        _row("LEFT",
-             blocked_total
-             - r["blocked_right_vertical"]
-             - r["blocked_right_right"]
-             - r["blocked_right_nothing"])
+        _row("DO_NOTHING", r["blocked_right_nothing"])
+        _row(
+            "LEFT",
+            blocked_total
+            - r["blocked_right_vertical"]
+            - r["blocked_right_right"]
+            - r["blocked_right_nothing"],
+        )
         print()
 
         v_pct = r["blocked_right_vertical"] / blocked_total * 100
@@ -314,27 +331,51 @@ def _parse_args(argv=None):
         description="Behavioural diagnostic for a trained Infinite Maze agent.",
         formatter_class=argparse.ArgumentDefaultsHelpFormatter,
     )
-    p.add_argument("--model",  type=str, required=True,
-                   help="Path to a saved .zip model file.")
-    p.add_argument("--steps",  type=int, default=2000,
-                   help="Number of environment steps to sample.")
-    p.add_argument("--phase",  type=int, default=1, choices=[0, 1, 2, 3, 4, 5],
-                   help="Environment phase.")
-    p.add_argument("--seed",   type=int, default=None,
-                   help="RNG seed for reproducibility.")
-    p.add_argument("--device", type=str, default="cpu",
-                   help="Torch device for PPO load/predict (cpu, cuda, or auto).")
-    p.add_argument("--top-k",  type=int, default=5,
-                   help="How many top sequence patterns/transitions to print.")
-    p.add_argument("--trace-episodes", type=int, default=0,
-                   help="Number of episode traces to print (0 disables traces).")
-    p.add_argument("--trace-steps", type=int, default=0,
-                   help="Max steps per traced episode (0 disables traces).")
+    p.add_argument(
+        "--model", type=str, required=True, help="Path to a saved .zip model file."
+    )
+    p.add_argument(
+        "--steps", type=int, default=2000, help="Number of environment steps to sample."
+    )
+    p.add_argument(
+        "--phase",
+        type=int,
+        default=1,
+        choices=[0, 1, 2, 3, 4, 5],
+        help="Environment phase.",
+    )
+    p.add_argument(
+        "--seed", type=int, default=None, help="RNG seed for reproducibility."
+    )
+    p.add_argument(
+        "--device",
+        type=str,
+        default="cpu",
+        help="Torch device for PPO load/predict (cpu, cuda, or auto).",
+    )
+    p.add_argument(
+        "--top-k",
+        type=int,
+        default=5,
+        help="How many top sequence patterns/transitions to print.",
+    )
+    p.add_argument(
+        "--trace-episodes",
+        type=int,
+        default=0,
+        help="Number of episode traces to print (0 disables traces).",
+    )
+    p.add_argument(
+        "--trace-steps",
+        type=int,
+        default=0,
+        help="Max steps per traced episode (0 disables traces).",
+    )
     return p.parse_args(argv)
 
 
 def main(argv=None):
-    args   = _parse_args(argv)
+    args = _parse_args(argv)
     result = diagnose(
         args.model,
         args.steps,

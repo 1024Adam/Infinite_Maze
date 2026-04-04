@@ -31,10 +31,10 @@ _ML = config.ML_CONFIG
 _MC = config.MOVEMENT_CONSTANTS
 
 DO_NOTHING = _MC["DO_NOTHING"]
-RIGHT      = _MC["RIGHT"]
-LEFT       = _MC["LEFT"]
-UP         = _MC["UP"]
-DOWN       = _MC["DOWN"]
+RIGHT = _MC["RIGHT"]
+LEFT = _MC["LEFT"]
+UP = _MC["UP"]
+DOWN = _MC["DOWN"]
 
 
 class InfiniteMazeEnv(gym.Env):
@@ -62,14 +62,14 @@ class InfiniteMazeEnv(gym.Env):
         )
 
         # Game objects — initialised on first reset()
-        self._game   = None
+        self._game = None
         self._player = None
-        self._lines  = None
+        self._lines = None
 
         # Episode state
-        self._tick_counter        = 0
+        self._tick_counter = 0
         self._consecutive_blocked = 0
-        self._prev_gap_offset     = 0.5
+        self._prev_gap_offset = 0.5
 
     # ------------------------------------------------------------------
     # gymnasium API
@@ -89,22 +89,20 @@ class InfiniteMazeEnv(gym.Env):
         """
         super().reset(seed=seed)
 
-        self._game   = Game(headless=True)
+        self._game = Game(headless=True)
         self._player = Player(
             config.PLAYER_START_X, config.PLAYER_START_Y, headless=True
         )
-        self._lines  = Line.generateMaze(
-            self._game, config.MAZE_ROWS, config.MAZE_COLS
-        )
+        self._lines = Line.generateMaze(self._game, config.MAZE_ROWS, config.MAZE_COLS)
 
-        self._tick_counter        = 0
+        self._tick_counter = 0
         self._consecutive_blocked = 0
-        self._prev_gap_offset     = 0.5
+        self._prev_gap_offset = 0.5
 
         if options is not None and "start_pace" in options:
             self._game.setPace(int(options["start_pace"]))
 
-        obs  = self._get_obs()
+        obs = self._get_obs()
         info = {}
         return obs, info
 
@@ -124,20 +122,20 @@ class InfiniteMazeEnv(gym.Env):
         truncated : bool   True when score >= EPISODE_SCORE_CAP
         info : dict        {'score', 'pace', 'tick'}
         """
-        game   = self._game
+        game = self._game
         player = self._player
-        lines  = self._lines
+        lines = self._lines
 
         # -- 1. Collision flags (computed before the move) --
         blocked_right = is_blocked_right(player, lines)
-        blocked_left  = is_blocked_left(player, lines)
-        blocked_up    = is_blocked_up(player, lines)
-        blocked_down  = is_blocked_down(player, lines)
+        blocked_left = is_blocked_left(player, lines)
+        blocked_up = is_blocked_up(player, lines)
+        blocked_down = is_blocked_down(player, lines)
         blocked_flags = {
             "right": blocked_right,
-            "left":  blocked_left,
-            "up":    blocked_up,
-            "down":  blocked_down,
+            "left": blocked_left,
+            "up": blocked_up,
+            "down": blocked_down,
         }
 
         # -- 1b. BFS optimal action (Phase 3+ curriculum) --
@@ -181,12 +179,12 @@ class InfiniteMazeEnv(gym.Env):
         x_max = Line.getXMax(lines)
         for line in lines:
             start = line.getXStart()
-            end   = line.getXEnd()
+            end = line.getXEnd()
             if start < config.PLAYER_START_X:
                 line.setXStart(x_max)
-                if start == end:      # vertical line — xStart == xEnd
+                if start == end:  # vertical line — xStart == xEnd
                     line.setXEnd(x_max)
-                else:                 # horizontal line — span one cell
+                else:  # horizontal line — span one cell
                     line.setXEnd(x_max + config.MAZE_CELL_SIZE)
 
         # -- 7. Pace update (tick-based, replaces real-time Clock) --
@@ -195,7 +193,7 @@ class InfiniteMazeEnv(gym.Env):
 
         # -- 8 & 9. Terminal / truncated --
         terminated = player.getX() < game.X_MIN
-        truncated  = game.getScore() >= _ML["EPISODE_SCORE_CAP"]
+        truncated = game.getScore() >= _ML["EPISODE_SCORE_CAP"]
 
         # -- 10. Consecutive-blocked counter update --
         if not blocked_right and action == RIGHT:
@@ -207,30 +205,41 @@ class InfiniteMazeEnv(gym.Env):
 
         # -- 11. Reward --
         prev_gap_offset = self._prev_gap_offset
-        prev_blocked    = self._consecutive_blocked
+        prev_blocked = self._consecutive_blocked
 
-        reward = float(compute_reward(
-            action, blocked_flags, terminated, game,
-            bfs_action=bfs_action, phase=self.phase,
-        ))
+        reward = float(
+            compute_reward(
+                action,
+                blocked_flags,
+                terminated,
+                game,
+                bfs_action=bfs_action,
+                phase=self.phase,
+            )
+        )
 
         self._consecutive_blocked = new_blocked
 
         # -- 12. Build observation and return --
-        obs     = self._get_obs()
+        obs = self._get_obs()
         new_gap = nearest_right_gap_offset(player, lines, game)
 
         if self.phase >= 3:
             reward += phase3_shaping(
-                action, prev_gap_offset, new_gap, prev_blocked, new_blocked, blocked_right
+                action,
+                prev_gap_offset,
+                new_gap,
+                prev_blocked,
+                new_blocked,
+                blocked_right,
             )
 
         self._prev_gap_offset = new_gap
 
         info = {
             "score": game.getScore(),
-            "pace":  game.getPace(),
-            "tick":  self._tick_counter,
+            "pace": game.getPace(),
+            "tick": self._tick_counter,
         }
         return obs, reward, terminated, truncated, info
 

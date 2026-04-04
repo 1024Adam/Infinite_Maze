@@ -14,7 +14,6 @@ python -m infinite_maze.ml.watch --model checkpoints/ppo_maze_final_10000_steps.
 """
 
 import argparse
-import sys
 
 import pygame
 from stable_baselines3 import PPO
@@ -34,10 +33,10 @@ from .features import (
 
 _ML = config.ML_CONFIG
 _MC = config.MOVEMENT_CONSTANTS
-RIGHT      = _MC["RIGHT"]
-LEFT       = _MC["LEFT"]
-UP         = _MC["UP"]
-DOWN       = _MC["DOWN"]
+RIGHT = _MC["RIGHT"]
+LEFT = _MC["LEFT"]
+UP = _MC["UP"]
+DOWN = _MC["DOWN"]
 DO_NOTHING = _MC["DO_NOTHING"]
 
 
@@ -51,7 +50,9 @@ def _user_quit() -> bool:
     return False
 
 
-def watch(model_path: str, n_episodes: int, phase: int, delay_ms: int, device: str) -> None:
+def watch(
+    model_path: str, n_episodes: int, phase: int, delay_ms: int, device: str
+) -> None:
     """Run n_episodes of a trained model in a live pygame window.
 
     The game loop mirrors core/engine.py exactly:
@@ -72,7 +73,7 @@ def watch(model_path: str, n_episodes: int, phase: int, delay_ms: int, device: s
     dummy.close()
 
     # Real game objects — display window opened once, reused across episodes
-    game   = Game(headless=False)
+    game = Game(headless=False)
     player = Player(config.PLAYER_START_X, config.PLAYER_START_Y, headless=False)
 
     game.getClock().reset()
@@ -102,9 +103,9 @@ def watch(model_path: str, n_episodes: int, phase: int, delay_ms: int, device: s
 
             # -- Collision flags before the move --
             blocked_right = is_blocked_right(player, lines)
-            blocked_left  = is_blocked_left(player, lines)
-            blocked_up    = is_blocked_up(player, lines)
-            blocked_down  = is_blocked_down(player, lines)
+            blocked_left = is_blocked_left(player, lines)
+            blocked_up = is_blocked_up(player, lines)
+            blocked_down = is_blocked_down(player, lines)
 
             # -- Apply action --
             if action == RIGHT and not blocked_right:
@@ -145,7 +146,7 @@ def watch(model_path: str, n_episodes: int, phase: int, delay_ms: int, device: s
             x_max = Line.getXMax(lines)
             for line in lines:
                 start = line.getXStart()
-                end   = line.getXEnd()
+                end = line.getXEnd()
                 if start < config.PLAYER_START_X:
                     line.setXStart(x_max)
                     if start == end:
@@ -171,16 +172,31 @@ def _parse_args(argv=None):
         description="Watch a trained PPO agent play Infinite Maze.",
         formatter_class=argparse.ArgumentDefaultsHelpFormatter,
     )
-    p.add_argument("--model",    type=str, required=True,
-                   help="Path to a saved .zip model file.")
-    p.add_argument("--episodes", type=int, default=3,
-                   help="Number of episodes to watch.")
-    p.add_argument("--phase",    type=int, default=1, choices=[0, 1, 2, 3, 4, 5],
-                   help="Environment phase used when loading the model.")
-    p.add_argument("--delay",    type=int, default=16,
-                   help="Milliseconds to wait between frames. 16≈60fps, 50≈20fps.")
-    p.add_argument("--device",   type=str, default="cpu",
-                   help="Torch device for PPO load/predict (cpu, cuda, or auto).")
+    p.add_argument(
+        "--model", type=str, required=True, help="Path to a saved .zip model file."
+    )
+    p.add_argument(
+        "--episodes", type=int, default=3, help="Number of episodes to watch."
+    )
+    p.add_argument(
+        "--phase",
+        type=int,
+        default=1,
+        choices=[0, 1, 2, 3, 4, 5],
+        help="Environment phase used when loading the model.",
+    )
+    p.add_argument(
+        "--delay",
+        type=int,
+        default=16,
+        help="Milliseconds to wait between frames. 16≈60fps, 50≈20fps.",
+    )
+    p.add_argument(
+        "--device",
+        type=str,
+        default="cpu",
+        help="Torch device for PPO load/predict (cpu, cuda, or auto).",
+    )
     return p.parse_args(argv)
 
 

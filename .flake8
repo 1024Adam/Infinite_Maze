@@ -7,3 +7,10 @@ exclude =
     build,
     dist,
     .venv
+per-file-ignores =
+    # os.environ must be set before pygame/SDL imports; long CLI examples in docstrings
+    infinite_maze/ml/evaluate.py: E402,E501
+    infinite_maze/ml/train.py: E402,E501
+    infinite_maze/ml/diagnose.py: E402,E501
+    # Long command examples in docstrings cannot be wrapped
+    infinite_maze/ml/*: E501

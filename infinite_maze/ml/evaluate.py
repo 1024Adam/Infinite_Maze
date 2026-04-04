@@ -69,17 +69,31 @@ def _parse_args(argv=None):
         description="Evaluate a saved Infinite Maze PPO agent.",
         formatter_class=argparse.ArgumentDefaultsHelpFormatter,
     )
-    p.add_argument("--model",    type=str, required=True,
-                   help="Path to a saved model .zip file.")
-    p.add_argument("--episodes", type=int, default=10,
-                   help="Number of evaluation episodes to run.")
-    p.add_argument("--phase",    type=int, default=1, choices=[0, 1, 2, 3, 4, 5],
-                   help="Environment phase for reward shaping context.")
-    p.add_argument("--seed",     type=int, default=None,
-                   help="Base RNG seed for reproducible evaluation. "
-                        "Episode i uses seed+i.")
-    p.add_argument("--device",   type=str, default="cpu",
-                   help="Torch device for PPO load/predict (cpu, cuda, or auto).")
+    p.add_argument(
+        "--model", type=str, required=True, help="Path to a saved model .zip file."
+    )
+    p.add_argument(
+        "--episodes", type=int, default=10, help="Number of evaluation episodes to run."
+    )
+    p.add_argument(
+        "--phase",
+        type=int,
+        default=1,
+        choices=[0, 1, 2, 3, 4, 5],
+        help="Environment phase for reward shaping context.",
+    )
+    p.add_argument(
+        "--seed",
+        type=int,
+        default=None,
+        help="Base RNG seed for reproducible evaluation. " "Episode i uses seed+i.",
+    )
+    p.add_argument(
+        "--device",
+        type=str,
+        default="cpu",
+        help="Torch device for PPO load/predict (cpu, cuda, or auto).",
+    )
     return p.parse_args(argv)
 
 
@@ -87,8 +101,10 @@ def main(argv=None):
     args = _parse_args(argv)
 
     print(f"Model : {args.model}")
-    print(f"Phase : {args.phase}  Episodes: {args.episodes}"
-          + (f"  Seed: {args.seed}" if args.seed is not None else ""))
+    print(
+        f"Phase : {args.phase}  Episodes: {args.episodes}"
+        + (f"  Seed: {args.seed}" if args.seed is not None else "")
+    )
     print(f"Device: {args.device}")
     print()
 

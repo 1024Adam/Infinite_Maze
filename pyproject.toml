@@ -88,6 +88,18 @@ warn_redundant_casts = true
 warn_unused_ignores = true
 warn_no_return = true
 warn_unreachable = true
+# ML module is under active development without type annotations yet
+exclude = ["infinite_maze/ml/"]
+
+[[tool.mypy.overrides]]
+module = [
+    "torch.*",
+    "stable_baselines3.*",
+    "gymnasium.*",
+    "gym.*",
+]
+ignore_errors = true
+follow_imports = "skip"
 strict_equality = true
 
 [[tool.mypy.overrides]]
