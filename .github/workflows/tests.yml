@@ -12,20 +12,15 @@ env:
 
 jobs:
   test:
-    name: pytest (Python ${{ matrix.python-version }})
+    name: pytest
     runs-on: ubuntu-latest
-
-    strategy:
-      fail-fast: false
-      matrix:
-        python-version: ["3.9", "3.10", "3.11", "3.12"]
 
     steps:
       - uses: actions/checkout@v4
 
       - uses: actions/setup-python@v5
         with:
-          python-version: ${{ matrix.python-version }}
+          python-version: "3.12"
 
       - name: Install Poetry
         run: pip install poetry
@@ -33,7 +28,7 @@ jobs:
       - name: Install dependencies
         run: |
           poetry install
-          pip install -r requirements-test.txt
+          poetry run pip install -r requirements-test.txt
 
       - name: Run tests
         run: |
@@ -43,7 +38,6 @@ jobs:
             --cov-report=xml
 
       - name: Upload coverage
-        if: matrix.python-version == '3.12'
         uses: actions/upload-artifact@v4
         with:
           name: coverage-report
