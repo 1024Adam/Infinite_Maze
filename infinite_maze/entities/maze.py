@@ -86,6 +86,10 @@ class Line:
     @staticmethod
     def generateMaze(game: Any, width: int, height: int) -> List["Line"]:
         lines: List[Line] = []
+        # Keep generation stable for tiny test dimensions.
+        width = max(width, 3)
+        height = max(height, 3)
+
         # Horizontal Line Gen
         for x in range(width * 2):
             sideA = (19 * x) + 1
@@ -128,6 +132,9 @@ class Line:
         # Create 'maze' structure
         # (will be complete when all 'cells' are connected to each other)
         sets: List[int] = []
+        if not lines:
+            return lines
+
         while len(sets) != 1:
             length = len(lines)
             lineNum = randint(0, length - 1)

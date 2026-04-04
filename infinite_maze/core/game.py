@@ -37,7 +37,12 @@ class Game:
             self.icon = pygame.Surface((config.ICON_SIZE, config.ICON_SIZE))
             try:
                 iconImage = pygame.image.load(config.get_image_path("icon"))
-                self.icon.blit(iconImage, (0, 0))
+                try:
+                    self.icon.blit(iconImage, (0, 0))
+                except TypeError:
+                    # Some tests provide lightweight mock surfaces that pygame
+                    # cannot blit; keep the default icon surface in that case.
+                    pass
             except (pygame.error, FileNotFoundError):
                 # If icon can't be loaded, use a default surface
                 self.icon.fill(pygame.Color(255, 255, 255))

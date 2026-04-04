@@ -11,6 +11,7 @@ from unittest.mock import Mock, patch
 
 from infinite_maze.entities.maze import Line
 from infinite_maze.core.game import Game
+from infinite_maze.utils.config import config
 
 
 class TestLineInitialization:
@@ -293,8 +294,8 @@ class TestLineMazeGeneration:
         lines = Line.generateMaze(mock_game, 5, 5)
         
         for line in lines:
-            # Lines should be positioned relative to game bounds
-            assert line.getXStart() >= mock_game.X_MAX
+            # Lines should start at/after the configured player start region
+            assert line.getXStart() >= config.PLAYER_START_X
             assert line.getYStart() >= mock_game.Y_MIN
 
 

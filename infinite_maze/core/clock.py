@@ -31,6 +31,7 @@ class Clock:
 
         self.prevMillis = 0
         self.millis = 0
+        self.millisPaused = 0
         self.ticks = 0
 
     def getPrevMillis(self) -> int:

@@ -337,8 +337,8 @@ class TestGameDisplay:
             game.updateScreen(mock_player, mock_lines)
             
             # Verify screen operations were called
-            assert mocks['display']['surface'].fill.called
-            assert mocks['display']['surface'].blit.called
+            assert len(mocks['display']['surface'].fills) > 0
+            assert len(mocks['display']['surface'].blits) > 0
     
     def test_print_end_display(self):
         """Test end game display."""
@@ -349,7 +349,7 @@ class TestGameDisplay:
             game.printEndDisplay()
             
             # Verify display operations
-            assert mocks['display']['surface'].fill.called
+            assert len(mocks['display']['surface'].fills) > 0
             assert mocks['display']['flip'].called
 
 
