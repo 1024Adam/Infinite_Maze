@@ -1,0 +1,34 @@
+name: Code Quality
+
+on:
+  push:
+    branches: [main, dev/**]
+  pull_request:
+    branches: [main]
+
+jobs:
+  quality:
+    name: Lint & Type Check
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - name: Install Poetry
+        run: pip install poetry
+
+      - name: Install dependencies
+        run: poetry install --with dev
+
+      - name: black
+        run: poetry run black --check infinite_maze/
+
+      - name: flake8
+        run: poetry run flake8 infinite_maze/
+
+      - name: mypy
+        run: poetry run mypy infinite_maze/
