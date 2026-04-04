@@ -34,11 +34,18 @@ Apply these patterns correctly:
 - DO NOT restructure the double-loop game engine unless that is the explicit request.
 - DO NOT hardcode magic numbers — reference `config` constants.
 - DO NOT break headless test compatibility when changing rendering or display code.
+- Keep CI commands green: `black --check`, `flake8`, `mypy`, and pytest selections used in workflows.
 
 ## Approach
 
 1. Read the relevant source file(s) before suggesting or making changes.
 2. Understand the game-state context (paused/active/over) before touching clock or input logic.
-3. Validate changes against the test suite (`pytest`) after edits; fix any regressions.
-4. For new features, follow the config-driven pattern — add constants to `config.py` first.
-5. Prefer small, targeted edits over rewrites.
+3. Validate changes with the same checks used in CI after edits:
+	- `poetry run black --check infinite_maze/`
+	- `poetry run flake8 infinite_maze/`
+	- `poetry run mypy infinite_maze/`
+	- `poetry run pytest -m "not slow and not performance"`
+4. Ensure test dependencies are available inside Poetry's virtualenv when needed:
+	- `poetry run pip install -r requirements-test.txt`
+5. For new features, follow the config-driven pattern — add constants to `config.py` first.
+6. Prefer small, targeted edits over rewrites.

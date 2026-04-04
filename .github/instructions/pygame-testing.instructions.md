@@ -8,6 +8,14 @@ applyTo: "tests/**/*.py"
 
 Every test must run without a display. Never call `pygame.display.set_mode()`, `pygame.display.flip()`, or load real image files directly in test code — always use the fixtures and mocks below.
 
+## CI Alignment
+
+- Run tests through Poetry so imports and dependencies match CI.
+- If pytest plugins are missing, install test deps into Poetry's env with:
+    - `poetry run pip install -r requirements-test.txt`
+- Default CI selection is:
+    - `poetry run pytest -m "not slow and not performance"`
+
 ## Fixture Reference
 
 ### `conftest.py` fixtures (auto-available to all tests)

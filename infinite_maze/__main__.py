@@ -1,7 +1,7 @@
 from .core.engine import maze
 
 
-def main():
+def main() -> None:
     maze()
 
 
