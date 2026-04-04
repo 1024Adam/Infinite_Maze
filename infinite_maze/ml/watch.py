@@ -51,7 +51,7 @@ def _user_quit() -> bool:
     return False
 
 
-def watch(model_path: str, n_episodes: int, phase: int, delay_ms: int) -> None:
+def watch(model_path: str, n_episodes: int, phase: int, delay_ms: int, device: str) -> None:
     """Run n_episodes of a trained model in a live pygame window.
 
     The game loop mirrors core/engine.py exactly:
@@ -68,7 +68,7 @@ def watch(model_path: str, n_episodes: int, phase: int, delay_ms: int) -> None:
     """
     # Load model using a temporary headless env for the policy network shape
     dummy = InfiniteMazeEnv(phase=phase)
-    model = PPO.load(model_path, env=dummy)
+    model = PPO.load(model_path, env=dummy, device=device)
     dummy.close()
 
     # Real game objects — display window opened once, reused across episodes
@@ -179,12 +179,14 @@ def _parse_args(argv=None):
                    help="Environment phase used when loading the model.")
     p.add_argument("--delay",    type=int, default=16,
                    help="Milliseconds to wait between frames. 16≈60fps, 50≈20fps.")
+    p.add_argument("--device",   type=str, default="cpu",
+                   help="Torch device for PPO load/predict (cpu, cuda, or auto).")
     return p.parse_args(argv)
 
 
 def main(argv=None):
     args = _parse_args(argv)
-    watch(args.model, args.episodes, args.phase, args.delay)
+    watch(args.model, args.episodes, args.phase, args.delay, args.device)
 
 
 if __name__ == "__main__":

@@ -22,7 +22,13 @@ from stable_baselines3 import PPO
 from .environment import InfiniteMazeEnv
 
 
-def evaluate(model_path: str, n_episodes: int, phase: int, seed: int | None) -> list[int]:
+def evaluate(
+    model_path: str,
+    n_episodes: int,
+    phase: int,
+    seed: int | None,
+    device: str,
+) -> list[int]:
     """Run evaluation episodes and return per-episode scores.
 
     Parameters
@@ -37,7 +43,7 @@ def evaluate(model_path: str, n_episodes: int, phase: int, seed: int | None) -> 
     list[int]  Per-episode final scores.
     """
     env = InfiniteMazeEnv(phase=phase)
-    model = PPO.load(model_path, env=env)
+    model = PPO.load(model_path, env=env, device=device)
 
     scores = []
     for ep in range(n_episodes):
@@ -72,6 +78,8 @@ def _parse_args(argv=None):
     p.add_argument("--seed",     type=int, default=None,
                    help="Base RNG seed for reproducible evaluation. "
                         "Episode i uses seed+i.")
+    p.add_argument("--device",   type=str, default="cpu",
+                   help="Torch device for PPO load/predict (cpu, cuda, or auto).")
     return p.parse_args(argv)
 
 
@@ -81,9 +89,10 @@ def main(argv=None):
     print(f"Model : {args.model}")
     print(f"Phase : {args.phase}  Episodes: {args.episodes}"
           + (f"  Seed: {args.seed}" if args.seed is not None else ""))
+    print(f"Device: {args.device}")
     print()
 
-    scores = evaluate(args.model, args.episodes, args.phase, args.seed)
+    scores = evaluate(args.model, args.episodes, args.phase, args.seed, args.device)
 
     mean_score = sum(scores) / len(scores)
     print()

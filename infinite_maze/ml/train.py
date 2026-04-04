@@ -64,6 +64,7 @@ def _build_model(env, args) -> PPO:
         n_epochs=args.n_epochs,
         ent_coef=args.ent_coef,
         clip_range=args.clip_range,
+        device=args.device,
         tensorboard_log=_ML["TENSORBOARD_LOG"] if args.tensorboard else None,
         verbose=1,
     )
@@ -108,7 +109,7 @@ def train(args) -> PPO:
 
     if args.resume:
         print(f"Resuming from checkpoint: {args.resume}")
-        model = PPO.load(args.resume, env=train_env, verbose=1)
+        model = PPO.load(args.resume, env=train_env, device=args.device, verbose=1)
         # Restore tensorboard log dir if configured
         if args.tensorboard:
             model.tensorboard_log = _ML["TENSORBOARD_LOG"]
@@ -151,6 +152,8 @@ def _parse_args(argv=None):
                    help="Training phase (controls reward shaping in the environment).")
     p.add_argument("--n-envs",          type=int,   default=1,
                    help="Number of parallel environments (use 4 for Phase 3).")
+    p.add_argument("--device",          type=str,   default="cpu",
+                   help="Torch device for PPO (cpu, cuda, or auto). Default cpu is faster for MlpPolicy.")
 
     # PPO hyperparameters (plan defaults; override per-phase as needed)
     p.add_argument("--learning-rate",   type=float, default=3e-4)

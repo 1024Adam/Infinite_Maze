@@ -101,12 +101,13 @@ def diagnose(
     n_steps: int,
     phase: int,
     seed: int | None,
+    device: str,
     top_k: int,
     trace_episodes: int,
     trace_steps: int,
 ) -> dict:
     env = InfiniteMazeEnv(phase=phase)
-    model = PPO.load(model_path, env=env)
+    model = PPO.load(model_path, env=env, device=device)
 
     reset_kwargs = {"seed": seed} if seed is not None else {}
     obs, _ = env.reset(**reset_kwargs)
@@ -321,6 +322,8 @@ def _parse_args(argv=None):
                    help="Environment phase.")
     p.add_argument("--seed",   type=int, default=None,
                    help="RNG seed for reproducibility.")
+    p.add_argument("--device", type=str, default="cpu",
+                   help="Torch device for PPO load/predict (cpu, cuda, or auto).")
     p.add_argument("--top-k",  type=int, default=5,
                    help="How many top sequence patterns/transitions to print.")
     p.add_argument("--trace-episodes", type=int, default=0,
@@ -337,6 +340,7 @@ def main(argv=None):
         args.steps,
         args.phase,
         args.seed,
+        args.device,
         args.top_k,
         args.trace_episodes,
         args.trace_steps,
