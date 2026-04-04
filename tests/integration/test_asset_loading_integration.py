@@ -271,10 +271,10 @@ class TestAssetMemoryManagement:
             
             mocks['image']['load'].side_effect = count_loads
             
-            # Create multiple players
-            player1 = Player(100, 100, headless=True)
-            player2 = Player(200, 100, headless=True)
-            player3 = Player(300, 100, headless=True)
+            # Create multiple players with rendering enabled so sprites are loaded
+            player1 = Player(100, 100, headless=False)
+            player2 = Player(200, 100, headless=False)
+            player3 = Player(300, 100, headless=False)
             
             # Note: Actual caching depends on implementation
             # This test documents expected behavior
@@ -321,7 +321,7 @@ class TestAssetDisplayIntegration:
     
     def test_sprite_scaling_integration(self):
         """Test sprite scaling integration."""
-        from ..utils.config import config
+        from infinite_maze.utils.config import config
         
         with full_pygame_mocks() as mocks:
             # Test different sprite sizes
@@ -538,7 +538,7 @@ class TestAssetIntegrationScenarios:
     
     def test_asset_hot_reload_simulation(self):
         """Test asset hot reload simulation."""
-        from ..utils.config import config
+        from infinite_maze.utils.config import config
         
         with full_pygame_mocks() as mocks:
             # Initial asset

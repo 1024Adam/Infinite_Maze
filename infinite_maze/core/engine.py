@@ -1,4 +1,6 @@
 import pygame
+from typing import Any
+
 from pygame import time
 from ..entities.player import Player
 from .game import Game
@@ -12,7 +14,7 @@ UP = config.get_movement_constant("UP")
 DOWN = config.get_movement_constant("DOWN")
 
 
-def maze():
+def maze() -> None:
     # Contains All Game Stats/Config
     game = Game()
 
@@ -242,14 +244,14 @@ def maze():
             game.quit()
 
         # Process Game Events
-        if any(event == pygame.QUIT for event in pygame.event.get()):
+        if any(event.type == pygame.QUIT for event in pygame.event.get()):
             game.quit()
 
     game.cleanup()
     exit(0)
 
 
-def controlled_run(wrapper, counter):
+def controlled_run(wrapper: Any, counter: int) -> None:
     # Contains All Game Stats/Config
     game = Game()
 

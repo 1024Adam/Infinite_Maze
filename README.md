@@ -1,5 +1,10 @@
 # Infinite Maze Game
 
+[![Tests](https://github.com/1024Adam/infinite-maze/actions/workflows/tests.yml/badge.svg)](https://github.com/1024Adam/infinite-maze/actions/workflows/tests.yml)
+[![Code Quality](https://github.com/1024Adam/infinite-maze/actions/workflows/quality.yml/badge.svg)](https://github.com/1024Adam/infinite-maze/actions/workflows/quality.yml)
+[![Python 3.9+](https://img.shields.io/badge/python-3.9+-blue.svg)](https://www.python.org/downloads/)
+[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE)
+
 A fast-paced, infinitely challenging maze navigation game built with Python and Pygame.
 
 ## 🎮 Overview
@@ -65,6 +70,9 @@ python run_game.py
 # Install with development dependencies
 poetry install
 
+# Install test tooling into Poetry env
+poetry run pip install -r requirements-test.txt
+
 # Code formatting
 poetry run black infinite_maze/
 
@@ -73,27 +81,35 @@ poetry run flake8 infinite_maze/
 
 # Type checking
 poetry run mypy infinite_maze/
+
+# CI-parity quality gate
+poetry run black --check infinite_maze/
+poetry run flake8 infinite_maze/
+poetry run mypy infinite_maze/
 ```
 
 ### Testing
 ```bash
-# Install test dependencies
-pip install -r requirements-test.txt
+# Install test dependencies (inside Poetry env)
+poetry run pip install -r requirements-test.txt
 
 # Run quick tests (unit + integration)
-python run_tests.py
+poetry run python run_tests.py
 
 # Run all tests including performance benchmarks
-python run_tests.py all
+poetry run python run_tests.py all
 
 # Run with coverage report
-python run_tests.py unit --coverage
+poetry run python run_tests.py unit --coverage
 
 # Run specific test categories
-pytest -m unit                    # Unit tests only
-pytest -m integration             # Integration tests only
-pytest -m functional              # End-to-end tests
-pytest -m performance --run-performance  # Performance benchmarks
+poetry run pytest -m unit                    # Unit tests only
+poetry run pytest -m integration             # Integration tests only
+poetry run pytest -m functional              # End-to-end tests
+poetry run pytest -m performance --run-performance  # Performance benchmarks
+
+# Match CI test selection (excludes slow/performance)
+poetry run pytest -m "not slow and not performance"
 ```
 
 The test suite includes:
