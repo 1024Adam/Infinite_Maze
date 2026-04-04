@@ -37,6 +37,7 @@ def _make_env(phase=1):
 # Environment compliance from SB3's perspective
 # ---------------------------------------------------------------------------
 
+@pytest.mark.slow
 class TestEnvCompliance:
     def test_sb3_check_env_passes(self):
         """SB3's own env checker must pass (complements gymnasium check_env)."""
@@ -63,6 +64,7 @@ class TestEnvCompliance:
 # Short PPO training smoke tests (≤ 1 000 timesteps)
 # ---------------------------------------------------------------------------
 
+@pytest.mark.slow
 class TestPPOSmokeRun:
     """PPO training smoke tests — kept small to stay well under the 60-s CI limit."""
 
@@ -152,6 +154,7 @@ class TestPPOSmokeRun:
 # Phase 3 multi-env smoke
 # ---------------------------------------------------------------------------
 
+@pytest.mark.slow
 class TestPhase3MultiEnv:
     def test_phase3_ppo_4_envs(self):
         """Phase 3 with n_envs=4 DummyVecEnv must train 1k steps without error."""
@@ -172,6 +175,7 @@ class TestPhase3MultiEnv:
 # Episode lifecycle integration
 # ---------------------------------------------------------------------------
 
+@pytest.mark.slow
 class TestEpisodeLifecycle:
     def test_random_policy_completes_episodes(self):
         """Random policy must complete at least one full episode in 500 steps."""
