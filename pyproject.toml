@@ -30,8 +30,8 @@ python = "^3.8.1"
 pygame = "^2.5.0"
 
 [tool.poetry.group.dev.dependencies]
-black = "^23.0.0"
-flake8 = "^6.0.0"
+black = "^24.8.0"
+flake8 = "^7.1.2"
 mypy = "^1.0.0"
 
 [tool.poetry.group.ml]
