@@ -1,5 +1,10 @@
 # Infinite Maze Game
 
+[![Tests](https://github.com/1024Adam/infinite-maze/actions/workflows/tests.yml/badge.svg)](https://github.com/1024Adam/infinite-maze/actions/workflows/tests.yml)
+[![Code Quality](https://github.com/1024Adam/infinite-maze/actions/workflows/quality.yml/badge.svg)](https://github.com/1024Adam/infinite-maze/actions/workflows/quality.yml)
+[![Python 3.9+](https://img.shields.io/badge/python-3.9+-blue.svg)](https://www.python.org/downloads/)
+[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE)
+
 A fast-paced, infinitely challenging maze navigation game built with Python and Pygame.
 
 ## 🎮 Overview
