@@ -7,10 +7,11 @@ final mean reward is finite. Must complete in < 60 s.
 stable-baselines3 is required. If not installed the entire module is skipped.
 """
 
-import numpy as np
 import pytest
 
 sb3 = pytest.importorskip("stable_baselines3", reason="stable-baselines3 not installed")
+
+import numpy as np
 
 from stable_baselines3 import PPO
 from stable_baselines3.common.env_checker import check_env as sb3_check_env

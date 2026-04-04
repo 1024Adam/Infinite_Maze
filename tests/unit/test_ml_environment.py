@@ -8,11 +8,12 @@ Covers the five acceptance conditions from the training plan (Step 2) plus
 hand-crafted wall-grid configuration tests for features.get_wall_grid.
 """
 
-import numpy as np
 import pytest
 
 # Skip entire module when gymnasium / ML deps are not installed
 pytest.importorskip("gymnasium", reason="gymnasium not installed")
+
+import numpy as np
 
 from infinite_maze.core.game import Game
 from infinite_maze.entities.player import Player
