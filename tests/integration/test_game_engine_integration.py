@@ -47,8 +47,9 @@ class TestGameEngineInitialization:
                 with patch.object(Game, 'isActive', return_value=False):
                     result = controlled_run(mock_wrapper, mock_counter)
                     
-                    # Should return some result
-                    assert result is not None
+                    # controlled_run reports via wrapper callbacks, no return value
+                    assert result is None
+                    mock_wrapper.gameover.assert_called_once()
 
 
 class TestGameEngineGameLoop:

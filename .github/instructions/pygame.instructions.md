@@ -42,7 +42,13 @@ applyTo: "infinite_maze/**/*.py"
 - All tests must be **headless-safe**: mock `pygame.display`, `pygame.event`, and surface creation using the fixtures in `tests/fixtures/pygame_mocks.py`. Never call `pygame.display.set_mode()` in test code.
 - Use `pytest`; place unit tests in `tests/unit/`, integration tests in `tests/integration/`.
 - Do not add `time.sleep()` or real timers in tests — use the `Clock` mock to control elapsed time.
-- After any source change, run `pytest` and fix regressions before considering the task done.
+- Keep local checks aligned with CI before finishing source changes:
+	- `poetry run black --check infinite_maze/`
+	- `poetry run flake8 infinite_maze/`
+	- `poetry run mypy infinite_maze/`
+	- `poetry run pytest -m "not slow and not performance"`
+- If pytest tools are missing in Poetry's env, install them with:
+	- `poetry run pip install -r requirements-test.txt`
 
 ## Dependencies
 
