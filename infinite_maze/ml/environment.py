@@ -283,6 +283,7 @@ class InfiniteMazeEnv(gym.Env):
                 game,
                 bfs_action=bfs_action,
                 phase=self.phase,
+                player=self._player,
             )
         )
 

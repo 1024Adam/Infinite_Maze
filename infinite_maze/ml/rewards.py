@@ -27,6 +27,7 @@ def compute_reward(
     game,
     bfs_action: int = -1,
     phase: int = 1,
+    player=None,
 ) -> float:
     """Return the shaped reward for one environment step.
 
@@ -49,6 +50,9 @@ def compute_reward(
         Pass -1 (default) to skip the BFS curriculum bonus.
     phase : int
         Current training phase. BFS bonus only applies for phase >= 3.
+    player : Player, optional
+        Live player instance. Used for vertical boundary penalty in Phase 1-2.
+        Pass None to skip boundary-awareness reward.
 
     Returns
     -------
@@ -116,6 +120,17 @@ def compute_reward(
     # BFS curriculum bonus (Phase 3+): small bonus when action matches BFS-optimal move
     if phase >= 3 and bfs_action >= 0 and action == bfs_action:
         reward += float(_ML["REWARD_BFS_MATCH"])
+
+    # Vertical boundary awareness (Phase 1-2 only): discourage getting stuck at top/bottom walls.
+    # This reinforces what the wall-grid already shows but accelerates learning in early phases.
+    if phase <= 2 and player is not None:
+        y_pos = player.getY()
+        y_min = game.Y_MIN if hasattr(game, 'Y_MIN') else 40
+        y_max = game.Y_MAX if hasattr(game, 'Y_MAX') else 450
+        boundary_threshold = float(_ML["Y_BOUNDARY_THRESHOLD"])
+        
+        if y_pos < y_min + boundary_threshold or y_pos > y_max - boundary_threshold:
+            reward += float(_ML["REWARD_APPROACH_Y_BOUNDARY"])
 
     return reward
 

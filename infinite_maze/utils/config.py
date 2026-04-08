@@ -130,6 +130,9 @@ class GameConfig:
         "REWARD_CORNER_ESCAPE_CLEAR": 1.0,
         "REWARD_TERMINAL": -10.0,
         "REWARD_BFS_MATCH": 0.3,
+        # Vertical boundary awareness (Phase 1-2 only)
+        "REWARD_APPROACH_Y_BOUNDARY": -0.05,
+        "Y_BOUNDARY_THRESHOLD": 40,
         # Training
         "DEFAULT_TIMESTEPS": 200_000,
         "CHECKPOINT_FREQ": 10_000,
