@@ -603,8 +603,16 @@ def get_wall_grid(player, lines) -> np.ndarray:
 # ---------------------------------------------------------------------------
 
 
-def get_obs(player, lines, game, consecutive_blocked: int = 0) -> np.ndarray:
-    """Encode the current game state as a flat float32 array of shape (53,).
+def get_obs(
+    player,
+    lines,
+    game,
+    consecutive_blocked: int = 0,
+    recent_actions=None,
+    recent_x_positions=None,
+    recent_blocked_right=None,
+) -> np.ndarray:
+    """Encode the current game state as a flat float32 array of shape (56,).
 
     All values are normalised to [0.0, 1.0].
 
@@ -616,6 +624,15 @@ def get_obs(player, lines, game, consecutive_blocked: int = 0) -> np.ndarray:
     consecutive_blocked : int
         Number of consecutive ticks the RIGHT action has been blocked.
         Tracked by the environment and passed in here; this module is stateless.
+    recent_actions : deque | None
+        Windowed action history for computing action repeat ratio.
+        If None or empty, defaults to neutral 0.0 (no repetition).
+    recent_x_positions : deque | None
+        Windowed x position history for computing x progress.
+        If None or has <2 elements, defaults to neutral 0.5 (no progress).
+    recent_blocked_right : deque | None
+        Windowed blocked-right flags for computing persistence ratio.
+        If None or empty, defaults to neutral 0.0 (not persistently blocked).
 
     Layout
     ------
@@ -632,11 +649,33 @@ def get_obs(player, lines, game, consecutive_blocked: int = 0) -> np.ndarray:
     [10]    pace (normalised)
     [11]    distance from death boundary (normalised)
     [12]    consecutive ticks blocked right (normalised)
-    [13..52] local wall grid — GRID_COLS × GRID_ROWS × 2 binary features
+    [13]    recent action repeat ratio (windowed)
+    [14]    signed x-progress over recent window, mapped to [0, 1]
+    [15]    blocked-right persistence ratio (windowed)
+    [16..55] local wall grid — GRID_COLS × GRID_ROWS × 2 binary features
     """
     ml = _ML
     max_scan = ml["MAX_WALL_SCAN_DIST"]
     x_range = int(game.X_MAX) - game.X_MIN  # int() — X_MAX is WIDTH/2 (float)
+
+    action_repeat = 0.0
+    if recent_actions is not None and len(recent_actions) > 0:
+        last_action = recent_actions[-1]
+        action_repeat = sum(a == last_action for a in recent_actions) / float(
+            len(recent_actions)
+        )
+
+    signed_progress = 0.5
+    if recent_x_positions is not None and len(recent_x_positions) >= 2:
+        x_delta = float(recent_x_positions[-1] - recent_x_positions[0])
+        signed = np.clip(x_delta / max(x_range, 1), -1.0, 1.0)
+        signed_progress = float(np.clip(0.5 + 0.5 * signed, 0.0, 1.0))
+
+    blocked_persistence = 0.0
+    if recent_blocked_right is not None and len(recent_blocked_right) > 0:
+        blocked_persistence = sum(float(v) for v in recent_blocked_right) / float(
+            len(recent_blocked_right)
+        )
 
     scalars = np.array(
         [
@@ -666,6 +705,12 @@ def get_obs(player, lines, game, consecutive_blocked: int = 0) -> np.ndarray:
             np.clip((player.getX() - game.X_MIN) / x_range, 0.0, 1.0),
             # [12] consecutive ticks blocked right (normalised)
             np.clip(consecutive_blocked / ml["CONSECUTIVE_BLOCKED_CAP"], 0.0, 1.0),
+            # [13] recent action repeat ratio
+            np.clip(action_repeat, 0.0, 1.0),
+            # [14] signed x progress over recent window
+            np.clip(signed_progress, 0.0, 1.0),
+            # [15] blocked-right persistence ratio
+            np.clip(blocked_persistence, 0.0, 1.0),
         ],
         dtype=np.float32,
     )

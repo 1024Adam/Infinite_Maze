@@ -71,7 +71,7 @@ class TestReset:
     def test_obs_shape(self):
         env = InfiniteMazeEnv()
         obs, info = env.reset(seed=42)
-        assert obs.shape == (53,)
+        assert obs.shape == (56,)
 
     def test_obs_dtype(self):
         env = InfiniteMazeEnv()
@@ -115,7 +115,7 @@ class TestReset:
         env = InfiniteMazeEnv()
         for seed in range(5):
             obs, _ = env.reset(seed=seed)
-            assert obs.shape == (53,)
+            assert obs.shape == (56,)
             assert env.observation_space.contains(obs)
 
 
@@ -133,7 +133,7 @@ class TestStep:
     def test_step_obs_shape(self, action):
         env = _make_env()
         obs, _, _, _, _ = env.step(action)
-        assert obs.shape == (53,)
+        assert obs.shape == (56,)
 
     @pytest.mark.parametrize("action", [DO_NOTHING, RIGHT, LEFT, UP, DOWN])
     def test_step_obs_dtype(self, action):

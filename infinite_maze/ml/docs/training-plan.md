@@ -1,8 +1,31 @@
 # Infinite Maze — RL Agent Training Plan
 
 **Generated:** 2026-03-29  
+**Last Updated:** 2026-04-08 — Diagnostic patterns documented; Phase 3 analysis reveals core problem is not reward-tuning but observation-action abstraction alignment. Updated with systematic debugging framework.  
 **Agent mode:** ml-trainer  
 **Scope:** Full training pipeline from scratch to elite-tier play
+
+---
+
+## Critical Insight: Spot-Fixing vs. Root-Cause Analysis
+
+**Current Issue (Phase 3, 290k steps):**
+- Mean score: 121.75 (target: 150) — **still below intermediate threshold**
+- Terminal cause: 100% pace catch-up — **agent not progressing right fast enough**
+- Action repetition: DOWN→DOWN 1624 times, UP→UP 1577 times (heavy looping patterns)
+- Max consecutive DOWN runs: 684 ticks — **vertical oscillation dominates**
+- Vertical when blocked right: 87% — **learning the right *survival reflex* but not navigation**
+- Eval reward: −194.74 (negative despite episodes lasting hundreds of ticks) — **punishment exceeds progress**
+
+**Temptation:** Tweak `REWARD_MOVE_RIGHT`, add new features (`action_repetition_ratio`), tune hyperparameters. Each change feels targeted and produces short-term improvements.
+
+**Real Problem:** The agent has learned to **survive** (avoid pace death) by oscillating vertically when blocked, but has not learned to **navigate** (systematically find and exploit gaps). These are fundamentally different skills:
+- **Survival:** Local, reactive — "When stuck, move up/down"
+- **Navigation:** Global, planned — "To reach the gap at [x+60, y−20], I need to move right, then up, then right again"
+
+Reward tuning alone won't bridge this gap because the network has no temporal abstraction mechanism. At each step it sees the current state and predicts the next action, but cannot plan multi-step sequences without explicit guidance.
+
+**Solution Framework:** Instead of patching individual reward weights, upgrade the *learning signal* to teach genuine navigation skill via curriculum reward (Option 2 from `pathfinding-options.md`). This is step-by-step progress toward the real capability, not noise-chasing.
 
 ---
 
@@ -98,7 +121,89 @@ ML_CONFIG = {
 
 ---
 
-## Step 2 — Environment Health Check
+## Systematic ML Debugging: The Three-Layer Problem Model
+
+Before moving to the next phase or adding new code, always ask: **Which layer is failing?**
+
+### Layer 1: Environment — Does the simulation work correctly?
+| Check | Method | Success Criterion |
+|-------|--------|-------------------|
+| Does `env.reset()` / `env.step()` complete without exceptions? | `pytest tests/unit/test_ml_environment.py` | 100% tests pass |
+| Are observations deterministic and in valid range? | `poetry run python -m infinite_maze.ml.watch --model none --episodes 3 --phase N` | Obs min/max within [0, 1] each step |
+| Do blocked moves truly prevent position change? | Manual test: try RIGHT by wall, verify `player.x` unchanged | Position unchanged after blocked move |
+| Does the collision system match the game engine exactly? | Compare `engine.py` collision logic line-by-line with `features.py` | 5 manual test cases pass |
+
+**If Layer 1 fails:** Fix the environment before touching anything else. ML can't learn from broken signals.
+
+### Layer 2: Observation-Action Alignment — Can the network *see* the problem it needs to solve?
+
+| Check | Method | Success Criterion |
+|-------|--------|-------------------|
+| Can a trained network distinguish "I'm about to hit a wall" from "I'm in open space"? | `poetry run python -c "print(obs[2:6])"` for 100 random states; plot `blocked_right` distribution | `blocked_right` ranges [0, 1]; spikes near 0 and 1, rarely stuck in middle |
+| Are wall-grid features encoding maze structure correctly? | `poetry run python -m infinite_maze.ml.watch --model none --render-wall-grid --episodes 1` | Wall grid shows maze geometry, not noise |
+| Does the network have visibility of enough maze structure to plan 3–4 moves ahead? | Check wall-grid coverage: GRID_COLS × GRID_ROWS × cells size; is it ≥ ~120px right? | Wall grid covers at least 4 cells of maze depth |
+| Can the network see "pace is increasing" and react? | Verify `obs[10] = game.pace / MAX_PACE` is in observation, not buried | Pace normalized in obs[10], easily addressable by first layer |
+
+**If Layer 2 fails:** Add features or expand wall-grid. The agent can't learn skills it can't observe.
+
+### Layer 3: Reward-Action Mapping — Does the reward function incentivize the right behavior?
+
+| Check | Method | Success Criterion |
+|-------|--------|-------------------|
+| **Survival signal present?** Is there a penalty for getting close to `X_MIN`? | Check config: `REWARD_TERMINAL = -10.0` present | Explicit large negative reward on termination |
+| **Progress signal present?** Does moving right yield cumulative positive reward? | Trace: 10 consecutive right moves in training → reward accumulates (+1.0×10 = +10.0 expected) | Positive trajectory visible in TensorBoard `rollout/ep_rew_mean` over time |
+| **Pace awareness present?** As pace increases, do episode rewards drop (indicating urgency)? | Eval model at pace=0 vs. pace=3; compare mean score | Score at pace=0 > score at pace=3 (indicates pace affects strategy) |
+| **Navigation signal present?** Is there guidance for multi-step sequences (not just single-step reward)? | Check config for `REWARD_BFS_MATCH` or similar curriculum reward | If curricula in effect: score gap (with vs. without) is ≥ 5% of base reward |
+
+**If Layer 3 fails:** Redesign reward function or add curriculum. Without the right incentive, no amount of training will produce the desired behavior.
+
+---
+
+## Phase Success Criteria (Updated)
+
+These gates prevent advancing until the agent has genuinely learned, not just memorised or hit local optima.
+
+### Phase 0 — Random Baseline
+| Criterion | Target | Fail If |
+|-----------|--------|---------|
+| Runs without exception | 10,000 steps | Any exception or hang |
+| Mean episode score | 2–10 | Score > 100 (env may be broken) |
+| All termination causes | 100% pace catch-up | Other termination modes present |
+| **Gate Action:** Proceed to Phase 1 only if env is confirmed stable and random score is in expected range |
+
+### Phase 1 — Survival (target: mean score > 25)
+| Criterion | Target | Fail If |
+|-----------|--------|---------|
+| Mean score (50 episodes) | ≥ 25 | < 25 after 100k steps |
+| Terminal cause: pace catch-up | ≥ 50% | < 50% (should still be losing to pace) |
+| Terminal cause: score truncation | < 1% | ≥ 1% (shouldn't reach score cap yet) |
+| Action repetition (DOWN-DOWN consecutive max) | < 100 | ≥ 200 (suggests local looping already) |
+| **Layer 2 validation:** Do wall-grid features vary meaningfully across episodes? | Variance > 0.1 for obs[13:53] | Variance ≈ 0 (features not encoding maze structure) |
+| **Gate Action:** Proceed to Phase 2 only if agent genuinely survives longer via *vertical escape* (high up/down proportion when blocked), not random drift |
+
+### Phase 2 — Bidirectional Navigation (target: mean score > 75)
+| Criterion | Target | Fail If |
+|-----------|--------|---------|
+| Mean score (50 episodes) | ≥ 75 | < 75 after additional 100k steps |
+| Terminal cause: pace catch-up | ≥ 20% | < 20% (agent should be progressing right, fewer pace deaths) |
+| Terminal cause: score truncation | ≥ 2% | < 2% (some episodes should reach score cap now) |
+| UP+DOWN action proportion when blocked right | ≥ 70% | < 70% (agent abandoning vertical escape) |
+| **Layer 3 validation:** Is positive reward accumulation visible in TensorBoard? | `rollout/ep_rew_mean` trend upward | Flat or downward trend (not learning) |
+| **Gate Action:** Proceed to Phase 3 only if agent is demonstrably navigating (finding gaps) rather than just surviving. Compare: score at pace=0 vs. pace=1. If gap < 10%, agent is pace-aware; if gap > 30%, agent is pace-brittle. Ideal is 15–25% degradation. |
+
+### Phase 3 — Navigation Under Acceleration (target: mean score > 150; current: 121.75)
+| Criterion | Target | Fail If |
+|-----------|--------|---------|
+| Mean score (20 episodes) | ≥ 150 | < 150 (stalling on navigation task is the current state) |
+| Terminal cause: pace catch-up | ≤ 80% | > 80% (agent still being caught up to frequently) |
+| Terminal cause: score truncation | ≥ 5% | < 5% (agent should reach advanced scores sometimes) |
+| Max consecutive DOWN runs | < 300 | ≥ 300 (vertical oscillation dominates; not navigating) |
+| DOWN-DOWN + UP-UP action count (per 1000 steps) | < 400 | ≥ 500 (excessive repetition = survival looping, not navigation) |
+| **Critical Layer 3 validation:** If `REWARD_BFS_MATCH` is enabled, disable it and re-evaluate deterministically. | Score with BFS disabled must be ≥ 250 | Score with BFS disabled is < 250 (agent learned the *cue*, not the skill) |
+| **Layer 2 validation:** At max pose (pace = 5+), is agent still using wall-grid features or regressing to immediate vertical reflexes? | Positive correlation: pace ↑ → more wall-grid dependent | Negative correlations (agent less strategic under pressure) |
+| **Gate Action:** If mean score < 150 after 200k+ steps, do not proceed to Phase 4. Instead: (a) re-examine Layer 1 (env correctness), (b) verify Layer 2 (observation includes pace, wall-grid covers enough maze depth), (c) if using BFS curriculum, check that curriculum is tuned correctly and agent is learning the underlying skill, not the cue. Consider branching: upgrade wall-grid size, add BFS curriculum, or retrain from Phase 2 checkpoint with revised reward weights. |
+
+---
 
 **Status: BLOCKED — `InfiniteMazeEnv` not yet implemented.**
 
@@ -299,6 +404,68 @@ Five consecutive runs identified and resolved a series of cascading reward engin
 | **Files to create/modify** | `infinite_maze/ml/train.py` (add `--algorithm rcppo` option if RecurrentPPO is needed), add `stable-baselines3[extra]` to dependencies if RecurrentPPO is used |
 
 **Note:** RecurrentPPO requires `sb3-contrib`. Only add it if Phase 4 results suggest the agent needs memory. Do not add it speculatively.
+
+---
+
+## Advanced: Diagnosing and Fixing Phase Stalls
+
+When an agent plateaus (e.g., Phase 3 stuck at score 121.75 despite tuning), the problem is rarely "pick the right reward constant." Use this framework to diagnose the layer of failure and target the right fix.
+
+### Phase 3 Stall Case Study: "Vertical Oscillation Without Navigation"
+
+**Symptomatic observation:**
+```
+Mean score: 121.75 (target 150) — stalled despite 200k+ steps
+Terminal cause: 100% pace catch-up — agent not progressing right
+Action distribution: DOWN 31%, UP 30%, RIGHT 15%, LEFT 15%, DO_NOTHING 6%
+Max consecutive DOWN/UP: 684 and 661 ticks — extreme vertical looping
+Eval reward: -194.74 — negative despite long episodes
+```
+
+**Diagnosis by layer:**
+
+1. **Layer 1 (Environment)** — Passed. Env runs correctly; blocked moves verified; collision logic checked against engine.py.
+
+2. **Layer 2 (Observation-Action Alignment)** — Partially passed. 
+   - ✅ Agent *sees* walls (wall-grid features meaningful)
+   - ✅ Agent *sees* direction to nearest gap (nearest right-gap offset available)
+   - ❌ Agent *does not see* the cost of multi-step sequences (observation is local; wall grid covers only ~88 px right, ~4 cell depths)
+   - ❌ Agent cannot plan beyond 2–3 moves without explicit guidance
+   
+   **Hypothesis:** Wall-grid covers approximately 4 columns × 5 rows = 4×22=88px right, 5×22=110px above/below. This is sufficient to *see* nearby gaps but insufficient to *plan around* the 2–4 cell detours often required to reach them. The network sees "gap is at +2 cells right" but cannot visualise the optimal path through the intervening walls.
+
+3. **Layer 3 (Reward-Action Mapping)** — Failed.
+   - ✅ Survival signal present (`REWARD_TERMINAL = -10.0`)
+   - ✅ Progress signal present (`REWARD_MOVE_RIGHT = +1.0` per step)
+   - ❌ **Navigation signal absent** — the agent receives reward for each individual step right, but has no gradient signal for multi-step sequences
+   - ❌ **Pace urgency signal weak** — as pace increases, agent has no explicit reason to abandon full-coverage vertical search in favour of efficient corridor-finding
+
+   **Root cause:** The agent learned a locally-optimal survival strategy (oscillate vertically when blocked, move right when free) that yields ~120 score per episode. It has no reward signal that *incentivises* the 4-step sequences needed to escape tighter mazes at higher paces. Each new 2-step detour is experienced as a cost (2 ticks of non-rightward movement) rather than an investment in capability.
+
+**Solution: BFS Curriculum Reward**
+
+Instead of expanding the wall-grid (Layer 2 expansion) or tweaking reward constants (Layer 3 noise), add a **curriculum reward** that teaches genuine navigation:
+
+1. **Compute BFS-optimal action** each step: Find the nearest right-unblocked target cell; return the first action on the shortest path to it. This requires only a fast local BFS (~1 ms on a 15×20 grid) and no network inference.
+
+2. **Reward matching:** If the agent's chosen action matches the BFS-optimal action, add a small bonus (`REWARD_BFS_MATCH = +0.05`). This is 5% of a successful RIGHT move — enough to be a meaningful signal without dominating the primary reward.
+
+3. **Why this works:**
+   - The agent is *rewarded for making the right move, not shown what it is.* It must learn the spatial pattern (wall configuration → navigate using vertical movement → find gap → move right) across thousands of diverse maze layouts.
+   - Multi-step sequences are implicitly guided: the agent gets +0.05 for each step that aligns with the BFS plan, creating positive gradient across the full sequence if it successfully chains moves.
+   - Generalization is genuine: if the agent learns to respond to BFS-optimal signals, it learns to navigate. Removing the reward at Phase 4 (setting `REWARD_BFS_MATCH = 0.0`) should *not* collapse the policy if it learned the underlying skill rather than cue-following.
+
+4. **Curriculum exit gate:** Before advancing to Phase 4, disable `REWARD_BFS_MATCH` and re-evaluate deterministically:
+   - If score holds ≥ 250 → agent learned genuine navigation; advance to Phase 4.
+   - If score collapses → policy was cue-following; continue Phase 3 training without the BFS bonus, forcing the agent to internalise the skill.
+
+**Implementation:**
+- Add `bfs_optimal_action(player, lines, game, config) → int` to `infinite_maze/ml/features.py`
+- Add `REWARD_BFS_MATCH: 0.05` to `ML_CONFIG` in `infinite_maze/utils/config.py`
+- In `compute_reward()`, add: `if phase >= 3 and action == bfs_action: reward += REWARD_BFS_MATCH`
+- In Phase 4 and beyond, set `REWARD_BFS_MATCH = 0.0`
+
+**Expected outcome:** Phase 3 mean score climbs from 121.75 → 180–220 after 200k additional steps, with cleaner action distribution (DOWN/UP drop to < 25%, RIGHT + gap-finding actions rise to > 60%).
 
 ---
 

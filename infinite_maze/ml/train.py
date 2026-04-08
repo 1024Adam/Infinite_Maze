@@ -109,7 +109,13 @@ def train(args) -> PPO:
 
     if args.resume:
         print(f"Resuming from checkpoint: {args.resume}")
-        model = PPO.load(args.resume, env=train_env, device=args.device, verbose=1)
+        # Load model without env to skip observation-space check (old model has 53 features)
+        model = PPO.load(args.resume, device=args.device, verbose=1)
+        # Update model's spaces to match new env (backward-compat for feature upgrades)
+        model.observation_space = train_env.observation_space
+        model.action_space = train_env.action_space
+        # Set env after updating spaces; policy will adapt to the new 56-feature space
+        model.set_env(train_env)
         # Restore tensorboard log dir if configured
         if args.tensorboard:
             model.tensorboard_log = _ML["TENSORBOARD_LOG"]
@@ -179,13 +185,13 @@ def _parse_args(argv=None):
     )
 
     # PPO hyperparameters (plan defaults; override per-phase as needed)
-    p.add_argument("--learning-rate", type=float, default=3e-4)
+    p.add_argument("--learning-rate", type=float, default=1e-4)
     p.add_argument("--gamma", type=float, default=0.99)
     p.add_argument("--n-steps", type=int, default=512)
     p.add_argument("--batch-size", type=int, default=64)
     p.add_argument("--n-epochs", type=int, default=10)
     p.add_argument("--ent-coef", type=float, default=0.01)
-    p.add_argument("--clip-range", type=float, default=0.2)
+    p.add_argument("--clip-range", type=float, default=0.15)
 
     # Callbacks
     p.add_argument(

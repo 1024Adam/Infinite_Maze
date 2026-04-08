@@ -4,9 +4,11 @@ Headless-safe: never calls pygame.display.set_mode(), pygame.display.flip(),
 or any rendering method. Drives the game step-by-step through direct state
 manipulation — the live engine loop (core/engine.py) is never imported or used.
 
-Observation space: Box(53,) float32, all values in [0.0, 1.0].
+Observation space: Box(56,) float32, all values in [0.0, 1.0].
 Action space:      Discrete(5) mapping to config.MOVEMENT_CONSTANTS.
 """
+
+from collections import deque
 
 import numpy as np
 import gymnasium as gym
@@ -58,7 +60,7 @@ class InfiniteMazeEnv(gym.Env):
 
         self.action_space = spaces.Discrete(5)
         self.observation_space = spaces.Box(
-            low=0.0, high=1.0, shape=(53,), dtype=np.float32
+            low=0.0, high=1.0, shape=(56,), dtype=np.float32
         )
 
         # Game objects — initialised on first reset()
@@ -69,7 +71,18 @@ class InfiniteMazeEnv(gym.Env):
         # Episode state
         self._tick_counter = 0
         self._consecutive_blocked = 0
+        self._consecutive_vertical = 0
+        self._consecutive_vertical_any = 0
+        self._last_vertical_action = -1
+        self._corner_escape_dir = -1
+        self._corner_escape_progress = 0
         self._prev_gap_offset = 0.5
+        self._blocked_vertical_same_y_streak = 0
+        self._blocked_vertical_anchor_y = -1
+        self._blocked_do_nothing_streak = 0
+        self._recent_actions = deque(maxlen=int(_ML["ACTION_REPEAT_WINDOW"]))
+        self._recent_x_positions = deque(maxlen=int(_ML["X_PROGRESS_WINDOW"]))
+        self._recent_blocked_right = deque(maxlen=int(_ML["BLOCKED_RIGHT_WINDOW"]))
 
     # ------------------------------------------------------------------
     # gymnasium API
@@ -97,7 +110,19 @@ class InfiniteMazeEnv(gym.Env):
 
         self._tick_counter = 0
         self._consecutive_blocked = 0
+        self._consecutive_vertical = 0
+        self._consecutive_vertical_any = 0
+        self._last_vertical_action = -1
+        self._corner_escape_dir = -1
+        self._corner_escape_progress = 0
         self._prev_gap_offset = 0.5
+        self._blocked_vertical_same_y_streak = 0
+        self._blocked_vertical_anchor_y = -1
+        self._blocked_do_nothing_streak = 0
+        self._recent_actions.clear()
+        self._recent_x_positions.clear()
+        self._recent_blocked_right.clear()
+        self._recent_x_positions.append(self._player.getX())
 
         if options is not None and "start_pace" in options:
             self._game.setPace(int(options["start_pace"]))
@@ -116,7 +141,7 @@ class InfiniteMazeEnv(gym.Env):
 
         Returns
         -------
-        obs : np.ndarray  shape (53,) float32
+        obs : np.ndarray  shape (56,) float32
         reward : float
         terminated : bool  True when player is pushed past X_MIN by pace
         truncated : bool   True when score >= EPISODE_SCORE_CAP
@@ -125,18 +150,35 @@ class InfiniteMazeEnv(gym.Env):
         game = self._game
         player = self._player
         lines = self._lines
+        prev_x = player.getX()
+        prev_y = player.getY()
 
         # -- 1. Collision flags (computed before the move) --
         blocked_right = is_blocked_right(player, lines)
         blocked_left = is_blocked_left(player, lines)
         blocked_up = is_blocked_up(player, lines)
         blocked_down = is_blocked_down(player, lines)
+        at_top_boundary = player.getY() <= game.Y_MIN
+        at_bottom_boundary = player.getY() >= game.Y_MAX
+        effective_blocked_up = blocked_up or at_top_boundary
+        effective_blocked_down = blocked_down or at_bottom_boundary
         blocked_flags = {
             "right": blocked_right,
             "left": blocked_left,
-            "up": blocked_up,
-            "down": blocked_down,
+            "up": effective_blocked_up,
+            "down": effective_blocked_down,
         }
+
+        if self.phase == 2:
+            in_corner = blocked_right and (
+                (effective_blocked_up and not effective_blocked_down)
+                or (effective_blocked_down and not effective_blocked_up)
+            )
+            blocked_trigger = int(_ML["CORNER_ESCAPE_TRIGGER_BLOCKED"])
+            if in_corner and self._consecutive_blocked >= blocked_trigger:
+                if self._corner_escape_dir == -1:
+                    self._corner_escape_dir = DOWN if effective_blocked_up else UP
+                    self._corner_escape_progress = 0
 
         # -- 1b. BFS optimal action (Phase 3+ curriculum) --
         bfs_action = bfs_optimal_action(player, lines, game) if self.phase >= 3 else -1
@@ -148,9 +190,9 @@ class InfiniteMazeEnv(gym.Env):
         elif action == LEFT and not blocked_left:
             player.moveX(-1)
             game.decrementScore()
-        elif action == UP and not blocked_up:
+        elif action == UP and not effective_blocked_up:
             player.moveY(-1)
-        elif action == DOWN and not blocked_down:
+        elif action == DOWN and not effective_blocked_down:
             player.moveY(1)
         # DO_NOTHING: no move
 
@@ -203,6 +245,32 @@ class InfiniteMazeEnv(gym.Env):
         else:
             new_blocked = self._consecutive_blocked
 
+        # -- 10b. Consecutive-vertical counter update --
+        if action in (UP, DOWN):
+            if action == self._last_vertical_action:
+                new_vertical = self._consecutive_vertical + 1
+            else:
+                new_vertical = 1
+            new_vertical_any = self._consecutive_vertical_any + 1
+        else:
+            new_vertical = 0
+            new_vertical_any = 0
+
+        # -- 10c. Phase 3+ blocked-right vertical stalling detector --
+        if self.phase >= 3 and blocked_right and action in (UP, DOWN):
+            y_delta = int(_ML["PHASE3_STUCK_VERTICAL_Y_DELTA"])
+            new_y = player.getY()
+            if self._blocked_vertical_anchor_y < 0:
+                self._blocked_vertical_anchor_y = prev_y
+            if abs(new_y - self._blocked_vertical_anchor_y) <= y_delta:
+                self._blocked_vertical_same_y_streak += 1
+            else:
+                self._blocked_vertical_anchor_y = new_y
+                self._blocked_vertical_same_y_streak = 1
+        else:
+            self._blocked_vertical_same_y_streak = 0
+            self._blocked_vertical_anchor_y = -1
+
         # -- 11. Reward --
         prev_gap_offset = self._prev_gap_offset
         prev_blocked = self._consecutive_blocked
@@ -218,7 +286,74 @@ class InfiniteMazeEnv(gym.Env):
             )
         )
 
+        # Penalise repeating the same vertical direction (breaks UP/DOWN looping exploit)
+        if new_vertical > _ML["CONSECUTIVE_VERTICAL_CAP"]:
+            reward += float(_ML["REWARD_CONSECUTIVE_VERTICAL_PENALTY"])
+
+        # Penalise any vertical loitering regardless of direction (breaks UP/DOWN oscillation)
+        if new_vertical_any > _ML["CONSECUTIVE_VERTICAL_ANY_CAP"]:
+            reward += float(_ML["REWARD_CONSECUTIVE_VERTICAL_ANY_PENALTY"])
+
+        # Penalise rapid vertical direction flips (UP -> DOWN or DOWN -> UP)
+        # This encourages sustained directional commitment rather than alternation
+        if action in (UP, DOWN) and self._last_vertical_action in (UP, DOWN):
+            if action != self._last_vertical_action:
+                reward += float(_ML["REWARD_VERTICAL_DIRECTION_FLIP"])
+
+        # Penalise repeated blocked-right vertical attempts with little Y movement.
+        if self.phase >= 3:
+            stuck_window = int(_ML["PHASE3_STUCK_VERTICAL_WINDOW"])
+            if self._blocked_vertical_same_y_streak > stuck_window:
+                reward += float(_ML["REWARD_PHASE3_STUCK_VERTICAL"])
+
+        # Penalise repeated DO_NOTHING when blocked-right (Phase 3+ idle exploit)
+        if self.phase >= 3 and blocked_right:
+            if action == DO_NOTHING:
+                self._blocked_do_nothing_streak += 1
+            else:
+                self._blocked_do_nothing_streak = 0
+            
+            loop_window = int(_ML["PHASE3_DO_NOTHING_LOOP_WINDOW"])
+            if self._blocked_do_nothing_streak > loop_window:
+                reward += float(_ML["REWARD_PHASE3_DO_NOTHING_LOOP"])
+        elif not blocked_right:
+            self._blocked_do_nothing_streak = 0
+
+        if self.phase == 2 and self._corner_escape_dir in (UP, DOWN):
+            target = int(_ML["CORNER_ESCAPE_TARGET_STEPS"])
+            if action == self._corner_escape_dir:
+                # Attempting correct direction: small bonus, and progress if move succeeds
+                reward += float(_ML["REWARD_CORNER_ESCAPE_ATTEMPT"])
+                if action == UP and not effective_blocked_up:
+                    self._corner_escape_progress += 1
+                    reward += float(_ML["REWARD_CORNER_ESCAPE_STEP"])
+                elif action == DOWN and not effective_blocked_down:
+                    self._corner_escape_progress += 1
+                    reward += float(_ML["REWARD_CORNER_ESCAPE_STEP"])
+            elif action in (UP, DOWN):
+                # Wrong direction: penalty (but lighter, and no progress regression)
+                reward += float(_ML["REWARD_CORNER_ESCAPE_WRONG_DIR"])
+            elif action in (LEFT, RIGHT):
+                # Horizontal movement during escape: weak penalty
+                reward += float(_ML["REWARD_CORNER_ESCAPE_HORIZONTAL"])
+            elif action == DO_NOTHING:
+                reward += float(_ML["REWARD_CORNER_ESCAPE_WAIT"])
+
+            post_blocked_right = is_blocked_right(player, lines)
+            if self._corner_escape_progress >= target and not post_blocked_right:
+                reward += float(_ML["REWARD_CORNER_ESCAPE_CLEAR"])
+                self._corner_escape_dir = -1
+                self._corner_escape_progress = 0
+
         self._consecutive_blocked = new_blocked
+        self._consecutive_vertical = new_vertical
+        self._consecutive_vertical_any = new_vertical_any
+        self._last_vertical_action = (
+            action if action in (UP, DOWN) else self._last_vertical_action
+        )
+        self._recent_actions.append(action)
+        self._recent_x_positions.append(player.getX())
+        self._recent_blocked_right.append(float(blocked_right))
 
         # -- 12. Build observation and return --
         obs = self._get_obs()
@@ -232,6 +367,8 @@ class InfiniteMazeEnv(gym.Env):
                 prev_blocked,
                 new_blocked,
                 blocked_right,
+                prev_x,
+                player.getX(),
             )
 
         self._prev_gap_offset = new_gap
@@ -259,4 +396,7 @@ class InfiniteMazeEnv(gym.Env):
             self._lines,
             self._game,
             self._consecutive_blocked,
+            self._recent_actions,
+            self._recent_x_positions,
+            self._recent_blocked_right,
         )
