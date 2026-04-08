@@ -51,7 +51,12 @@ def _user_quit() -> bool:
 
 
 def watch(
-    model_path: str, n_episodes: int, phase: int, delay_ms: int, device: str
+    model_path: str,
+    n_episodes: int,
+    phase: int,
+    delay_ms: int,
+    device: str,
+    legacy_obs: bool = False,
 ) -> None:
     """Run n_episodes of a trained model in a live pygame window.
 
@@ -66,11 +71,22 @@ def watch(
 
     Pace builds on the real-time clock (30 s per increment), matching the
     live game experience rather than the accelerated tick-based training pace.
+
+    Parameters
+    ----------
+    legacy_obs : bool
+        When True, pass ``legacy=True`` to ``get_obs()`` so the observation
+        shape is (53,) instead of (56,). Use this to watch models trained
+        before the history features (indices 13-15) were added.
     """
-    # Load model using a temporary headless env for the policy network shape
-    dummy = InfiniteMazeEnv(phase=phase)
-    model = PPO.load(model_path, env=dummy, device=device)
-    dummy.close()
+    if legacy_obs:
+        # Load without env-validation — the network expects (53,) inputs,
+        # which is incompatible with the current InfiniteMazeEnv (56,).
+        model = PPO.load(model_path, device=device)
+    else:
+        dummy = InfiniteMazeEnv(phase=phase)
+        model = PPO.load(model_path, env=dummy, device=device)
+        dummy.close()
 
     # Real game objects — display window opened once, reused across episodes
     game = Game(headless=False)
@@ -95,7 +111,7 @@ def watch(
             game.updateScreen(player, lines)
 
             # -- Build observation --
-            obs = get_obs(player, lines, game, consecutive_blocked)
+            obs = get_obs(player, lines, game, consecutive_blocked, legacy=legacy_obs)
 
             # -- Model prediction --
             action, _ = model.predict(obs, deterministic=True)
@@ -197,12 +213,20 @@ def _parse_args(argv=None):
         default="cpu",
         help="Torch device for PPO load/predict (cpu, cuda, or auto).",
     )
+    p.add_argument(
+        "--legacy-obs",
+        action="store_true",
+        default=False,
+        help="Use 53-feature observation (no history features). Required for "
+             "models trained before the action-repeat/x-progress/blocked-right "
+             "history features were added.",
+    )
     return p.parse_args(argv)
 
 
 def main(argv=None):
     args = _parse_args(argv)
-    watch(args.model, args.episodes, args.phase, args.delay, args.device)
+    watch(args.model, args.episodes, args.phase, args.delay, args.device, args.legacy_obs)
 
 
 if __name__ == "__main__":

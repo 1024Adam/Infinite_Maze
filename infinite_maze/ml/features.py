@@ -611,8 +611,13 @@ def get_obs(
     recent_actions=None,
     recent_x_positions=None,
     recent_blocked_right=None,
+    legacy: bool = False,
 ) -> np.ndarray:
-    """Encode the current game state as a flat float32 array of shape (56,).
+    """Encode the current game state as a flat float32 array.
+
+    Returns shape (56,) by default, or (53,) when ``legacy=True``.
+    Use ``legacy=True`` to load models trained before the history features
+    (indices 13–15) were added.
 
     All values are normalised to [0.0, 1.0].
 
@@ -714,4 +719,8 @@ def get_obs(
         ],
         dtype=np.float32,
     )
+    if legacy:
+        # Drop indices 13-15 (action_repeat, x_progress, blocked_persistence)
+        # to produce the original (53,) observation shape.
+        scalars = scalars[:13]
     return np.concatenate([scalars, get_wall_grid(player, lines)])
